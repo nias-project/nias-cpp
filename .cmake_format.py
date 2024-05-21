@@ -1,6 +1,8 @@
-# Inspired by https://github.com/arup-group/oasys-core/blob/master/.cmake_format.py
-# which is inspired by
-# https://github.com/dune-community/vcsetup/blob/master/.cmake_format.py
+# This file is part of the NiAS project (https://github.com/nias-project).
+# Copyright NiAS developers and contributors. All rights reserved.
+# License: BSD 2-Clause License (https://opensource.org/licenses/BSD-2-Clause)
+#
+# Inspired by https://github.com/dune-community/vcsetup/blob/master/.cmake_format.py
 
 # ----------------------------------
 # Options affecting listfile parsing
