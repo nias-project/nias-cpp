@@ -1,0 +1,84 @@
+---
+# This file is part of the NiAS project (https://github.com/nias-project).
+# Copyright NiAS developers and contributors. All rights reserved.
+# License: BSD 2-Clause License (https://opensource.org/licenses/BSD-2-Clause)
+#
+# See https://pre-commit.com for more information
+# See https://pre-commit.com/hooks.html for more hooks
+repos:
+  - repo: https://github.com/pre-commit/mirrors-clang-format
+    rev: v16.0.6
+    hooks:
+      - id: clang-format
+        types_or: [c, c++]
+        exclude: .github
+  - repo: https://github.com/cheshirekow/cmake-format-precommit
+    rev: v0.6.13
+    hooks:
+      - id: cmake-format
+        additional_dependencies: [pyyaml>=5.1]  # see https://github.com/cheshirekow/cmake-format-precommit/pull/4#issuecomment-943444582
+        args: [-i, --config-files=.cmake_format.py]
+      - id: cmake-lint
+        additional_dependencies: [pyyaml>=5.1]  # see https://github.com/cheshirekow/cmake-format-precommit/pull/4#issuecomment-943444582
+        args: [--config-files=.cmake_format.py]
+  - repo: https://github.com/tcort/markdown-link-check
+    rev: v3.11.2
+    hooks:
+      - id: markdown-link-check
+        args: [--quiet, --config=.markdown_link_check_config.json]
+  - repo: https://github.com/rhysd/actionlint
+    rev: v1.6.26
+    hooks:
+      - id: actionlint
+  - repo: https://github.com/astral-sh/ruff-pre-commit
+    rev: v0.1.9
+    hooks:
+      - id: ruff
+        args: [--fix]
+        exclude: .cmake_format.py
+  - repo: https://github.com/DavidAnson/markdownlint-cli2
+    rev: v0.11.0
+    hooks:
+      - id: markdownlint-cli2
+        args: [--fix]
+  - repo: https://github.com/pappasam/toml-sort.git
+    rev: v0.23.1
+    hooks:
+      - id: toml-sort-fix
+  - repo: https://github.com/lyz-code/yamlfix
+    rev: 1.16.0
+    hooks:
+      - id: yamlfix
+        types: [text]
+        files: \.yaml|\.yml|\.cff$
+        exclude: ^conda|.github
+# this should go last since it will fix line endings broken by other tools
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v4.5.0
+    hooks:
+      - id: trailing-whitespace
+      # The pre-commit check on CI detects some whitespace changes if we include .github
+        exclude: .github
+      - id: check-added-large-files
+      - id: check-case-conflict
+      - id: check-executables-have-shebangs
+      - id: check-json
+      - id: check-merge-conflict
+      - id: check-shebang-scripts-are-executable
+      - id: check-symlinks
+      - id: check-yaml
+      - id: check-xml
+      - id: debug-statements
+      - id: destroyed-symlinks
+      - id: end-of-file-fixer
+      - id: file-contents-sorter
+        files: ^\.mailmap$
+      - id: mixed-line-ending
+        args: [--fix=lf]
+      - id: pretty-format-json
+        args: [--autofix, --no-sort-keys, --indent=4]
+      - id: trailing-whitespace
+      - id: fix-byte-order-marker
+ci:
+  autofix_prs: false
+  autoupdate_schedule: quarterly
