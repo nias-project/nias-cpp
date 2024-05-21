@@ -1,0 +1,19 @@
+# This file is part of the NiAS project (https://github.com/nias-project).
+# Copyright NiAS developers and contributors. All rights reserved.
+# License: BSD 2-Clause License (https://opensource.org/licenses/BSD-2-Clause)
+
+[build-system]
+requires = ["scikit-build-core>=0.3.3", "pybind11"]
+build-backend = "scikit_build_core.build"
+
+[project]
+name = "nias_cpp"
+version = "0.1.0"
+description = "C++ bindings for NIAS - Numerics in Abstract Spaces"
+readme = "README.md"
+authors = [
+  {name = "Felix Schindler", email = "felix.schindler@uni-muenster.de"}
+]
+
+[tool.scikit-build]
+wheel.expand-macos-universal-tags = true

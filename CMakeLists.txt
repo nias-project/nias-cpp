@@ -1,5 +1,10 @@
-cmake_minimum_required(VERSION 3.15)
-project(nias-cpp LANGUAGES CXX)
+# Require CMake 3.15+ (matching scikit-build-core) Use new versions of all
+# policies up to CMake 3.30
+cmake_minimum_required(VERSION 3.15...3.30)
+project(
+    ${SKBUILD_PROJECT_NAME}
+    VERSION ${SKBUILD_PROJECT_VERSION}
+    LANGUAGES CXX)
 set(CMAKE_CXX_STANDARD 20)
 
 # If CMAKE_CXX_VISIBILITY_PRESET is not set, pybind11 will set the visibility for the library to hidden
@@ -26,8 +31,15 @@ if(CMAKE_CXX_COMPILER_ID MATCHES "GNU" OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
     set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -Wall -Wextra -Wpedantic")
 endif()
 
+find_package(Python REQUIRED COMPONENTS Interpreter Development.Module)
+
 # add pybind11
 add_subdirectory(extern/pybind11)
+
+# add dummy module
+python_add_library(dummy MODULE src/nias_cpp/dummy.cpp WITH_SOABI)
+target_link_libraries(dummy PRIVATE pybind11::headers)
+install(TARGETS dummy DESTINATION nias_cpp)
 
 # find our own package
 find_package(nias-cpp PATHS ${CMAKE_CURRENT_SOURCE_DIR}/cmake NO_DEFAULT_PATH)

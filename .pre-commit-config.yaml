@@ -6,80 +6,79 @@
 # See https://pre-commit.com for more information
 # See https://pre-commit.com/hooks.html for more hooks
 repos:
-- repo: https://github.com/pre-commit/mirrors-clang-format
-  rev: v18.1.8
-  hooks:
-  - id: clang-format
-    types_or: [c, c++]
-    exclude: .github
-- repo: https://github.com/cheshirekow/cmake-format-precommit
-  rev: v0.6.13
-  hooks:
-  - id: cmake-format
-    additional_dependencies: [pyyaml>=5.1]     # see https://github.com/cheshirekow/cmake-format-precommit/pull/4#issuecomment-943444582
-    args: [-i, --config-files=.cmake_format.py]
-    exclude: config.h.cmake
-  - id: cmake-lint
-    additional_dependencies: [pyyaml>=5.1]     # see https://github.com/cheshirekow/cmake-format-precommit/pull/4#issuecomment-943444582
-    args: [--config-files=.cmake_format.py]
-    exclude: config.h.cmake
-- repo: https://github.com/astral-sh/ruff-pre-commit
+  - repo: https://github.com/pre-commit/mirrors-clang-format
+    rev: v18.1.8
+    hooks:
+      - id: clang-format
+        types_or: [c, c++]
+        exclude: .github
+  - repo: https://github.com/cheshirekow/cmake-format-precommit
+    rev: v0.6.13
+    hooks:
+      - id: cmake-format
+        additional_dependencies: [pyyaml>=5.1]  # see https://github.com/cheshirekow/cmake-format-precommit/pull/4#issuecomment-943444582
+        args: [-i, --config-files=.cmake_format.py]
+        exclude: config.h.cmake
+      - id: cmake-lint
+        additional_dependencies: [pyyaml>=5.1]  # see https://github.com/cheshirekow/cmake-format-precommit/pull/4#issuecomment-943444582
+        args: [--config-files=.cmake_format.py]
+        exclude: config.h.cmake
+  - repo: https://github.com/astral-sh/ruff-pre-commit
     # Ruff version.
-  rev: v0.5.1
-  hooks:
-  - id: ruff
-    args: [ --fix ]
-  - id: ruff-format
-- repo: https://github.com/rhysd/actionlint
+    rev: v0.5.1
+    hooks:
+      - id: ruff
+        args: [--fix]
+      - id: ruff-format
+  - repo: https://github.com/rhysd/actionlint
   # TODO: Use version number instead of commit hash once there is a release with
   # https://github.com/rhysd/actionlint/pull/425
-  rev: v1.7.1
-  hooks:
-  - id: actionlint
-- repo: https://github.com/DavidAnson/markdownlint-cli2
-  rev: v0.13.0
-  hooks:
-    - id: markdownlint-cli2
-      args: [--fix]
-- repo: https://github.com/pappasam/toml-sort.git
-  rev: v0.23.1
-  hooks:
-    - id: toml-sort-fix
-- repo: https://github.com/lyz-code/yamlfix
-  rev: 1.16.0
-  hooks:
-    - id: yamlfix
-      types: [text]
-      files: \.yaml|\.yml|\.cff$
-      exclude: ^conda|.github
+    rev: v1.7.1
+    hooks:
+      - id: actionlint
+  - repo: https://github.com/DavidAnson/markdownlint-cli2
+    rev: v0.13.0
+    hooks:
+      - id: markdownlint-cli2
+        args: [--fix]
+  - repo: https://github.com/pappasam/toml-sort.git
+    rev: v0.23.1
+    hooks:
+      - id: toml-sort-fix
+  - repo: https://github.com/lyz-code/yamlfix
+    rev: 1.16.0
+    hooks:
+      - id: yamlfix
+        types: [text]
+        files: \.yaml|\.yml|\.cff$
+        exclude: ^conda|.github
 # this should go last since it will fix line endings broken by other tools
-- repo: https://github.com/pre-commit/pre-commit-hooks
-  rev: v4.6.0
-  hooks:
-  - id: trailing-whitespace
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v4.6.0
+    hooks:
+      - id: trailing-whitespace
     # The pre-commit check on CI detects some whitespace changes if we include .github
-    exclude: .github
-  - id: check-added-large-files
-  - id: check-case-conflict
-  - id: check-executables-have-shebangs
-  - id: check-json
-  - id: check-merge-conflict
-  - id: check-shebang-scripts-are-executable
-  - id: check-xml
-  - id: check-yaml
-  - id: check-symlinks
-  - id: debug-statements
-  - id: destroyed-symlinks
-  - id: end-of-file-fixer
-  - id: file-contents-sorter
-    files: ^\.mailmap$
-  - id: fix-byte-order-marker
-  - id: mixed-line-ending
-    args: [--fix=lf]
-  - id: pretty-format-json
-    args: [--autofix, --no-sort-keys, --indent=4]
-    exclude: .*\.ipynb$
-
+        exclude: .github
+      - id: check-added-large-files
+      - id: check-case-conflict
+      - id: check-executables-have-shebangs
+      - id: check-json
+      - id: check-merge-conflict
+      - id: check-shebang-scripts-are-executable
+      - id: check-xml
+      - id: check-yaml
+      - id: check-symlinks
+      - id: debug-statements
+      - id: destroyed-symlinks
+      - id: end-of-file-fixer
+      - id: file-contents-sorter
+        files: ^\.mailmap$
+      - id: fix-byte-order-marker
+      - id: mixed-line-ending
+        args: [--fix=lf]
+      - id: pretty-format-json
+        args: [--autofix, --no-sort-keys, --indent=4]
+        exclude: .*\.ipynb$
 ci:
   autofix_prs: false
   autoupdate_schedule: quarterly

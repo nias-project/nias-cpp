@@ -7,6 +7,7 @@
 # B = bugbear
 # PTH = flake8-use-pathlib
 # PL = pylint
+
 select = ["E", "F", "W", "N", "RUF", "I001", "UP", "B", "PTH", "PL"]
 # E501: line too long
 ignore = ["E501"]
