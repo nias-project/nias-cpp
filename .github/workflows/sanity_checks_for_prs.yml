@@ -1,0 +1,153 @@
+---
+# This file is part of the NiAS project (https://github.com/nias-project).
+# Copyright NiAS developers and contributors. All rights reserved.
+# License: BSD 2-Clause License (https://opensource.org/licenses/BSD-2-Clause)
+name: Sanity Checks
+# merge_group triggers happen in merge queues
+# workflow_dispatch triggers happen when a user manually runs the workflow
+# pull_request triggers happen when a pull request is updated
+on:
+  - merge_group
+  - pull_request
+  - workflow_dispatch
+concurrency:
+  group: sanity_${{ github.event.ref }}
+  cancel-in-progress: true
+jobs:
+  sanity_checks:
+    name: Sanity Checks
+    runs-on: ubuntu-22.04
+    timeout-minutes: 5
+    steps:
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Install dependencies
+        run: pip install pygithub==1.59.0
+      - name: Block Autosquash Commits
+        if: ${{ !github.event.pull_request.draft }}
+        shell: python {0}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_REPOSITORY: ${{ github.repository }}
+          HEAD_SHA: ${{  github.event_name == 'pull_request' && github.event.pull_request.head.sha
+            || github.event.merge_group.head_sha }}
+          BASE_SHA: ${{  github.event_name == 'pull_request' && github.event.pull_request.base.sha
+            || github.event.merge_group.base_sha }}
+        run: |
+          from github import Github
+          import os
+          import sys
+          repo_name = os.environ['GITHUB_REPOSITORY']
+          head_sha = os.environ['HEAD_SHA']
+          base_sha = os.environ['BASE_SHA']
+          g = Github(os.environ["GITHUB_TOKEN"])
+          blocked_words = ["fixup!", "squash!",]
+          blocked_messages = ["f", "REVERT ME BEFORE MERGE"]
+          repo = g.get_repo(repo_name)
+          head_commit = repo.get_commit(head_sha)
+          base_commit = repo.get_commit(base_sha)
+          commits = repo.compare(base_commit.sha, head_commit.sha).commits
+          for commit in commits:
+              commit_msg = commit.commit.message
+              # Check if the commit message is in the blocked messages
+              if commit_msg in blocked_messages:
+                  print(f"Commit message is blocked: {commit_msg}")
+                  print("Please squash your commits before merging")
+                  sys.exit(1)
+              # Check if the commit message contains any of the search words
+              if any(word in commit_msg for word in blocked_words):
+                  print(f"Commit message contains blocked word: {commit_msg}")
+                  print("Please squash your commits before merging")
+                  sys.exit(1)
+      - name: Block merge commits on the PR branch
+      # When we've entered the merge queue we can be sure that no new commits enter the branch
+      # and therefore do not need to run this check which depends on PR data being available
+        if: ${{ vars.REQUIRE_LINEAR_HISTORY == 'true' && github.event_name != 'merge_group' }}
+        shell: python {0}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+        run: |
+          import requests
+          import json
+          import os
+          headers = {'Authorization': f'token {os.environ["GITHUB_TOKEN"]}'}
+          repo = os.environ["GITHUB_REPOSITORY"]
+          pr = os.environ["PR_NUMBER"]
+          url = f'https://api.github.com/repos/{repo}/pulls/{pr}/commits'
+          response = requests.get(url, headers=headers)
+          commits = response.json()
+          while 'link' in response.headers and 'next' in response.links:
+              response = requests.get(response.links['next']['url'], headers=headers)
+              commits.extend(response.json())
+          assert response.status_code == 200, f'Failed to get commits for PR {pr}'
+          for commit in commits:
+              # If commit has more than one parent, it's a merge commit
+              if len(commit['parents']) > 1:
+                  raise RuntimeError(f'Merge commits are not allowed on PR branches: {commit["sha"]}')
+      # we require the checkout for the mailmap check below
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+        # we rely on git log to determine all contributors
+          fetch-depth: 0
+      - name: Check Mailmap for inconsistencies
+        shell: python {0}
+      # This is https://github.com/pymor/pymor/blob/0dfec244b20186b938b34e678d8c06ddcab79588/.ci/gitlab/check_mailmap.py
+        run: |
+          import sys
+          from collections import defaultdict
+          from pathlib import Path
+          from subprocess import check_output
+          namesep = '??'
+          fmtsep = '||'
+          cmd = ['git', 'log', f'--format=%an{namesep}%ae{fmtsep}%aN{namesep}%aE']
+          seen_set = set()
+          seen = defaultdict(list)
+          for user in (f.split(fmtsep) for f in set(check_output(cmd, universal_newlines=True).strip().split('\n'))):
+              if user[0] != user[1]:
+                  # has a mailmap entry
+                  continue
+              name, email = user[0].split(namesep)
+              seen_set.add((name, email))
+              seen[name].append(email)
+          mailmap = Path('.mailmap').resolve()
+          if not mailmap.exists():
+              print(f'No mailmap found at {mailmap}')
+              sys.exit(0)
+          contents = mailmap.read_text()
+          assert len(contents) > 0
+          # completely missing from mailmap
+          missing_complete_entry = [(u, e) for u, e in seen_set if u not in contents or e not in contents]
+          # name is in mailmap, but email is new
+          missing_email = [(u, e) for u, e in seen_set if u in contents and e not in contents]
+          # name occurs with multiple mails, but no mailmap entry
+          duplicates = [(u, mails) for u, mails in seen.items() if len(mails) > 1]
+          lines = [line for line in contents.splitlines() if not line.startswith('#')]
+          sorted_lines = sorted(lines, key=lambda line: line.lower())
+          unsorted = [u for u, t in zip(lines, sorted_lines, strict=True) if t != u]
+          for user, email in missing_email + missing_complete_entry:
+              print(f'missing mailmap entry for {user} <{email}>')
+          for user, emails in duplicates:
+              print(f'multiple emails for {user}: {emails}')
+          for line in unsorted:
+              print(f'line not sorted properly: {line}')
+          if unsorted:
+              mailmap.with_suffix('.sorted').write_text('\n'.join(sorted_lines) + '\n')
+          num_failures = len(missing_complete_entry) + len(missing_email) + len(duplicates) + len(unsorted)
+          if num_failures > 0:
+              print('\nDetected inconsistency in the .mailmap (see the above messages)!\n'
+                      'Please fix the .mailmap (see https://git-scm.com/docs/gitmailmap) in a separete commit.\n'
+                      'First time contributers: please ensure at least single line of the form\n'
+                      '"Proper Name <github_or_other_representative_email>".')
+          sys.exit(num_failures)
+      - name: Upload sorted mailmap (if check failed)
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: mailmap.sorted
+          path: .mailmap.sorted
+      - name: Carry out pre-commit checks
+        uses: pre-commit/action@v3.0.1
