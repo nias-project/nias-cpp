@@ -1,3 +1,7 @@
+# This file is part of the NiAS project (https://github.com/nias-project).
+# Copyright NiAS developers and contributors. All rights reserved.
+# License: BSD 2-Clause License (https://opensource.org/licenses/BSD-2-Clause)
+
 # Require CMake 3.15+ (matching scikit-build-core) Use new versions of all
 # policies up to CMake 3.30
 cmake_minimum_required(VERSION 3.15...3.30)
