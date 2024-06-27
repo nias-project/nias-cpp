@@ -5,6 +5,7 @@
 #include <concepts>
 #include <iostream>
 #include <set>
+#include <string>
 #include <vector>
 
 #include <pybind11/pybind11.h>
@@ -85,19 +86,10 @@ class VectorArray
     void append(VectorArray& other, bool remove_from_other = false,
                 const std::vector<size_t>& other_indices = {})
     {
-        if (!is_compatible_array(other))
-        {
-            throw std::invalid_argument("VectorArray: incompatible dimensions.");
-        }
+        check(is_compatible_array(other), "incompatible dimensions.");
         vectors_.reserve(vectors_.size() + other_indices.size());
-        if (remove_from_other)
-        {
-            append_with_removal(other, other_indices);
-        }
-        else
-        {
-            append_without_removal(other, other_indices);
-        }
+        remove_from_other ? append_with_removal(other, other_indices)
+                          : append_without_removal(other, other_indices);
     }
 
     void delete_vectors(const std::vector<size_t>& indices)
@@ -125,72 +117,50 @@ class VectorArray
         {
             for (auto i : indices)
             {
-                vectors_.at(i).scal(alpha);
+                vectors_[i].scal(alpha);
             }
         }
     }
 
     void scal(const std::vector<double>& alpha, const std::vector<size_t>& indices = {})
     {
-        if (indices.empty())
+        const auto this_size = indices.empty() ? size() : indices.size();
+        check(alpha.size() == this_size || alpha.size() == 1,
+              "alpha must be scalar or have the same length as the array.");
+        for (size_t i = 0; i < this_size; ++i)
         {
-            if (alpha.size() != size())
-            {
-                throw std::invalid_argument(
-                    "VectorArray: alpha must be scalar or have the same length as the array.");
-            }
-            for (size_t i = 0; i < vectors_.size(); ++i)
-            {
-                vectors_.at(i).scal(alpha.at(i));
-            }
-        }
-        else
-        {
-            if (alpha.size() != indices.size())
-            {
-                throw std::invalid_argument("VectorArray: number of scalars must match number of indices.");
-            }
-            for (size_t i = 0; i < indices.size(); ++i)
-            {
-                vectors_.at(indices.at(i)).scal(alpha.at(i));
-            }
+            const auto index = indices.empty() ? i : indices[i];
+            const auto alpha_index = alpha.size() == 1 ? 0 : i;
+            vectors_[index].scal(alpha[alpha_index]);
         }
     }
 
     void axpy(const std::vector<double>& alpha, const VectorArray& x, const std::vector<size_t>& indices = {},
               const std::vector<size_t>& x_indices = {})
     {
-        if (!is_compatible_array(x))
-        {
-            throw std::invalid_argument("VectorArray: incompatible dimensions.");
-        }
+        check(is_compatible_array(x), "incompatible dimensions.");
         const auto this_size = indices.empty() ? size() : indices.size();
         const auto x_size = x_indices.empty() ? x.size() : x_indices.size();
-        if (!(this_size == x_size || x_size == 1))
-        {
-            throw std::invalid_argument("VectorArray: x must have length 1 or the same length as this");
-        }
-        if (!(alpha.size() == x_size || alpha.size() == 1))
-        {
-            throw std::invalid_argument("VectorArray: alpha must be a scalar or have the same length as x");
-        }
+        check(x_size == this_size || x_size == 1, "x must have length 1 or the same length as this");
+        check(alpha.size() == this_size || alpha.size() == 1,
+              "alpha must be scalar or have the same length as x");
 
         for (size_t i = 0; i < this_size; ++i)
         {
-            const auto this_index = indices.empty() ? i : indices.at(i);
+            const auto this_index = indices.empty() ? i : indices[i];
             // x can either have the same length as this or length 1
             size_t x_index;
             if (x_size == this_size)
             {
-                x_index = x_indices.empty() ? i : x_indices.at(i);
+                x_index = x_indices.empty() ? i : x_indices[i];
             }
             else
             {
                 // x has length 1
-                x_index = x_indices.empty() ? 0 : x_indices.at(0);
+                x_index = x_indices.empty() ? 0 : x_indices[0];
             }
-            const auto a = alpha.size() == 1 ? alpha.at(0) : alpha.at(x_index);
-            vectors_.at(this_index).axpy(a, x.vectors_.at(x_index));
+            const auto alpha_index = alpha.size() == 1 ? 0 : i;
+            vectors_[this_index].axpy(alpha[alpha_index], x.vectors_[x_index]);
         }
     }
 
@@ -201,15 +171,22 @@ class VectorArray
     }
 
    private:
+    void check(const bool condition, const std::string& message)
+    {
+        if (!condition)
+        {
+            throw std::invalid_argument("VectorArray: " + message);
+        }
+    }
+
     void check_vec_dimensions()
     {
-        for (const auto& vector : vectors_)
-        {
-            if (vector.size() != dim_)
-            {
-                throw std::invalid_argument("VectorArray: all vectors must have the same length.");
-            }
-        }
+        check(std::ranges::all_of(vectors_,
+                                  [dim = dim_](const auto& vector)
+                                  {
+                                      return vector.size() == dim;
+                                  }),
+              "All vectors must have the same length.");
     }
 
     void append_without_removal(const VectorArray& other, std::vector<size_t> other_indices = {})
@@ -282,7 +259,6 @@ auto bind_nias_vectorarray(pybind11::module& m, const std::string name)
                  {
                      return v.size();
                  })
-            .def("size", &VecArray::size)
             .def_property_readonly("dim", &VecArray::dim)
             .def_property_readonly("vectors", &VecArray::vectors)
             .def("copy", &VecArray::copy)

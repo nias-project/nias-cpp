@@ -52,10 +52,12 @@ int main()
     // Perform Gram-Schmidt orthogonalization and print result
     std::cout << "\n\nPerforming Gram-Schmidt orthogonalization... ";
     auto orthonormalized_vectors = nias::gram_schmidt(vectors, "ExampleVector");
-    auto orthonormalized_vectors_2 = nias::gram_schmidt(vec_array, "ExampleVector");
+    auto orthonormalized_vectorarray = nias::gram_schmidt(vec_array);
+    nias::gram_schmidt_in_place(vec_array);
     std::cout << "done!\n\n" << std::endl;
     print(orthonormalized_vectors, "Output Vectors");
-    print(orthonormalized_vectors_2, "Output VecArray");
+    print(orthonormalized_vectorarray.vectors(), "Output VecArray");
+    print(vec_array.vectors(), "Output VecArray in-place");
 
     return 0;
 }
