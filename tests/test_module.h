@@ -18,6 +18,10 @@ class ExampleVector
     ExampleVector(const ExampleVector& other);
     ExampleVector(ExampleVector&& other);
 
+    // copy and move assignment operators
+    ExampleVector& operator=(const ExampleVector& other);
+    ExampleVector& operator=(ExampleVector&& other);
+
     // iterators
     Iterator begin();
     Iterator end();

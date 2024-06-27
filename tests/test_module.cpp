@@ -20,6 +20,19 @@ ExampleVector::ExampleVector(const ExampleVector& other)
 ExampleVector::ExampleVector(ExampleVector&& other)
     : data_(std::move(other.data_)) {};
 
+// ExampleVector copy and move assignment operators
+ExampleVector& ExampleVector::operator=(const ExampleVector& other)
+{
+    data_ = other.data_;
+    return *this;
+}
+
+ExampleVector& ExampleVector::operator=(ExampleVector&& other)
+{
+    data_ = std::move(other.data_);
+    return *this;
+}
+
 // ExampleVector iterators
 ExampleVector::Iterator ExampleVector::begin()
 {
@@ -79,4 +92,5 @@ PYBIND11_MODULE(nias_cpp_test, m)
 {
     m.doc() = "nias-cpp test bindings";  // optional module docstring
     nias::bind_nias_vector<ExampleVector>(m, "ExampleVector");
+    nias::bind_nias_vectorarray<ExampleVector>(m, "ExampleVectorArray");
 }

@@ -43,6 +43,8 @@ int main()
     std::vector<ExampleVector> vectors {{1., 2., 3.}, {4., 5., 6.}, {7., 8., 9.}};
     print(vectors, "Input");
 
+    VectorArray<ExampleVector> vec_array(vectors, 3);
+
     // Start the interpreter and import the test module
     py::scoped_interpreter guard {};  // start the interpreter and keep it alive
     py::module_ nias_cpp_test_module = py::module::import("nias_cpp_test");
@@ -50,8 +52,10 @@ int main()
     // Perform Gram-Schmidt orthogonalization and print result
     std::cout << "\n\nPerforming Gram-Schmidt orthogonalization... ";
     auto orthonormalized_vectors = nias::gram_schmidt(vectors, "ExampleVector");
+    auto orthonormalized_vectors_2 = nias::gram_schmidt(vec_array, "ExampleVector");
     std::cout << "done!\n\n" << std::endl;
-    print(orthonormalized_vectors, "Output");
+    print(orthonormalized_vectors, "Output Vectors");
+    print(orthonormalized_vectors_2, "Output VecArray");
 
     return 0;
 }
