@@ -3,7 +3,9 @@
 
 #include <algorithm>
 #include <concepts>
-#include <iostream>
+#include <cstddef>
+// #include <iostream>
+#include <memory>
 #include <set>
 #include <string>
 #include <vector>
@@ -15,34 +17,111 @@ namespace nias
 {
 
 
-// C++20 concept for a vector of doubles which has copy, dot, scal, and axpy methods
-template <class V>
-concept NiasVector = requires(V v) {
-    // TODO: update requirements
-    { v.size() } -> std::convertible_to<std::size_t>;
-    { v.copy() } -> std::same_as<V>;
-    { v.dot(v) } -> std::convertible_to<double>;
-    { v.scal(1.0) };
-    { v.axpy(1.0, v) };
-};
-
-template <NiasVector VectorType>
-class VectorArray
+template <std::floating_point F>
+class VectorInterface
 {
    public:
-    VectorArray(const std::vector<VectorType>& vectors, size_t dim)
-        : vectors_(std::move(vectors))
+    virtual ~VectorInterface() {
+        // std::cout << "VectorInterface destructor for " << this << std::endl;
+    };
+
+    // accessors
+    virtual F& operator[](size_t i) = 0;
+    virtual const F& operator[](size_t i) const = 0;
+
+    // return the dimension (length) of the vector
+    virtual size_t dim() const = 0;
+
+    // copy the Vector to a new Vector
+    virtual std::shared_ptr<VectorInterface> copy() const = 0;
+
+    // dot product
+    virtual F dot(const VectorInterface& x) const = 0;
+
+    // scale with a scalar
+    virtual void scal(F alpha) = 0;
+
+    // axpy
+    virtual void axpy(F alpha, const VectorInterface& x) = 0;
+};
+
+// template <std::floating_point F>
+// class VectorArrayInterface
+// {
+//    public:
+//     // return the number of vectors in the array
+//     virtual size_t size() const = 0;
+//
+//     // return the dimension (length) of the vectors in the array
+//     virtual size_t dim() const = 0;
+//
+//     virtual bool is_compatible_array(const VectorArrayInterface& other) const
+//     {
+//         return dim() == other.dim();
+//     }
+//
+//     // copy (a subset of) the VectorArray to a new VectorArray
+//     virtual std::shared_ptr<VectorArrayInterface<F>> copy(const std::vector<size_t>& indices = {}) const = 0;
+//
+//     virtual void append(VectorArrayInterface& other, bool remove_from_other = false,
+//                         const std::vector<size_t>& other_indices = {}) = 0;
+//
+//     virtual void scal(const std::vector<F>& alpha, const std::vector<size_t>& indices = {}) = 0;
+//
+//     virtual void scal(F alpha, const std::vector<size_t>& indices = {})
+//     {
+//         scal(std::vector<F> {alpha}, indices);
+//     }
+//
+//     virtual void axpy(const std::vector<F>& alpha, const VectorArrayInterface& x,
+//                       const std::vector<size_t>& indices = {}, const std::vector<size_t>& x_indices = {}) = 0;
+//
+//     virtual void axpy(F alpha, const VectorArrayInterface& x, const std::vector<size_t>& indices = {},
+//                       const std::vector<size_t>& x_indices = {})
+//     {
+//         axpy(std::vector<F> {alpha}, x, indices, x_indices);
+//     }
+//
+//     virtual const std::vector<std::shared_ptr<VectorInterface<F>>>& vectors() const = 0;
+// };
+
+template <std::floating_point F>
+class ListVectorArray  // : public VectorArrayInterface<F>
+{
+    using ThisType = ListVectorArray;
+    using VectorInterfaceType = VectorInterface<F>;
+
+   public:
+    ListVectorArray(const std::vector<std::shared_ptr<VectorInterfaceType>>& vectors, size_t dim)
+        : vectors_()
         , dim_(dim)
     {
+        // std::cout << "VectorArray constructor" << std::endl;
+        vectors_.reserve(vectors.size());
+        for (const auto& vector : vectors)
+        {
+            vectors_.push_back(vector->copy());
+        }
         check_vec_dimensions();
     }
 
-    VectorArray(std::vector<VectorType>&& vectors, size_t dim)
+    ListVectorArray(std::vector<std::shared_ptr<VectorInterfaceType>>&& vectors, size_t dim)
         : vectors_(std::move(vectors))
         , dim_(dim)
     {
+        // std::cout << "VectorArray with vectors move constructor" << std::endl;
         check_vec_dimensions();
     }
+
+    ~ListVectorArray()
+    {
+        // std::cout << "ListVectorArray destructor for " << this << std::endl;
+    }
+
+    ListVectorArray(const ListVectorArray& other) = delete;
+    ListVectorArray(ListVectorArray&& other) = delete;
+    ListVectorArray& operator=(const ListVectorArray& other) = delete;
+    ListVectorArray& operator=(ListVectorArray&& other) = delete;
 
     size_t size() const
     {
@@ -54,40 +133,55 @@ class VectorArray
         return dim_;
     }
 
-    const std::vector<VectorType>& vectors() const
+    bool is_compatible_array(const ThisType& other) const
+    {
+        return dim() == other.dim();
+    }
+
+    const VectorInterfaceType& get(size_t i) const
+    {
+        return *vectors_[i];
+    }
+
+    const std::vector<std::shared_ptr<VectorInterfaceType>>& vectors() const
     {
         return vectors_;
     }
 
-    bool is_compatible_array(const VectorArray& other) const
+    std::shared_ptr<ThisType> copy(const std::vector<size_t>& indices = {}) const
     {
-        return dim_ == other.dim_;
-    }
-
-    VectorArray copy(const std::vector<size_t>& indices = {}) const
-    {
+        // std::cout << "Copy called in VecArray!" << std::endl;
+        std::vector<std::shared_ptr<VectorInterfaceType>> copied_vectors;
         if (indices.empty())
         {
-            return VectorArray(vectors_, dim_);
+            copied_vectors.reserve(vectors_.size());
+            std::ranges::transform(vectors_, std::back_inserter(copied_vectors),
+                                   [](const auto& vec)
+                                   {
+                                       return vec->copy();
+                                   });
         }
         else
         {
-            std::vector<VectorType> copied_vectors;
             copied_vectors.reserve(indices.size());
             std::ranges::transform(indices, std::back_inserter(copied_vectors),
                                    [this](size_t i)
                                    {
-                                       return vectors_.at(i);
+                                       return vectors_[i]->copy();
                                    });
-            return VectorArray(copied_vectors, dim_);
         }
+        return std::make_shared<ThisType>(std::move(copied_vectors), dim_);
     }
 
-    void append(VectorArray& other, bool remove_from_other = false,
+    // void append(BaseType& other, bool remove_from_other = false,
+    void append(ThisType& other, bool remove_from_other = false,
                 const std::vector<size_t>& other_indices = {})
     {
-        check(is_compatible_array(other), "incompatible dimensions.");
-        vectors_.reserve(vectors_.size() + other_indices.size());
+        // check(is_list_vector_array(other), "append is not (yet) implemented if x is not a ListVectorArray");
+        const auto num_vecs_to_add = other_indices.empty() ? other.size() : other_indices.size();
+        vectors_.reserve(vectors_.size() + num_vecs_to_add);
+        // remove_from_other ? append_with_removal(dynamic_cast<ThisType&>(other), other_indices)
+        //                   : append_without_removal(dynamic_cast<ThisType&>(other), other_indices);
         remove_from_other ? append_with_removal(other, other_indices)
                           : append_without_removal(other, other_indices);
     }
@@ -104,25 +198,25 @@ class VectorArray
         }
     }
 
-    void scal(const double& alpha, const std::vector<size_t>& indices = {})
+    void scal(F alpha, const std::vector<size_t>& indices = {})
     {
         if (indices.empty())
         {
             for (auto& vector : vectors_)
             {
-                vector.scal(alpha);
+                vector->scal(alpha);
             }
         }
         else
         {
             for (auto i : indices)
             {
-                vectors_[i].scal(alpha);
+                vectors_[i]->scal(alpha);
             }
         }
     }
 
-    void scal(const std::vector<double>& alpha, const std::vector<size_t>& indices = {})
+    void scal(const std::vector<F>& alpha, const std::vector<size_t>& indices = {})
     {
         const auto this_size = indices.empty() ? size() : indices.size();
         check(alpha.size() == this_size || alpha.size() == 1,
@@ -131,19 +225,21 @@ class VectorArray
         {
             const auto index = indices.empty() ? i : indices[i];
             const auto alpha_index = alpha.size() == 1 ? 0 : i;
-            vectors_[index].scal(alpha[alpha_index]);
+            vectors_[index]->scal(alpha[alpha_index]);
         }
     }
 
-    void axpy(const std::vector<double>& alpha, const VectorArray& x, const std::vector<size_t>& indices = {},
+    // void axpy(const std::vector<F>& alpha, const BaseType& x, const std::vector<size_t>& indices = {},
+    void axpy(const std::vector<F>& alpha, const ThisType& x, const std::vector<size_t>& indices = {},
               const std::vector<size_t>& x_indices = {})
     {
-        check(is_compatible_array(x), "incompatible dimensions.");
+        // check(this->is_compatible_array(x), "incompatible dimensions.");
         const auto this_size = indices.empty() ? size() : indices.size();
         const auto x_size = x_indices.empty() ? x.size() : x_indices.size();
         check(x_size == this_size || x_size == 1, "x must have length 1 or the same length as this");
         check(alpha.size() == this_size || alpha.size() == 1,
               "alpha must be scalar or have the same length as x");
+        // check(is_list_vector_array(x), "axpy is not implemented if x is not a ListVectorArray");
 
         for (size_t i = 0; i < this_size; ++i)
         {
@@ -160,22 +256,37 @@ class VectorArray
                 x_index = x_indices.empty() ? 0 : x_indices[0];
             }
             const auto alpha_index = alpha.size() == 1 ? 0 : i;
-            vectors_[this_index].axpy(alpha[alpha_index], x.vectors_[x_index]);
+            // vectors_[this_index]->axpy(alpha[alpha_index],
+            //                            *dynamic_cast<const ThisType&>(x).vectors_[x_index]);
+            vectors_[this_index]->axpy(alpha[alpha_index], *x.vectors_[x_index]);
         }
     }
 
-    void axpy(double alpha, const VectorArray& x, const std::vector<size_t>& indices = {},
+    void axpy(F alpha, const ThisType& x, const std::vector<size_t>& indices = {},
               const std::vector<size_t>& x_indices = {})
     {
-        axpy(std::vector<double> {alpha}, x, indices, x_indices);
+        axpy(std::vector<F> {alpha}, x, indices, x_indices);
     }
 
    private:
+    // bool is_list_vector_array(const BaseType& other) const
+    // {
+    //     try
+    //     {
+    //         dynamic_cast<const ThisType&>(other);
+    //         return true;
+    //     }
+    //     catch (std::bad_cast&)
+    //     {
+    //         return false;
+    //     }
+    // }
+
     void check(const bool condition, const std::string& message)
     {
         if (!condition)
         {
-            throw std::invalid_argument("VectorArray: " + message);
+            throw std::invalid_argument("ListVectorArray: " + message);
         }
     }
 
@@ -184,28 +295,32 @@ class VectorArray
         check(std::ranges::all_of(vectors_,
                                   [dim = dim_](const auto& vector)
                                   {
-                                      return vector.size() == dim;
+                                      return vector->dim() == dim;
                                   }),
               "All vectors must have the same length.");
     }
 
-    void append_without_removal(const VectorArray& other, std::vector<size_t> other_indices = {})
+    void append_without_removal(const ThisType& other, std::vector<size_t> other_indices = {})
     {
         if (other_indices.empty())
         {
-            vectors_.insert(vectors_.end(), other.vectors_.begin(), other.vectors_.end());
+            std::ranges::transform(other.vectors_, std::back_inserter(vectors_),
+                                   [](const auto& vec)
+                                   {
+                                       return vec->copy();
+                                   });
         }
         else
         {
             std::ranges::transform(other_indices, std::back_inserter(vectors_),
                                    [&other](size_t i)
                                    {
-                                       return other.vectors_[i];
+                                       return other.vectors_[i]->copy();
                                    });
         }
     }
 
-    void append_with_removal(VectorArray& other, const std::vector<size_t>& other_indices)
+    void append_with_removal(ThisType& other, const std::vector<size_t>& other_indices)
     {
         if (other_indices.empty())
         {
@@ -226,55 +341,9 @@ class VectorArray
         }
     }
 
-    std::vector<VectorType> vectors_;
+    std::vector<std::shared_ptr<VectorInterfaceType>> vectors_;
     size_t dim_;
 };
-
-template <NiasVector V>
-auto bind_nias_vector(pybind11::module& m, const std::string name)
-{
-    namespace py = pybind11;
-    auto ret = py::class_<V>(m, name.c_str())
-                   .def("__len__",
-                        [](const V& v)
-                        {
-                            return v.size();
-                        })
-                   .def("copy", &V::copy)
-                   .def("dot", &V::dot)
-                   .def("scal", &V::scal)
-                   .def("axpy", &V::axpy);
-    return ret;
-}
-
-template <NiasVector V>
-auto bind_nias_vectorarray(pybind11::module& m, const std::string name)
-{
-    namespace py = pybind11;
-    using VecArray = VectorArray<V>;
-    auto ret =
-        py::class_<VecArray>(m, name.c_str())
-            .def("__len__",
-                 [](const VecArray& v)
-                 {
-                     return v.size();
-                 })
-            .def_property_readonly("dim", &VecArray::dim)
-            .def_property_readonly("vectors", &VecArray::vectors)
-            .def("copy", &VecArray::copy)
-            .def("append", &VecArray::append)
-            .def("delete", &VecArray::delete_vectors)
-            .def("scal", py::overload_cast<const double&, const std::vector<size_t>&>(&VecArray::scal))
-            .def("scal",
-                 py::overload_cast<const std::vector<double>&, const std::vector<size_t>&>(&VecArray::scal))
-            .def("axpy", py::overload_cast<double, const VecArray&, const std::vector<size_t>&,
-                                           const std::vector<size_t>&>(&VecArray::axpy))
-            .def("axpy",
-                 py::overload_cast<const std::vector<double>&, const VecArray&, const std::vector<size_t>&,
-                                   const std::vector<size_t>&>(&VecArray::axpy))
-            .def("is_compatible_array", &VecArray::is_compatible_array);
-    return ret;
-}
 
 
 }  // namespace nias

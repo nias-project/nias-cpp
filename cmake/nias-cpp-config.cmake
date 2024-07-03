@@ -12,8 +12,14 @@ function(nias_cpp_build_library target_name)
         return()
     endif()
 
-    add_library(${target_name} SHARED ${_NIAS_CPP_DIR}/src/nias-cpp/gram_schmidt.h
-                                      ${_NIAS_CPP_DIR}/src/nias-cpp/vector.h)
+    pybind11_add_module(
+        ${target_name}
+        SHARED
+        ${ARG_UNPARSED_ARGUMENTS}
+        ${_NIAS_CPP_DIR}/src/nias-cpp/gram_schmidt.h
+        ${_NIAS_CPP_DIR}/src/nias-cpp/vector.h
+        ${_NIAS_CPP_DIR}/src/nias-cpp/bindings.h
+        ${_NIAS_CPP_DIR}/src/nias-cpp/bindings.cpp)
 
     target_include_directories(${target_name} SYSTEM PUBLIC ${_NIAS_CPP_DIR}/src)
 

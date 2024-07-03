@@ -1,7 +1,7 @@
 #include "test_module.h"
 
-#include <algorithm>
-#include <numeric>
+// #include <algorithm>
+// #include <numeric>
 #include <vector>
 
 #include <nias-cpp/vector.h>
@@ -15,20 +15,31 @@ ExampleVector::ExampleVector(std::initializer_list<double> init_list)
     : data_(init_list) {};
 
 ExampleVector::ExampleVector(const ExampleVector& other)
-    : data_(other.data_) {};
+    : data_(other.data_) {
+        // std::cout << "Example Vector copy constructor" << std::endl;
+    };
 
 ExampleVector::ExampleVector(ExampleVector&& other)
-    : data_(std::move(other.data_)) {};
+    : data_(std::move(other.data_)) {
+        // std::cout << "Example Vector move constructor" << std::endl;
+    };
+
+ExampleVector::~ExampleVector()
+{
+    // std::cout << "ExampleVector destructor for " << this << std::endl;
+}
 
 // ExampleVector copy and move assignment operators
 ExampleVector& ExampleVector::operator=(const ExampleVector& other)
 {
+    // std::cout << "Example Vector copy assignment" << std::endl;
     data_ = other.data_;
     return *this;
 }
 
 ExampleVector& ExampleVector::operator=(ExampleVector&& other)
 {
+    // std::cout << "Example Vector move assignment" << std::endl;
     data_ = std::move(other.data_);
     return *this;
 }
@@ -54,20 +65,40 @@ ExampleVector::ConstIterator ExampleVector::end() const
     return data_.end();
 }
 
+// ExampleVector accessors
+double& ExampleVector::operator[](size_t i)
+{
+    return data_[i];
+}
+
+const double& ExampleVector::operator[](size_t i) const
+{
+    return data_[i];
+}
+
 // ExampleVector methods
-size_t ExampleVector::size() const
+size_t ExampleVector::dim() const
 {
     return data_.size();
 }
 
-ExampleVector ExampleVector::copy() const
+std::shared_ptr<nias::VectorInterface<double>> ExampleVector::copy() const
 {
-    return *this;
+    // std::cout << "Copy called!" << std::endl;
+    return std::make_shared<ExampleVector>(*this);
 }
 
-double ExampleVector::dot(const ExampleVector& other) const
+double ExampleVector::dot(const nias::VectorInterface<double>& other) const
 {
-    return std::inner_product(begin(), end(), other.begin(), 0.0);
+    // We cannot use
+    // return std::inner_product(begin(), end(), other.begin(), 0.0);
+    // because VectorInterface does not define iterators
+    double ret = 0;
+    for (size_t i = 0; i < dim(); ++i)
+    {
+        ret += (*this)[i] * other[i];
+    }
+    return ret;
 }
 
 void ExampleVector::scal(double alpha)
@@ -78,19 +109,17 @@ void ExampleVector::scal(double alpha)
     }
 }
 
-void ExampleVector::axpy(double alpha, const ExampleVector& x)
+void ExampleVector::axpy(double alpha, const nias::VectorInterface<double>& x)
 {
-    std::ranges::transform(*this, x, begin(),
-                           [alpha](double a, double b)
-                           {
-                               return a + alpha * b;
-                           });
-}
-
-// ExampleVector bindings
-PYBIND11_MODULE(nias_cpp_test, m)
-{
-    m.doc() = "nias-cpp test bindings";  // optional module docstring
-    nias::bind_nias_vector<ExampleVector>(m, "ExampleVector");
-    nias::bind_nias_vectorarray<ExampleVector>(m, "ExampleVectorArray");
+    // We cannot use
+    // std::ranges::transform(*this, x, begin(),
+    //                        [alpha](double a, double b)
+    //                        {
+    //                            return a + alpha * b;
+    //                        });
+    // because VectorInterface does not define iterators
+    for (size_t i = 0; i < dim(); ++i)
+    {
+        (*this)[i] += alpha * x[i];
+    }
 }
