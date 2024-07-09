@@ -1,8 +1,8 @@
 #include <iostream>
 #include <vector>
 
-#include <nias-cpp/gram_schmidt.h>
-#include <nias-cpp/vector.h>
+#include <nias_cpp/gram_schmidt.h>
+#include <nias_cpp/vector.h>
 
 #include "test_module.h"
 

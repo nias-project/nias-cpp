@@ -16,10 +16,10 @@ function(nias_cpp_build_library target_name)
         ${target_name}
         SHARED
         ${ARG_UNPARSED_ARGUMENTS}
-        ${_NIAS_CPP_DIR}/src/nias-cpp/gram_schmidt.h
-        ${_NIAS_CPP_DIR}/src/nias-cpp/vector.h
-        ${_NIAS_CPP_DIR}/src/nias-cpp/bindings.h
-        ${_NIAS_CPP_DIR}/src/nias-cpp/bindings.cpp)
+        ${_NIAS_CPP_DIR}/src/nias_cpp/gram_schmidt.h
+        ${_NIAS_CPP_DIR}/src/nias_cpp/vector.h
+        ${_NIAS_CPP_DIR}/src/nias_cpp/bindings.h
+        ${_NIAS_CPP_DIR}/src/nias_cpp/bindings.cpp)
 
     target_include_directories(${target_name} SYSTEM PUBLIC ${_NIAS_CPP_DIR}/src)
 

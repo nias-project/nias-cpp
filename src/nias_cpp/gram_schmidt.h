@@ -3,8 +3,8 @@
 
 #include <iostream>
 
-#include <nias-cpp/interpreter.h>
-#include <nias-cpp/vector.h>
+#include <nias_cpp/interpreter.h>
+#include <nias_cpp/vector.h>
 #include <pybind11/embed.h>
 
 namespace nias

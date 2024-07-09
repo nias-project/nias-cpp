@@ -4,7 +4,7 @@
 // #include <numeric>
 #include <vector>
 
-#include <nias-cpp/vector.h>
+#include <nias_cpp/vector.h>
 #include <pybind11/pybind11.h>
 
 // ExampleVector constructors

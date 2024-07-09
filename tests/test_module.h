@@ -3,7 +3,7 @@
 
 #include <vector>
 
-#include <nias-cpp/vector.h>
+#include <nias_cpp/vector.h>
 
 class ExampleVector : public nias::VectorInterface<double>
 {

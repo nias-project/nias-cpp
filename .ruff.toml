@@ -8,9 +8,9 @@
 # PTH = flake8-use-pathlib
 # PL = pylint
 
-select = ["E", "F", "W", "N", "RUF", "I001", "UP", "B", "PTH", "PL"]
-# E501: line too long
-ignore = ["E501"]
 fix = true
 line-length = 120
 target-version = "py39"
+lint.select = ["E", "F", "W", "N", "RUF", "I001", "UP", "B", "PTH", "PL"]
+# E501: line too long
+lint.ignore = ["E501"]

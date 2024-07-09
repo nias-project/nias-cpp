@@ -24,7 +24,7 @@ endif()
 
 # set build type to Release if not specified
 if(NOT CMAKE_BUILD_TYPE AND NOT CMAKE_CONFIGURATION_TYPES)
-    message(STATUS "nias-cpp: setting build type to 'Release' as none was specified.")
+    message(STATUS "nias_cpp: setting build type to 'Release' as none was specified.")
     set(CMAKE_BUILD_TYPE
         Release
         CACHE STRING "Choose the type of build." FORCE)
@@ -46,7 +46,7 @@ target_link_libraries(dummy PRIVATE pybind11::headers)
 install(TARGETS dummy DESTINATION nias_cpp)
 
 # find our own package
-find_package(nias-cpp PATHS ${CMAKE_CURRENT_SOURCE_DIR}/cmake NO_DEFAULT_PATH)
+find_package(nias_cpp PATHS ${CMAKE_CURRENT_SOURCE_DIR}/cmake NO_DEFAULT_PATH)
 
 # add tests if this is the master project
 if(NIAS_CPP_MASTER_PROJECT)
