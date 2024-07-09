@@ -3,6 +3,7 @@
 
 #include <iostream>
 
+#include <nias-cpp/interpreter.h>
 #include <nias-cpp/vector.h>
 #include <pybind11/embed.h>
 
@@ -14,6 +15,7 @@ template <std::floating_point F>
 std::shared_ptr<ListVectorArray<F>> gram_schmidt(std::shared_ptr<ListVectorArray<F>> vec_array)
 {
     std::cout << "\n\nPerforming Gram-Schmidt orthogonalization... ";
+    ensure_interpreter_is_running();
 
     // import nias_cpp module
     namespace py = pybind11;
@@ -43,6 +45,7 @@ template <std::floating_point F>
 void gram_schmidt_in_place(std::shared_ptr<ListVectorArray<F>> vec_array)
 {
     std::cout << "\n\nPerforming in-place Gram-Schmidt orthogonalization... ";
+    ensure_interpreter_is_running();
 
     // import nias_cpp module
     namespace py = pybind11;

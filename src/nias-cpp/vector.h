@@ -282,7 +282,7 @@ class ListVectorArray  // : public VectorArrayInterface<F>
     //     }
     // }
 
-    void check(const bool condition, const std::string& message)
+    void check(const bool condition, const std::string& message) const
     {
         if (!condition)
         {
@@ -290,7 +290,7 @@ class ListVectorArray  // : public VectorArrayInterface<F>
         }
     }
 
-    void check_vec_dimensions()
+    void check_vec_dimensions() const
     {
         check(std::ranges::all_of(vectors_,
                                   [dim = dim_](const auto& vector)

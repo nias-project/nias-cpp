@@ -3,7 +3,6 @@
 
 #include <nias-cpp/gram_schmidt.h>
 #include <nias-cpp/vector.h>
-#include <pybind11/embed.h>
 
 #include "test_module.h"
 
@@ -41,15 +40,6 @@ int main()
 
     // Start the interpreter
     namespace py = pybind11;
-    // We would like to keep the user code free of pybind11 and thus start and finalize the interpreters in each function
-    // (so in this example, we would like to start the interpreter in the gram_schmidt function and finalize it before
-    // returning, and then start the interpreter again in the gram_schmidt_in_place function. However, this always results in segfaults
-    // when trying to start the interpreter the second time.
-    // Similar issue to https://github.com/pybind/pybind11/issues/1439. If I understand correctly, it should work when using
-    // py::initialize_interpreter() and py::finalize_interpreter() instead of py::scoped_interpreter but that does not work for
-    // me either.
-    // Maybe https://github.com/pybind/pybind11/pull/4769 plays a role here, too.
-    py::scoped_interpreter guard {};
 
     // Create some input vectors and print them
     std::vector<std::shared_ptr<VectorInterface<double>>> vectors {
