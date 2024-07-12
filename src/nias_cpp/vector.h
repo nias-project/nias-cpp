@@ -2,6 +2,7 @@
 #define NIAS_CPP_VECTOR_H
 
 #include <algorithm>
+#include <complex>
 #include <concepts>
 #include <cstddef>
 // #include <iostream>
@@ -10,6 +11,7 @@
 #include <string>
 #include <vector>
 
+#include <pybind11/complex.h>
 #include <pybind11/pybind11.h>
 #include <pybind11/stl.h>
 
@@ -17,7 +19,8 @@ namespace nias
 {
 
 
-template <std::floating_point F>
+template <class F>
+    requires std::floating_point<F> || std::is_same_v<F, std::complex<typename F::value_type>>
 class VectorInterface
 {
    public:
@@ -26,8 +29,8 @@ class VectorInterface
     };
 
     // accessors
-    virtual F& operator[](size_t i) = 0;
-    virtual const F& operator[](size_t i) const = 0;
+    virtual F& get(size_t i) = 0;
+    virtual const F& get(size_t i) const = 0;
 
     // return the dimension (length) of the vector
     virtual size_t dim() const = 0;
@@ -85,7 +88,8 @@ class VectorInterface
 //     virtual const std::vector<std::shared_ptr<VectorInterface<F>>>& vectors() const = 0;
 // };
 
-template <std::floating_point F>
+template <class F>
+    requires std::floating_point<F> || std::is_same_v<F, std::complex<typename F::value_type>>
 class ListVectorArray  // : public VectorArrayInterface<F>
 {
     using ThisType = ListVectorArray;

@@ -3,6 +3,7 @@
 
 #include <concepts>
 #include <memory>
+#include <string>
 
 #include <nias_cpp/vector.h>
 #include <pybind11/detail/common.h>
@@ -12,8 +13,9 @@ namespace nias
 {
 
 
-template <std::floating_point F>
-auto bind_nias_vectorinterface(pybind11::module& m)
+template <class F>
+    requires std::floating_point<F> || std::is_same_v<F, std::complex<typename F::value_type>>
+auto bind_nias_vectorinterface(pybind11::module& m, std::string name = "VectorInterface")
 {
     namespace py = pybind11;
     using VecInterface = VectorInterface<F>;
@@ -69,30 +71,30 @@ auto bind_nias_vectorinterface(pybind11::module& m)
                                    alpha, x);
         }
 
-        F& operator[](size_t i) override
+        F& get(size_t i) override
         {
             throw std::invalid_argument("Not implemented yet");
             PYBIND11_OVERRIDE_PURE_NAME(F&,            /* Return type */
                                         VecInterface,  /* Parent class */
                                         "__setitem__", /* Name of function in Python */
-                                        operator[],    /* Name of function in C++ */
+                                        get,           /* Name of function in C++ */
                                         i              /* Argument(s) */
             );
         }
 
-        const F& operator[](size_t i) const override
+        const F& get(size_t i) const override
         {
             throw std::invalid_argument("Not implemented yet");
             PYBIND11_OVERRIDE_PURE_NAME(const F&,      /* Return type */
                                         VecInterface,  /* Parent class */
                                         "__getitem__", /* Name of function in Python */
-                                        operator[],    /* Name of function in C++ */
+                                        get,           /* Name of function in C++ */
                                         i              /* Argument(s) */
             );
         }
     };
 
-    auto ret = py::class_<VecInterface, PyVecInterface, std::shared_ptr<VecInterface>>(m, "VectorInterface")
+    auto ret = py::class_<VecInterface, PyVecInterface, std::shared_ptr<VecInterface>>(m, name.c_str())
                    .def(py::init<>())
                    .def("__len__",
                         [](const VecInterface& v)
@@ -106,8 +108,9 @@ auto bind_nias_vectorinterface(pybind11::module& m)
     return ret;
 }
 
-template <std::floating_point F>
-auto bind_nias_listvectorarray(pybind11::module& m)
+template <class F>
+    requires std::floating_point<F> || std::is_same_v<F, std::complex<typename F::value_type>>
+auto bind_nias_listvectorarray(pybind11::module& m, std::string name = "ListVectorArray")
 {
     namespace py = pybind11;
     using VecArray = ListVectorArray<F>;
@@ -237,7 +240,7 @@ auto bind_nias_listvectorarray(pybind11::module& m)
     //                .def("is_compatible_array", &VecArrayInterface::is_compatible_array);
     //
     auto ret =
-        py::class_<VecArray, std::shared_ptr<VecArray>>(m, "ListVectorArray")
+        py::class_<VecArray, std::shared_ptr<VecArray>>(m, name.c_str())
             .def("__len__",
                  [](const VecArray& v)
                  {

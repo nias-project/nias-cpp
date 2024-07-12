@@ -11,7 +11,8 @@ namespace nias
 {
 
 
-template <std::floating_point F>
+template <class F>
+    requires std::floating_point<F> || std::is_same_v<F, std::complex<typename F::value_type>>
 std::shared_ptr<ListVectorArray<F>> gram_schmidt(std::shared_ptr<ListVectorArray<F>> vec_array)
 {
     std::cout << "\n\nPerforming Gram-Schmidt orthogonalization... ";
@@ -41,7 +42,8 @@ std::shared_ptr<ListVectorArray<F>> gram_schmidt(std::shared_ptr<ListVectorArray
     return ret;
 }
 
-template <std::floating_point F>
+template <class F>
+    requires std::floating_point<F> || std::is_same_v<F, std::complex<typename F::value_type>>
 void gram_schmidt_in_place(std::shared_ptr<ListVectorArray<F>> vec_array)
 {
     std::cout << "\n\nPerforming in-place Gram-Schmidt orthogonalization... ";

@@ -1,3 +1,2 @@
-nias_cpp_add_module(nias_cpp_test test_module.h test_module.cpp)
 add_executable(test_gram_schmidt gram_schmidt_test.cpp)
-target_link_libraries(test_gram_schmidt PRIVATE nias_cpp_test)
+target_link_libraries(test_gram_schmidt PRIVATE nias_cpp)

@@ -30,6 +30,22 @@ if(NOT CMAKE_BUILD_TYPE AND NOT CMAKE_CONFIGURATION_TYPES)
         CACHE STRING "Choose the type of build." FORCE)
 endif()
 
+# installation rules
+include(GNUInstallDirs)
+set(NIAS_CPP_INSTALL_DIR
+    "${CMAKE_INSTALL_PREFIX}/nias_cpp"
+    CACHE PATH "")
+
+set(NIAS_CPP_INCLUDE_INSTALL_DIR "${NIAS_CPP_INSTALL_DIR}/src")
+set(NIAS_CPP_CMAKE_INSTALL_DIR "${NIAS_CPP_INSTALL_DIR}/cmake")
+
+install(
+    DIRECTORY src/
+    DESTINATION "${NIAS_CPP_INCLUDE_INSTALL_DIR}"
+    PATTERN "*.py" EXCLUDE)
+
+install(DIRECTORY cmake/ DESTINATION "${NIAS_CPP_CMAKE_INSTALL_DIR}")
+
 # enable warnings for gcc and clang
 if(CMAKE_CXX_COMPILER_ID MATCHES "GNU" OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
     set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -Wall -Wextra -Wpedantic")
@@ -39,11 +55,6 @@ find_package(Python REQUIRED COMPONENTS Interpreter Development.Module)
 
 # add pybind11
 add_subdirectory(extern/pybind11)
-
-# add dummy module
-python_add_library(dummy MODULE src/nias_cpp/dummy.cpp WITH_SOABI)
-target_link_libraries(dummy PRIVATE pybind11::headers)
-install(TARGETS dummy DESTINATION nias_cpp)
 
 # find our own package
 find_package(nias_cpp PATHS ${CMAKE_CURRENT_SOURCE_DIR}/cmake NO_DEFAULT_PATH)

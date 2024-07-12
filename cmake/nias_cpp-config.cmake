@@ -7,6 +7,9 @@ set(_NIAS_CPP_DIR
     ${_NIAS_CPP_DIR}
     CACHE INTERNAL "")
 
+include(CMakeFindDependencyMacro)
+find_dependency(pybind11 CONFIG REQUIRED HINTS ${_NIAS_CPP_DIR}/../pybind11/share/cmake/pybind11)
+
 function(nias_cpp_build_library target_name)
     if(TARGET ${target_name})
         return()
@@ -35,9 +38,7 @@ function(nias_cpp_add_module name)
 
     pybind11_add_module(${name} SHARED ${ARG_UNPARSED_ARGUMENTS})
 
-    set(libname "nias_cpp")
-
-    nias_cpp_build_library(${libname})
-
-    target_link_libraries(${name} PUBLIC ${libname})
+    target_link_libraries(${name} PUBLIC nias_cpp)
 endfunction()
+
+nias_cpp_build_library(nias_cpp)

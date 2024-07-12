@@ -14,6 +14,10 @@ readme = "README.md"
 authors = [
   {name = "Felix Schindler", email = "felix.schindler@uni-muenster.de"}
 ]
+dependencies = [
+  "pybind11",
+  "nias"
+]
 
 [tool.scikit-build]
 wheel.expand-macos-universal-tags = true
