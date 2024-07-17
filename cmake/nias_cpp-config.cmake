@@ -3,12 +3,19 @@ include_guard(GLOBAL)
 get_filename_component(_NIAS_CPP_DIR "${CMAKE_CURRENT_LIST_FILE}" PATH)
 get_filename_component(_NIAS_CPP_DIR "${_NIAS_CPP_DIR}" PATH)
 
+set(CMAKE_CXX_STANDARD 20)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
+
 set(_NIAS_CPP_DIR
     ${_NIAS_CPP_DIR}
     CACHE INTERNAL "")
 
-include(CMakeFindDependencyMacro)
-find_dependency(pybind11 CONFIG REQUIRED HINTS ${_NIAS_CPP_DIR}/../pybind11/share/cmake/pybind11)
+if(NOT COMMAND pybind11_add_module)
+    include(CMakeFindDependencyMacro)
+    set(PYBIND11_FINDPYTHON ON)
+    find_dependency(Python COMPONENTS Interpreter Development REQUIRED)
+    find_dependency(pybind11 CONFIG REQUIRED HINTS ${_NIAS_CPP_DIR}/../pybind11/share/cmake/pybind11)
+endif()
 
 function(nias_cpp_build_library target_name)
     if(TARGET ${target_name})
