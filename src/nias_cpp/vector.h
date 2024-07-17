@@ -18,9 +18,11 @@
 namespace nias
 {
 
-
 template <class F>
-    requires std::floating_point<F> || std::is_same_v<F, std::complex<typename F::value_type>>
+concept floating_point_or_complex =
+    std::floating_point<F> || std::is_same_v<F, std::complex<typename F::value_type>>;
+
+template <floating_point_or_complex F>
 class VectorInterface
 {
    public:
@@ -48,52 +50,54 @@ class VectorInterface
     virtual void axpy(F alpha, const VectorInterface& x) = 0;
 };
 
-// template <std::floating_point F>
-// class VectorArrayInterface
-// {
-//    public:
-//     // return the number of vectors in the array
-//     virtual size_t size() const = 0;
-//
-//     // return the dimension (length) of the vectors in the array
-//     virtual size_t dim() const = 0;
-//
-//     virtual bool is_compatible_array(const VectorArrayInterface& other) const
-//     {
-//         return dim() == other.dim();
-//     }
-//
-//     // copy (a subset of) the VectorArray to a new VectorArray
-//     virtual std::shared_ptr<VectorArrayInterface<F>> copy(const std::vector<size_t>& indices = {}) const = 0;
-//
-//     virtual void append(VectorArrayInterface& other, bool remove_from_other = false,
-//                         const std::vector<size_t>& other_indices = {}) = 0;
-//
-//     virtual void scal(const std::vector<F>& alpha, const std::vector<size_t>& indices = {}) = 0;
-//
-//     virtual void scal(F alpha, const std::vector<size_t>& indices = {})
-//     {
-//         scal(std::vector<F> {alpha}, indices);
-//     }
-//
-//     virtual void axpy(const std::vector<F>& alpha, const VectorArrayInterface& x,
-//                       const std::vector<size_t>& indices = {}, const std::vector<size_t>& x_indices = {}) = 0;
-//
-//     virtual void axpy(F alpha, const VectorArrayInterface& x, const std::vector<size_t>& indices = {},
-//                       const std::vector<size_t>& x_indices = {})
-//     {
-//         axpy(std::vector<F> {alpha}, x, indices, x_indices);
-//     }
-//
-//     virtual const std::vector<std::shared_ptr<VectorInterface<F>>>& vectors() const = 0;
-// };
+template <floating_point_or_complex F>
+class VectorArrayInterface
+{
+    using ThisType = VectorArrayInterface;
 
-template <class F>
-    requires std::floating_point<F> || std::is_same_v<F, std::complex<typename F::value_type>>
-class ListVectorArray  // : public VectorArrayInterface<F>
+   public:
+    // return the number of vectors in the array
+    virtual size_t size() const = 0;
+
+    // return the dimension (length) of the vectors in the array
+    virtual size_t dim() const = 0;
+
+    virtual bool is_compatible_array(const ThisType& other) const
+    {
+        return dim() == other.dim();
+    }
+
+    // copy (a subset of) the VectorArray to a new VectorArray
+    virtual std::shared_ptr<ThisType> copy(const std::vector<size_t>& indices = {}) const = 0;
+
+    virtual void append(ThisType& other, bool remove_from_other = false,
+                        const std::vector<size_t>& other_indices = {}) = 0;
+
+    virtual void scal(const std::vector<F>& alpha, const std::vector<size_t>& indices = {}) = 0;
+
+    virtual void scal(F alpha, const std::vector<size_t>& indices = {})
+    {
+        scal(std::vector<F> {alpha}, indices);
+    }
+
+    virtual void axpy(const std::vector<F>& alpha, const ThisType& x, const std::vector<size_t>& indices = {},
+                      const std::vector<size_t>& x_indices = {}) = 0;
+
+    virtual void axpy(F alpha, const ThisType& x, const std::vector<size_t>& indices = {},
+                      const std::vector<size_t>& x_indices = {})
+    {
+        axpy(std::vector<F> {alpha}, x, indices, x_indices);
+    }
+
+    // virtual const std::vector<std::shared_ptr<VectorInterface<F>>>& vectors() const = 0;
+};
+
+template <floating_point_or_complex F>
+class ListVectorArray : public VectorArrayInterface<F>
 {
     using ThisType = ListVectorArray;
     using VectorInterfaceType = VectorInterface<F>;
+    using InterfaceType = VectorArrayInterface<F>;
 
    public:
     ListVectorArray(const std::vector<std::shared_ptr<VectorInterfaceType>>& vectors, size_t dim)
@@ -127,17 +131,17 @@ class ListVectorArray  // : public VectorArrayInterface<F>
     ListVectorArray& operator=(const ListVectorArray& other) = delete;
     ListVectorArray& operator=(ListVectorArray&& other) = delete;
 
-    size_t size() const
+    size_t size() const override
     {
         return vectors_.size();
     }
 
-    size_t dim() const
+    size_t dim() const override
     {
         return dim_;
     }
 
-    bool is_compatible_array(const ThisType& other) const
+    bool is_compatible_array(const InterfaceType& other) const override
     {
         return dim() == other.dim();
     }
@@ -152,7 +156,7 @@ class ListVectorArray  // : public VectorArrayInterface<F>
         return vectors_;
     }
 
-    std::shared_ptr<ThisType> copy(const std::vector<size_t>& indices = {}) const
+    std::shared_ptr<InterfaceType> copy(const std::vector<size_t>& indices = {}) const override
     {
         // std::cout << "Copy called in VecArray!" << std::endl;
         std::vector<std::shared_ptr<VectorInterfaceType>> copied_vectors;
@@ -178,16 +182,14 @@ class ListVectorArray  // : public VectorArrayInterface<F>
     }
 
     // void append(BaseType& other, bool remove_from_other = false,
-    void append(ThisType& other, bool remove_from_other = false,
-                const std::vector<size_t>& other_indices = {})
+    void append(InterfaceType& other, bool remove_from_other = false,
+                const std::vector<size_t>& other_indices = {}) override
     {
-        // check(is_list_vector_array(other), "append is not (yet) implemented if x is not a ListVectorArray");
+        check(is_list_vector_array(other), "append is not (yet) implemented if x is not a ListVectorArray");
         const auto num_vecs_to_add = other_indices.empty() ? other.size() : other_indices.size();
         vectors_.reserve(vectors_.size() + num_vecs_to_add);
-        // remove_from_other ? append_with_removal(dynamic_cast<ThisType&>(other), other_indices)
-        //                   : append_without_removal(dynamic_cast<ThisType&>(other), other_indices);
-        remove_from_other ? append_with_removal(other, other_indices)
-                          : append_without_removal(other, other_indices);
+        remove_from_other ? append_with_removal(dynamic_cast<ThisType&>(other), other_indices)
+                          : append_without_removal(dynamic_cast<ThisType&>(other), other_indices);
     }
 
     void delete_vectors(const std::vector<size_t>& indices)
@@ -202,7 +204,7 @@ class ListVectorArray  // : public VectorArrayInterface<F>
         }
     }
 
-    void scal(F alpha, const std::vector<size_t>& indices = {})
+    void scal(F alpha, const std::vector<size_t>& indices = {}) override
     {
         if (indices.empty())
         {
@@ -220,7 +222,7 @@ class ListVectorArray  // : public VectorArrayInterface<F>
         }
     }
 
-    void scal(const std::vector<F>& alpha, const std::vector<size_t>& indices = {})
+    void scal(const std::vector<F>& alpha, const std::vector<size_t>& indices = {}) override
     {
         const auto this_size = indices.empty() ? size() : indices.size();
         check(alpha.size() == this_size || alpha.size() == 1,
@@ -234,16 +236,16 @@ class ListVectorArray  // : public VectorArrayInterface<F>
     }
 
     // void axpy(const std::vector<F>& alpha, const BaseType& x, const std::vector<size_t>& indices = {},
-    void axpy(const std::vector<F>& alpha, const ThisType& x, const std::vector<size_t>& indices = {},
-              const std::vector<size_t>& x_indices = {})
+    void axpy(const std::vector<F>& alpha, const InterfaceType& x, const std::vector<size_t>& indices = {},
+              const std::vector<size_t>& x_indices = {}) override
     {
-        // check(this->is_compatible_array(x), "incompatible dimensions.");
+        check(this->is_compatible_array(x), "incompatible dimensions.");
         const auto this_size = indices.empty() ? size() : indices.size();
         const auto x_size = x_indices.empty() ? x.size() : x_indices.size();
         check(x_size == this_size || x_size == 1, "x must have length 1 or the same length as this");
         check(alpha.size() == this_size || alpha.size() == 1,
               "alpha must be scalar or have the same length as x");
-        // check(is_list_vector_array(x), "axpy is not implemented if x is not a ListVectorArray");
+        check(is_list_vector_array(x), "axpy is not implemented if x is not a ListVectorArray");
 
         for (size_t i = 0; i < this_size; ++i)
         {
@@ -260,31 +262,30 @@ class ListVectorArray  // : public VectorArrayInterface<F>
                 x_index = x_indices.empty() ? 0 : x_indices[0];
             }
             const auto alpha_index = alpha.size() == 1 ? 0 : i;
-            // vectors_[this_index]->axpy(alpha[alpha_index],
-            //                            *dynamic_cast<const ThisType&>(x).vectors_[x_index]);
-            vectors_[this_index]->axpy(alpha[alpha_index], *x.vectors_[x_index]);
+            vectors_[this_index]->axpy(alpha[alpha_index],
+                                       *dynamic_cast<const ThisType&>(x).vectors_[x_index]);
         }
     }
 
-    void axpy(F alpha, const ThisType& x, const std::vector<size_t>& indices = {},
+    void axpy(F alpha, const InterfaceType& x, const std::vector<size_t>& indices = {},
               const std::vector<size_t>& x_indices = {})
     {
         axpy(std::vector<F> {alpha}, x, indices, x_indices);
     }
 
    private:
-    // bool is_list_vector_array(const BaseType& other) const
-    // {
-    //     try
-    //     {
-    //         dynamic_cast<const ThisType&>(other);
-    //         return true;
-    //     }
-    //     catch (std::bad_cast&)
-    //     {
-    //         return false;
-    //     }
-    // }
+    bool is_list_vector_array(const InterfaceType& other) const
+    {
+        try
+        {
+            dynamic_cast<const ThisType&>(other);
+            return true;
+        }
+        catch (std::bad_cast&)
+        {
+            return false;
+        }
+    }
 
     void check(const bool condition, const std::string& message) const
     {

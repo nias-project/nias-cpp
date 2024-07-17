@@ -15,10 +15,10 @@ PYBIND11_MODULE(nias_cpp, m)
     nias::bind_nias_vectorinterface<std::complex<double>>(m, "ComplexDoubleVectorInterface");
     nias::bind_nias_vectorinterface<std::complex<long double>>(m, "ComplexLongDoubleVectorInterface");
 
-    nias::bind_nias_listvectorarray<float>(m, "FloatListVectorArray");
-    nias::bind_nias_listvectorarray<double>(m, "DoubleListVectorArray");
-    nias::bind_nias_listvectorarray<long double>(m, "LongDoubleListVectorArray");
-    nias::bind_nias_listvectorarray<std::complex<float>>(m, "ComplexFloatListVectorArray");
-    nias::bind_nias_listvectorarray<std::complex<double>>(m, "ComplexDoubleListVectorArray");
-    nias::bind_nias_listvectorarray<std::complex<long double>>(m, "ComplexLongDoubleListVectorArray");
+    nias::bind_nias_listvectorarray<float>(m, "Float");
+    nias::bind_nias_listvectorarray<double>(m, "Double");
+    nias::bind_nias_listvectorarray<long double>(m, "LongDouble");
+    nias::bind_nias_listvectorarray<std::complex<float>>(m, "ComplexFloat");
+    nias::bind_nias_listvectorarray<std::complex<double>>(m, "ComplexDouble");
+    nias::bind_nias_listvectorarray<std::complex<long double>>(m, "ComplexLongDouble");
 }

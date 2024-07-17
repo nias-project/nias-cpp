@@ -27,6 +27,8 @@ function(nias_cpp_build_library target_name)
         SHARED
         ${ARG_UNPARSED_ARGUMENTS}
         ${_NIAS_CPP_DIR}/src/nias_cpp/gram_schmidt.h
+        ${_NIAS_CPP_DIR}/src/nias_cpp/interpreter.h
+        ${_NIAS_CPP_DIR}/src/nias_cpp/interpreter.cpp
         ${_NIAS_CPP_DIR}/src/nias_cpp/vector.h
         ${_NIAS_CPP_DIR}/src/nias_cpp/bindings.h
         ${_NIAS_CPP_DIR}/src/nias_cpp/bindings.cpp)
