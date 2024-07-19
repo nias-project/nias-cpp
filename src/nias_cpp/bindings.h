@@ -5,6 +5,7 @@
 #include <memory>
 #include <string>
 
+#include <nias_cpp/gram_schmidt.h>
 #include <nias_cpp/vector.h>
 #include <pybind11/detail/common.h>
 #include <pybind11/pybind11.h>
@@ -150,6 +151,15 @@ auto bind_nias_listvectorarray(pybind11::module& m, std::string field_type_name)
             );
         }
 
+        F get(size_t i, size_t j) const override
+        {
+            PYBIND11_OVERRIDE_PURE(F,                 /* Return type */
+                                   VecArrayInterface, /* Parent class */
+                                   get,               /* Name of function in C++ */
+                                   i, j               /* Argument(s) */
+            );
+        }
+
         // copy (a subset of) the VectorArray to a new VectorArray
         std::shared_ptr<VecArrayInterface> copy(const std::vector<size_t>& indices = {}) const
         {
@@ -239,7 +249,8 @@ auto bind_nias_listvectorarray(pybind11::module& m, std::string field_type_name)
                      return v.size();
                  })
             .def_property_readonly("dim", &VecArray::dim)
-            .def("get", &VecArray::get, py::return_value_policy::reference)
+            .def("get", py::overload_cast<size_t>(&VecArray::get, py::const_),
+                 py::return_value_policy::reference)
             .def("copy", &VecArray::copy)
             .def("append", &VecArray::append)
             .def("delete", &VecArray::delete_vectors)
@@ -253,6 +264,18 @@ auto bind_nias_listvectorarray(pybind11::module& m, std::string field_type_name)
                                    const std::vector<size_t>&, const std::vector<size_t>&>(&VecArray::axpy))
             .def("is_compatible_array", &VecArray::is_compatible_array);
     return ret;
+}
+
+template <class F>
+    requires std::floating_point<F> || std::is_same_v<F, std::complex<typename F::value_type>>
+auto bind_cpp_gram_schmidt(pybind11::module& m, std::string field_type_name)
+{
+    m.def((field_type_name + "_gram_schmidt_cpp").c_str(),
+          [](pybind11::array_t<F>& numpy_array)
+          {
+              NumpyVectorArray<F> vec_array(numpy_array);
+              gram_schmidt_cpp(vec_array);
+          });
 }
 
 

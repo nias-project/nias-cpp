@@ -5,6 +5,8 @@ get_filename_component(_NIAS_CPP_DIR "${_NIAS_CPP_DIR}" PATH)
 
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
+# If CMAKE_CXX_VISIBILITY_PRESET is not set, pybind11 will set the visibility for the library to hidden
+set(CMAKE_CXX_VISIBILITY_PRESET default)
 
 set(_NIAS_CPP_DIR
     ${_NIAS_CPP_DIR}

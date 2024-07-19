@@ -21,4 +21,8 @@ PYBIND11_MODULE(nias_cpp, m)
     nias::bind_nias_listvectorarray<std::complex<float>>(m, "ComplexFloat");
     nias::bind_nias_listvectorarray<std::complex<double>>(m, "ComplexDouble");
     nias::bind_nias_listvectorarray<std::complex<long double>>(m, "ComplexLongDouble");
+
+    nias::bind_cpp_gram_schmidt<float>(m, "float");
+    nias::bind_cpp_gram_schmidt<double>(m, "double");
+    nias::bind_cpp_gram_schmidt<long double>(m, "long_double");
 }

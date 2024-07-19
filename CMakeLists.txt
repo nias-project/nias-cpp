@@ -11,9 +11,6 @@ project(
     LANGUAGES CXX)
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
-
-# If CMAKE_CXX_VISIBILITY_PRESET is not set, pybind11 will set the visibility for the library to hidden
-set(CMAKE_CXX_VISIBILITY_PRESET default)
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
 # We want to include the tests below only if nias-cpp is the master project
