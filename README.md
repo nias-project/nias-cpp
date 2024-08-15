@@ -6,10 +6,15 @@ providing numerical algorithms (e.g., Gram-Schmidt orthonormalization) formulate
 
 ## Quick Start
 
+To run the Gram-Schmidt test (which creates a few vectors and orthogonalizes them using NiAS's Gram-Schmidt algorithm)
+you can use the following commands:
+
 ```bash
-python -m venv venv
+python3 -m venv venv
 . venv/bin/activate
-pip install build
-python -m build
-pip install dist/nias_cpp*.whl
+pip install .
+mkdir build && cd build
+cmake ..
+make
+./tests/test_gram_schmidt
 ```

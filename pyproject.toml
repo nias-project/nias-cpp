@@ -12,7 +12,8 @@ version = "0.1.0"
 description = "C++ bindings for NIAS - Numerics in Abstract Spaces"
 readme = "README.md"
 authors = [
-  {name = "Felix Schindler", email = "felix.schindler@uni-muenster.de"}
+  {name = "Felix Schindler", email = "felix.schindler@uni-muenster.de"},
+  {name = "Tobias Leibner", email = "tobias.leibner@arup.com"}
 ]
 dependencies = [
   "pybind11",
