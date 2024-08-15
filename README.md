@@ -18,3 +18,10 @@ cmake ..
 make
 ./tests/test_gram_schmidt
 ```
+
+To run the python test, copy the test over to the build directory and run it with the python interpreter:
+
+```bash
+cp ../tests/test_gram_schmidt.py .
+python3 test_gram_schmidt.py
+```
