@@ -1,0 +1,82 @@
+# This file defines the Oasys formatting style
+# The configuration options can be found at:
+# https://clang.llvm.org/docs/ClangFormatStyleOptions.html
+
+# We use Google style as a basis and modify where needed
+BasedOnStyle: Google
+Language: Cpp
+
+# We group and sort includes based on the Google style...
+IncludeCategories:
+  # We currently need precompiled headers to come before other headers.
+  # This is because some headers are not properly self-contained and rely
+  # on the things included/defined in the precompiled header.
+  # TODO: GSA-6242 - make headers self-contained and remove this include category
+  - Regex:           'stdafx.h'
+    Priority:        -1
+  - Regex:           'pch.h'
+    Priority:        -1
+
+  # C system headers (more precisely: headers in angle brackets with the .h extension), e.g., <unistd.h>, <stdlib.h>.
+  - Regex:           '^<[^/]*\.h>'
+    Priority:        2
+
+  # C++ standard library headers (without file extension), e.g., <algorithm>, <cstddef>.
+  - Regex:           '^<[a-z_]*>'
+    Priority:        3
+
+  # Other libraries' .h files.
+  - Regex:           '^<.*'
+    Priority:        4
+
+  # Your project's .h files.
+  - Regex:           '.*'
+    Priority:        5
+
+# We use tabs instead of spaces for indentation to minimise change to
+# existing code and to allow IDE display flexibility.
+IndentWidth: 4
+UseTab: Never
+
+# We allow an increased colunm limit as we have 4-character indentation
+ColumnLimit: 110
+
+# We use braces on a new line as it better suits our existing code
+BreakBeforeBraces: Allman
+
+# We prefer statements to be on a new line so we can easily add break points
+AllowShortFunctionsOnASingleLine: Empty
+AllowShortLambdasOnASingleLine: Empty
+AllowShortIfStatementsOnASingleLine: Never
+AllowShortLoopsOnASingleLine: false
+AllowShortCompoundRequirementOnASingleLine: true
+
+# We do not want to 'reflow comments' - it tends to make a mess of it
+# (especially for commentator documentation, ASCII art, table layouts etc)
+ReflowComments: false
+
+# We separate definition blocks to avoid stylistic changes
+# coming in amongst other changes in PRs
+SeparateDefinitionBlocks: Always
+
+# We want braced initializer lists to mimic assignment
+SpaceBeforeCpp11BracedList: true
+Cpp11BracedListStyle: true
+
+# We want closing namespace comments
+FixNamespaceComments: true
+
+# We want to enable indentation of PP directives for better readability
+IndentPPDirectives: AfterHash
+
+# We want lambdas to be indented
+LambdaBodyIndentation: Signature
+
+# We want to allow for larger visual separation
+MaxEmptyLinesToKeep: 2
+
+# We want one statement per line as much as possible
+AllowAllArgumentsOnNextLine: true
+BreakConstructorInitializers: BeforeComma
+AlwaysBreakTemplateDeclarations: true
+ConstructorInitializerAllOnOneLineOrOnePerLine: false

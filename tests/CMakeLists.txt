@@ -1,0 +1,2 @@
+add_executable(test_gram_schmidt gram_schmidt_test.cpp)
+target_link_libraries(test_gram_schmidt PRIVATE nias_cpp)
