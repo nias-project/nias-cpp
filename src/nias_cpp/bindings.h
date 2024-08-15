@@ -275,10 +275,12 @@ template <class F>
 auto bind_cpp_gram_schmidt(pybind11::module& m, std::string field_type_name)
 {
     m.def((field_type_name + "_gram_schmidt_cpp").c_str(),
-          [](pybind11::array_t<F>& numpy_array)
+          [](const pybind11::array_t<F>& numpy_array)
           {
-              NumpyVectorArray<F> vec_array(numpy_array);
+              auto numpy_array_copy = pybind11::array_t<F>(numpy_array.request());
+              NumpyVectorArray<F> vec_array(numpy_array_copy);
               gram_schmidt_cpp(vec_array);
+              return vec_array.array();
           });
 }
 
