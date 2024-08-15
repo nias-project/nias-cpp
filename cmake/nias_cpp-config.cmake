@@ -28,10 +28,14 @@ function(nias_cpp_build_library target_name)
         ${target_name}
         SHARED
         ${ARG_UNPARSED_ARGUMENTS}
-        ${_NIAS_CPP_DIR}/src/nias_cpp/gram_schmidt.h
+        ${_NIAS_CPP_DIR}/src/nias_cpp/algorithms/gram_schmidt.h
+        ${_NIAS_CPP_DIR}/src/nias_cpp/concepts.h
         ${_NIAS_CPP_DIR}/src/nias_cpp/interpreter.h
         ${_NIAS_CPP_DIR}/src/nias_cpp/interpreter.cpp
-        ${_NIAS_CPP_DIR}/src/nias_cpp/vector.h
+        ${_NIAS_CPP_DIR}/src/nias_cpp/interfaces/vector.h
+        ${_NIAS_CPP_DIR}/src/nias_cpp/interfaces/vectorarray.h
+        ${_NIAS_CPP_DIR}/src/nias_cpp/vectorarray/list.h
+        ${_NIAS_CPP_DIR}/src/nias_cpp/vectorarray/numpy.h
         ${_NIAS_CPP_DIR}/src/nias_cpp/bindings.h
         ${_NIAS_CPP_DIR}/src/nias_cpp/bindings.cpp)
 

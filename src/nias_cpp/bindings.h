@@ -2,11 +2,15 @@
 #define NIAS_CPP_BINDINGS_H
 
 #include <concepts>
+#include <cstddef>
 #include <memory>
 #include <string>
 
-#include <nias_cpp/gram_schmidt.h>
-#include <nias_cpp/vector.h>
+#include <nias_cpp/algorithms/gram_schmidt.h>
+#include <nias_cpp/interfaces/vector.h>
+#include <nias_cpp/interfaces/vectorarray.h>
+#include <nias_cpp/vectorarray/list.h>
+#include <nias_cpp/vectorarray/numpy.h>
 #include <pybind11/detail/common.h>
 #include <pybind11/pybind11.h>
 

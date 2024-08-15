@@ -2,57 +2,62 @@
 #define NIAS_TEST_MODULE_H
 
 #include <complex>
+#include <initializer_list>
+#include <memory>
+#include <type_traits>
+#include <utility>
 #include <vector>
+// #include <iostream>
 
-#include <nias_cpp/vector.h>
+#include <nias_cpp/interfaces/vector.h>
 
 template <class F>
-class ExampleVector : public nias::VectorInterface<F>
+class DynamicVector : public nias::VectorInterface<F>
 {
    public:
     using Iterator = typename std::vector<F>::iterator;
     using ConstIterator = typename std::vector<F>::const_iterator;
 
     // constructors
-    ExampleVector() = default;
+    DynamicVector() = default;
 
-    ExampleVector(size_t dim, F value = 0.)
+    DynamicVector(size_t dim, F value = 0.)
         : data_(dim, value) {};
 
-    ExampleVector(std::initializer_list<F> init_list)
+    DynamicVector(std::initializer_list<F> init_list)
         : data_(init_list) {};
 
-    ExampleVector(const ExampleVector& other)
+    DynamicVector(const DynamicVector& other)
         : data_(other.data_) {
             // std::cout << "Example Vector copy constructor" << std::endl;
         };
 
-    ExampleVector(ExampleVector&& other)
+    DynamicVector(DynamicVector&& other)
         : data_(std::move(other.data_)) {
             // std::cout << "Example Vector move constructor" << std::endl;
         };
 
-    ~ExampleVector() override
+    ~DynamicVector() override
     {
-        // std::cout << "ExampleVector destructor for " << this << std::endl;
+        // std::cout << "DynamicVector destructor for " << this << std::endl;
     }
 
-    // ExampleVector copy and move assignment operators
-    ExampleVector& operator=(const ExampleVector& other)
+    // DynamicVector copy and move assignment operators
+    DynamicVector& operator=(const DynamicVector& other)
     {
         // std::cout << "Example Vector copy assignment" << std::endl;
         data_ = other.data_;
         return *this;
     }
 
-    ExampleVector& operator=(ExampleVector&& other)
+    DynamicVector& operator=(DynamicVector&& other)
     {
         // std::cout << "Example Vector move assignment" << std::endl;
         data_ = std::move(other.data_);
         return *this;
     }
 
-    // ExampleVector iterators
+    // DynamicVector iterators
     Iterator begin()
     {
         return data_.begin();
@@ -73,7 +78,7 @@ class ExampleVector : public nias::VectorInterface<F>
         return data_.end();
     }
 
-    // ExampleVector accessors
+    // DynamicVector accessors
     F& get(size_t i) override
     {
         return data_[i];
@@ -84,7 +89,7 @@ class ExampleVector : public nias::VectorInterface<F>
         return data_[i];
     }
 
-    // ExampleVector methods
+    // DynamicVector methods
     size_t dim() const override
     {
         return data_.size();
@@ -93,7 +98,7 @@ class ExampleVector : public nias::VectorInterface<F>
     std::shared_ptr<nias::VectorInterface<F>> copy() const override
     {
         // std::cout << "Copy called!" << std::endl;
-        return std::make_shared<ExampleVector>(*this);
+        return std::make_shared<DynamicVector>(*this);
     }
 
     F dot(const nias::VectorInterface<F>& other) const override

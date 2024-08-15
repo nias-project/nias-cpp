@@ -3,9 +3,13 @@
 #include <stdexcept>
 #include <vector>
 
-#include <nias_cpp/gram_schmidt.h>
+#include <nias_cpp/algorithms/gram_schmidt.h>
+#include <nias_cpp/interfaces/vector.h>
+#include <nias_cpp/interfaces/vectorarray.h>
 #include <nias_cpp/interpreter.h>
-#include <nias_cpp/vector.h>
+#include <nias_cpp/vectorarray/list.h>
+#include <nias_cpp/vectorarray/numpy.h>
+#include <pybind11/numpy.h>
 
 #include "test_module.h"
 
@@ -75,9 +79,9 @@ void test_gram_schmidt()
 
     // Create some input vectors and print them
     std::vector<std::shared_ptr<VectorInterface<F>>> vectors {
-        std::shared_ptr<VectorInterface<F>>(new ExampleVector {F(1.), F(2.), F(3.)}),
-        std::shared_ptr<VectorInterface<F>>(new ExampleVector {F(4.), F(5.), F(6.)}),
-        std::shared_ptr<VectorInterface<F>>(new ExampleVector {F(7.), F(8.), F(9.)})};
+        std::shared_ptr<VectorInterface<F>>(new DynamicVector {F(1.), F(2.), F(3.)}),
+        std::shared_ptr<VectorInterface<F>>(new DynamicVector {F(4.), F(5.), F(6.)}),
+        std::shared_ptr<VectorInterface<F>>(new DynamicVector {F(7.), F(8.), F(9.)})};
     print(vectors, "Input");
 
     // Perform Gram-Schmidt orthogonalization and print result
@@ -295,14 +299,14 @@ void test_cpp_gram_schmidt()
 int main()
 {
     test_cpp_gram_schmidt<double>();
-    // test_numpy_vecarray<double>();
-    // std::cout << "\n\n\n======================\n";
-    // std::cout << "=== Testing double ===\n";
-    // std::cout << "======================\n" << std::endl;
-    // test_gram_schmidt<double>();
-    // std::cout << "\n\n\n===============================\n";
-    // std::cout << "=== Testing complex<double> ===\n";
-    // std::cout << "===============================\n" << std::endl;
-    // test_gram_schmidt<std::complex<double>>();
+    test_numpy_vecarray<double>();
+    std::cout << "\n\n\n======================\n";
+    std::cout << "=== Testing double ===\n";
+    std::cout << "======================\n" << std::endl;
+    test_gram_schmidt<double>();
+    std::cout << "\n\n\n===============================\n";
+    std::cout << "=== Testing complex<double> ===\n";
+    std::cout << "===============================\n" << std::endl;
+    test_gram_schmidt<std::complex<double>>();
     return 0;
 }

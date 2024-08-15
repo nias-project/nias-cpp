@@ -4,8 +4,9 @@
 #include <cstddef>
 #include <iostream>
 
+#include <nias_cpp/interfaces/vectorarray.h>
 #include <nias_cpp/interpreter.h>
-#include <nias_cpp/vector.h>
+#include <nias_cpp/vectorarray/list.h>
 #include <pybind11/embed.h>
 
 namespace nias
