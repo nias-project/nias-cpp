@@ -16,7 +16,7 @@ authors = [
 ]
 dependencies = [
   "pybind11",
-  "nias"
+  "nias@git+https://github.com/nias-project/nias@add_cpp_vectorarray"
 ]
 
 [tool.scikit-build]
