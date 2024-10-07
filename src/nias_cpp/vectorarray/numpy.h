@@ -2,7 +2,6 @@
 #define NIAS_CPP_VECTORARRAY_NUMPY_H
 
 #include <concepts>
-#include <cstddef>
 #include <memory>
 #include <set>
 #include <string>
@@ -46,9 +45,9 @@ class NumpyVectorArray : public VectorArrayInterface<F>
         {
             return false;
         }
-        for (size_t i = 0; i < size(); ++i)
+        for (ssize_t i = 0; i < size(); ++i)
         {
-            for (size_t j = 0; j < dim(); ++j)
+            for (ssize_t j = 0; j < dim(); ++j)
             {
                 if (array_.at(i, j) != other.array_.at(i, j))
                 {
@@ -69,12 +68,12 @@ class NumpyVectorArray : public VectorArrayInterface<F>
         return array_;
     }
 
-    size_t size() const override
+    ssize_t size() const override
     {
         return array_.shape(0);
     }
 
-    size_t dim() const override
+    ssize_t dim() const override
     {
         return array_.shape(1);
     }
@@ -84,51 +83,54 @@ class NumpyVectorArray : public VectorArrayInterface<F>
         return dim() == other.dim();
     }
 
-    F get(size_t i, size_t j) const override
+    F get(ssize_t i, ssize_t j) const override
     {
         return array_.at(i, j);
     }
 
-    std::shared_ptr<InterfaceType> copy(const std::vector<size_t>& indices = {}) const override
+    std::shared_ptr<InterfaceType> copy(const std::optional<Indices>& indices = {}) const override
     {
-        if (indices.empty())
+        if (!indices)
         {
             return std::make_shared<ThisType>(pybind11::array_t<F>(array_.request()));
         }
         else
         {
-            pybind11::array_t<F> sub_array({indices.size(), dim()});
-            for (size_t i = 0 /*subarray_index*/; auto j : indices)
-            {
-                for (size_t k = 0; k < dim(); ++k)
+            pybind11::array_t<F> sub_array({indices->size(this->size()), dim()});
+            ssize_t i = 0;  // index for sub_array
+            indices->for_each(
+                [this, &i, &sub_array](ssize_t j)
                 {
-                    sub_array.mutable_at(i, k) = array_.at(j, k);
-                }
-                ++i;
-            }
+                    for (ssize_t k = 0; k < dim(); ++k)
+                    {
+                        sub_array.mutable_at(i, k) = array_.at(j, k);
+                    }
+                    ++i;
+                },
+                this->size());
             return std::make_shared<ThisType>(sub_array);
         }
     }
 
     void append(InterfaceType& other, bool remove_from_other = false,
-                const std::vector<size_t>& other_indices = {}) override
+                const std::optional<Indices>& other_indices = {}) override
     {
         check(is_numpy_vector_array(other), "append is not (yet) implemented if x is not a NumpyVectorArray");
-        const size_t other_size = other_indices.empty() ? other.size() : other_indices.size();
+        const ssize_t other_size = other_indices ? other_indices->size(other.size()) : other.size();
         pybind11::array_t<F> new_array({size() + other_size, dim()});
         // copy old data
-        for (size_t i = 0; i < size(); ++i)
+        for (ssize_t i = 0; i < size(); ++i)
         {
-            for (size_t j = 0; j < dim(); ++j)
+            for (ssize_t j = 0; j < dim(); ++j)
             {
                 new_array.mutable_at(i, j) = array_.at(i, j);
             }
         }
         // copy new data
-        for (size_t i = 0; i < other_size; ++i)
+        for (ssize_t i = 0; i < other_size; ++i)
         {
-            const size_t other_index = other_indices.empty() ? i : other_indices[i];
-            for (size_t j = 0; j < dim(); ++j)
+            const ssize_t other_index = other_indices ? other_indices->get(i, other.size()) : i;
+            for (ssize_t j = 0; j < dim(); ++j)
             {
                 new_array.mutable_at(size() + i, j) =
                     dynamic_cast<const ThisType&>(other).array_.at(other_index, j);
@@ -138,25 +140,26 @@ class NumpyVectorArray : public VectorArrayInterface<F>
         if (remove_from_other)
         {
             auto& old_array_other = dynamic_cast<ThisType&>(other).array_;
-            if (other_indices.empty())
+            if (!other_indices)
             {
-                old_array_other = pybind11::array_t<F>(std::vector<size_t> {0, dim()});
+                old_array_other = pybind11::array_t<F>(std::vector<ssize_t> {0, dim()});
             }
             else
             {
                 // deduplicate other_indices
-                std::set<size_t> unique_indices(other_indices.begin(), other_indices.end());
+                const auto other_indices_vec = other_indices->as_vec(other.size());
+                std::set<ssize_t> unique_indices(other_indices_vec.begin(), other_indices_vec.end());
                 // now remove entries corresponding to unique_indices from other
                 check(unique_indices.size() <= other.size(), "unique_indices contains invalid indices");
                 const auto new_size = other.size() - unique_indices.size();
-                pybind11::array_t<F> new_array_other({new_size, dim()});
-                size_t j = 0;  // index for new_array_other
-                for (size_t i = 0; i < other.size(); ++i)
+                pybind11::array_t<F> new_array_other(std::vector<ssize_t> {new_size, dim()});
+                ssize_t j = 0;  // index for new_array_other
+                for (ssize_t i = 0; i < other.size(); ++i)
                 {
                     if (!unique_indices.contains(i))
                     {
                         check(j < new_size, "j is out of bounds");
-                        for (size_t k = 0; k < dim(); ++k)
+                        for (ssize_t k = 0; k < dim(); ++k)
                         {
                             new_array_other.mutable_at(j, k) = old_array_other.at(i, k);
                         }
@@ -168,14 +171,15 @@ class NumpyVectorArray : public VectorArrayInterface<F>
         }
     }
 
-    void delete_vectors(const std::vector<size_t>& indices) override
+    void delete_vectors(const std::optional<Indices>& indices) override
     {
         // We first sort and deduplicate indices by converting to a std::set
-        std::set<size_t> unique_indices(indices.begin(), indices.end());
+        const auto indices_vec = indices->as_vec(this->size());
+        std::set<ssize_t> unique_indices(indices_vec.begin(), indices_vec.end());
         assert(unique_indices.size() <= size());
-        const size_t new_size = size() - unique_indices.size();
-        std::vector<size_t> indices_to_keep;
-        for (size_t i = 0; i < size(); ++i)
+        const ssize_t new_size = size() - unique_indices.size();
+        std::vector<ssize_t> indices_to_keep;
+        for (ssize_t i = 0; i < size(); ++i)
         {
             if (!unique_indices.contains(i))
             {
@@ -185,7 +189,7 @@ class NumpyVectorArray : public VectorArrayInterface<F>
         auto new_array = pybind11::array_t<F>({new_size, dim()});
         for (const auto& i : indices_to_keep)
         {
-            for (size_t j = 0; j < dim(); ++j)
+            for (ssize_t j = 0; j < dim(); ++j)
             {
                 new_array.mutable_at(indices_to_keep[i], j) = array_.at(i, j);
             }
@@ -193,13 +197,13 @@ class NumpyVectorArray : public VectorArrayInterface<F>
         array_ = new_array;
     }
 
-    void scal(F alpha, const std::vector<size_t>& indices = {}) override
+    void scal(F alpha, const std::optional<Indices>& indices = {}) override
     {
-        if (indices.empty())
+        if (!indices)
         {
-            for (size_t i = 0; i < size(); ++i)
+            for (ssize_t i = 0; i < size(); ++i)
             {
-                for (size_t j = 0; j < dim(); ++j)
+                for (ssize_t j = 0; j < dim(); ++j)
                 {
                     array_.mutable_at(i, j) *= alpha;
                 }
@@ -207,59 +211,61 @@ class NumpyVectorArray : public VectorArrayInterface<F>
         }
         else
         {
-            for (auto i : indices)
-            {
-                for (size_t j = 0; j < dim(); ++j)
+            indices->for_each(
+                [this, alpha](ssize_t i)
                 {
-                    array_.mutable_at(i, j) *= alpha;
-                }
-            }
+                    for (ssize_t j = 0; j < dim(); ++j)
+                    {
+                        array_.mutable_at(i, j) *= alpha;
+                    }
+                },
+                size());
         }
     }
 
-    void scal(const std::vector<F>& alpha, const std::vector<size_t>& indices = {}) override
+    void scal(const std::vector<F>& alpha, const std::optional<Indices>& indices = {}) override
     {
-        const auto this_size = indices.empty() ? size() : indices.size();
+        const auto this_size = indices ? indices->size(size()) : size();
         check(alpha.size() == this_size || alpha.size() == 1,
               "alpha must be scalar or have the same length as the array.");
-        for (size_t i = 0; i < this_size; ++i)
+        for (ssize_t i = 0; i < this_size; ++i)
         {
-            const auto index = indices.empty() ? i : indices[i];
+            const auto index = indices ? indices->get(i, size()) : i;
             const auto alpha_index = alpha.size() == 1 ? 0 : i;
-            for (size_t j = 0; j < dim(); ++j)
+            for (ssize_t j = 0; j < dim(); ++j)
             {
                 array_.mutable_at(index, j) *= alpha[alpha_index];
             }
         }
     }
 
-    void axpy(const std::vector<F>& alpha, const InterfaceType& x, const std::vector<size_t>& indices = {},
-              const std::vector<size_t>& x_indices = {}) override
+    void axpy(const std::vector<F>& alpha, const InterfaceType& x, const std::optional<Indices>& indices = {},
+              const std::optional<Indices>& x_indices = {}) override
     {
         check(this->is_compatible_array(x), "incompatible dimensions.");
-        const auto this_size = indices.empty() ? size() : indices.size();
-        const auto x_size = x_indices.empty() ? x.size() : x_indices.size();
+        const auto this_size = indices ? indices->size(size()) : size();
+        const auto x_size = x_indices ? x_indices->size(x.size()) : x.size();
         check(x_size == this_size || x_size == 1, "x must have length 1 or the same length as this");
         check(alpha.size() == this_size || alpha.size() == 1,
               "alpha must be scalar or have the same length as x");
         check(is_numpy_vector_array(x), "axpy is not implemented if x is not a NumpyVectorArray");
 
-        for (size_t i = 0; i < this_size; ++i)
+        for (ssize_t i = 0; i < this_size; ++i)
         {
-            const auto this_index = indices.empty() ? i : indices[i];
+            const auto this_index = indices ? indices->get(i, size()) : i;
             // x can either have the same length as this or length 1
-            size_t x_index;
+            ssize_t x_index;
             if (x_size == this_size)
             {
-                x_index = x_indices.empty() ? i : x_indices[i];
+                x_index = x_indices ? x_indices->get(i, x.size()) : i;
             }
             else
             {
                 // x has length 1
-                x_index = x_indices.empty() ? 0 : x_indices[0];
+                x_index = x_indices ? x_indices->get(0, x.size()) : 0;
             }
             const auto alpha_index = alpha.size() == 1 ? 0 : i;
-            for (size_t j = 0; j < dim(); ++j)
+            for (ssize_t j = 0; j < dim(); ++j)
             {
                 array_.mutable_at(this_index, j) +=
                     alpha[alpha_index] * dynamic_cast<const ThisType&>(x).array_.at(x_index, j);
@@ -267,8 +273,8 @@ class NumpyVectorArray : public VectorArrayInterface<F>
         }
     }
 
-    void axpy(F alpha, const InterfaceType& x, const std::vector<size_t>& indices = {},
-              const std::vector<size_t>& x_indices = {})
+    void axpy(F alpha, const InterfaceType& x, const std::optional<Indices>& indices = {},
+              const std::optional<Indices>& x_indices = {})
     {
         axpy(std::vector<F> {alpha}, x, indices, x_indices);
     }

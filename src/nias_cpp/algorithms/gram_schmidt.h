@@ -1,7 +1,6 @@
 #ifndef NIAS_CPP_GRAM_SCHMIDT_H
 #define NIAS_CPP_GRAM_SCHMIDT_H
 
-#include <cstddef>
 #include <iostream>
 
 #include <nias_cpp/interfaces/vectorarray.h>
@@ -72,7 +71,7 @@ void gram_schmidt_in_place(std::shared_ptr<ListVectorArray<F>> vec_array)
 
 template <floating_point_or_complex F>
 std::vector<F> dot_product(const VectorArrayInterface<F>& lhs, const VectorArrayInterface<F>& rhs,
-                           std::vector<size_t> lhs_indices, std::vector<size_t> rhs_indices)
+                           std::vector<ssize_t> lhs_indices, std::vector<ssize_t> rhs_indices)
 {
     const auto lhs_size = lhs_indices.empty() ? lhs.size() : lhs_indices.size();
     const auto rhs_size = rhs_indices.empty() ? rhs.size() : rhs_indices.size();
@@ -81,9 +80,9 @@ std::vector<F> dot_product(const VectorArrayInterface<F>& lhs, const VectorArray
         throw std::invalid_argument("lhs and rhs must have the same size and dimension");
     }
     std::vector<F> ret(lhs_size, F(0.));
-    for (size_t i = 0; i < lhs_size; ++i)
+    for (ssize_t i = 0; i < lhs_size; ++i)
     {
-        for (size_t j = 0; j < lhs.dim(); ++j)
+        for (ssize_t j = 0; j < lhs.dim(); ++j)
         {
             ret[i] += lhs.get(lhs_indices.empty() ? i : lhs_indices[i], j) *
                       rhs.get(rhs_indices.empty() ? i : rhs_indices[i], j);
@@ -97,9 +96,9 @@ void gram_schmidt_cpp(VectorArrayInterface<F>& vec_array)
 {
     constexpr F atol = 1e-15;
     std::vector<bool> remove(vec_array.size(), false);
-    for (size_t i = 0; i < vec_array.size(); ++i)
+    for (ssize_t i = 0; i < vec_array.size(); ++i)
     {
-        for (size_t j = 0; j < i; j++)
+        for (ssize_t j = 0; j < i; j++)
         {
             if (remove[j])
             {
@@ -120,8 +119,8 @@ void gram_schmidt_cpp(VectorArrayInterface<F>& vec_array)
             vec_array.scal(1. / std::sqrt(norm2), {i});
         }
     }
-    std::vector<size_t> indices_to_remove;
-    for (size_t i = 0; i < vec_array.size(); ++i)
+    std::vector<ssize_t> indices_to_remove;
+    for (ssize_t i = 0; i < vec_array.size(); ++i)
     {
         if (remove[i])
         {

@@ -59,7 +59,8 @@ We currently have
        ortho_test_array = double_gram_schmidt_cpp(test_array)
        ```
 
-  - An implementation operating on `std::shared_ptr<ListVectorArray<F>> vec_array` and using the Python NiAS Gram-Schmidt algorithm:
+  - An implementation operating on `std::shared_ptr<ListVectorArray<F>> vec_array` and using the\
+  Python NiAS Gram-Schmidt algorithm:
 
      ```C++
        py::module_ nias_cpp_vectorarray = py::module::import("nias.bindings.nias_cpp.vectorarray");
@@ -91,11 +92,13 @@ We currently have
 
 TODOs:
 
-- Packaging questions (currently, `pip install .` in a virtualenv works, but [including it in the pyproject.toml in oasys-core does not work](https://github.com/nias-project/nias-cpp/issues/9))
+- Packaging questions (currently, `pip install .` in a virtualenv works, but\
+[including it in the pyproject.toml in oasys-core does not work](https://github.com/nias-project/nias-cpp/issues/9))
   - We currently use `scikit-build-core`
   - Integrate into NiAS repo?
   - Also install python bindings with `pip` (https://github.com/nias-project/nias-cpp/issues/7)
-- [Directly derive bindings for `VectorArrayInterface` from `nias::VectorArray](https://github.com/nias-project/nias-cpp/issues/6) such that we
+- Mimic all relevant Python classes on the C++ side and derive the bindings from the respective Python class, for example
+ [directly derive bindings for `VectorArrayInterface` from `nias::VectorArray`](https://github.com/nias-project/nias-cpp/issues/6)
   - Needs an `Indices` class which can handle at least integers, lists of integers and `pybind11::slice`
   - Needs a `VectorArrayView` class
   - Benefits:

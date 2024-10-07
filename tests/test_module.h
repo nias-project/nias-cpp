@@ -21,7 +21,7 @@ class DynamicVector : public nias::VectorInterface<F>
     // constructors
     DynamicVector() = default;
 
-    DynamicVector(size_t dim, F value = 0.)
+    DynamicVector(ssize_t dim, F value = 0.)
         : data_(dim, value) {};
 
     DynamicVector(std::initializer_list<F> init_list)
@@ -79,18 +79,18 @@ class DynamicVector : public nias::VectorInterface<F>
     }
 
     // DynamicVector accessors
-    F& get(size_t i) override
+    F& get(ssize_t i) override
     {
         return data_[i];
     }
 
-    const F& get(size_t i) const override
+    const F& get(ssize_t i) const override
     {
         return data_[i];
     }
 
     // DynamicVector methods
-    size_t dim() const override
+    ssize_t dim() const override
     {
         return data_.size();
     }
@@ -107,7 +107,7 @@ class DynamicVector : public nias::VectorInterface<F>
         // return std::inner_product(begin(), end(), other.begin(), 0.0);
         // because VectorInterface does not define iterators
         F ret = 0;
-        for (size_t i = 0; i < dim(); ++i)
+        for (ssize_t i = 0; i < dim(); ++i)
         {
             if constexpr (std::is_floating_point_v<F>)
             {
@@ -138,7 +138,7 @@ class DynamicVector : public nias::VectorInterface<F>
         //                            return a + alpha * b;
         //                        });
         // because VectorInterface does not define iterators
-        for (size_t i = 0; i < dim(); ++i)
+        for (ssize_t i = 0; i < dim(); ++i)
         {
             data_[i] += alpha * x.get(i);
         }

@@ -1,11 +1,9 @@
 #ifndef NIAS_CPP_INTERFACES_VECTOR_H
 #define NIAS_CPP_INTERFACES_VECTOR_H
 
-#include <cstddef>
 #include <memory>
 
 #include <nias_cpp/concepts.h>
-#include <nias_cpp/interfaces/vector.h>
 
 namespace nias
 {
@@ -20,11 +18,11 @@ class VectorInterface
     };
 
     // accessors
-    virtual F& get(size_t i) = 0;
-    virtual const F& get(size_t i) const = 0;
+    virtual F& get(ssize_t i) = 0;
+    virtual const F& get(ssize_t i) const = 0;
 
     // return the dimension (length) of the vector
-    virtual size_t dim() const = 0;
+    virtual ssize_t dim() const = 0;
 
     // copy the Vector to a new Vector
     virtual std::shared_ptr<VectorInterface> copy() const = 0;

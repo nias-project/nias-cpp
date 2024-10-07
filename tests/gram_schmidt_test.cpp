@@ -21,7 +21,7 @@ void print(const std::vector<std::shared_ptr<V>>& vecs, std::string_view name)
     for (auto& vec : vecs)
     {
         std::cout << "vec" << i++ << ": ";
-        for (size_t i = 0; i < vec->dim(); ++i)
+        for (ssize_t i = 0; i < vec->dim(); ++i)
         {
             std::cout << vec->get(i) << " ";
         }
@@ -45,18 +45,18 @@ template <nias::floating_point_or_complex F>
 void print(const nias::VectorArrayInterface<F>& vec_array, std::string_view name)
 {
     std::cout << "======== " << name << " ========" << std::endl;
-    for (size_t i = 0; i < vec_array.size(); ++i)
+    for (ssize_t i = 0; i < vec_array.size(); ++i)
     {
-        for (size_t j = 0; j < vec_array.dim(); ++j)
+        for (ssize_t j = 0; j < vec_array.dim(); ++j)
         {
             std::cout << vec_array.get(i, j) << " ";
         }
         std::cout << std::endl;
     }
     std::cout << "Inner products: " << std::endl;
-    for (size_t i = 0; i < vec_array.size(); ++i)
+    for (ssize_t i = 0; i < vec_array.size(); ++i)
     {
-        for (size_t j = 0; j < vec_array.size(); ++j)
+        for (ssize_t j = 0; j < vec_array.size(); ++j)
         {
             std::cout << nias::dot_product(vec_array, vec_array, {i}, {j})[0] << " ";
         }
@@ -98,16 +98,16 @@ void test_numpy_vecarray()
 {
     using namespace nias;
     ensure_interpreter_is_running();
-    const size_t size = 3;
-    const size_t dim = 4;
+    const ssize_t size = 3;
+    const ssize_t dim = 4;
 
     // create array
     auto array = pybind11::array_t<F>({size, dim});
     std::iota(array.mutable_data(), array.mutable_data() + size * dim, 1);
     const NumpyVectorArray<F> vec_array(array);
-    for (size_t i = 0; i < size; ++i)
+    for (ssize_t i = 0; i < size; ++i)
     {
-        for (size_t j = 0; j < dim; ++j)
+        for (ssize_t j = 0; j < dim; ++j)
         {
             check(vec_array.array().at(i, j) == F(i * dim + j + 1), "vec array has wrong entries");
         }
@@ -123,12 +123,12 @@ void test_numpy_vecarray()
     check(vec_array.get(0, 0) == 1, "copy is not deep");
 
     // check copy with indices
-    auto vec_array_copy_with_indices = vec_array.copy({0, 2});
+    auto vec_array_copy_with_indices = vec_array.copy(Indices({0, 2}));
     auto* numpy_vec_array_copy_with_indices =
         dynamic_cast<NumpyVectorArray<F>*>(vec_array_copy_with_indices.get());
     check(vec_array_copy_with_indices->dim() == 4, "copy with indices results in wrong dim");
     check(vec_array_copy_with_indices->size() == 2, "copy with indices results in wrong size");
-    for (size_t j = 0; j < dim; ++j)
+    for (ssize_t j = 0; j < dim; ++j)
     {
         check(vec_array_copy_with_indices->get(0, j) == vec_array.get(0, j),
               "copy with indices has wrong entries");
@@ -140,29 +140,29 @@ void test_numpy_vecarray()
 
     // check append (no remove_from_other, no indices)
     vec_array_copy = vec_array.copy();
-    vec_array_copy_with_indices = vec_array.copy({0, 2});
+    vec_array_copy_with_indices = vec_array.copy(Indices({0, 2}));
     vec_array_copy->append(*vec_array_copy_with_indices);
-    std::vector<size_t> indices = {0, 1, 2, 0, 2};
+    std::vector<ssize_t> indices = {0, 1, 2, 0, 2};
     check(*dynamic_cast<const NumpyVectorArray<F>*>(vec_array_copy.get()) ==
               *dynamic_cast<const NumpyVectorArray<F>*>(vec_array.copy(indices).get()),
           "wrong entries after append");
-    for (size_t i = 0; i < vec_array_copy->size(); ++i)
+    for (ssize_t i = 0; i < vec_array_copy->size(); ++i)
     {
-        for (size_t j = 0; j < dim; ++j)
+        for (ssize_t j = 0; j < dim; ++j)
         {
             check(vec_array_copy->get(i, j) == vec_array.get(indices[i], j), "wrong entries after append");
         }
     }
     // check_append (no remove_from_other, with indices)
     auto vec_array_copy_2 = vec_array.copy();
-    vec_array_copy_2->append(*vec_array.copy(), false, {0, 2});
+    vec_array_copy_2->append(*vec_array.copy(), false, Indices({0, 2}));
     check(*dynamic_cast<const NumpyVectorArray<F>*>(vec_array_copy_2.get()) ==
               *dynamic_cast<const NumpyVectorArray<F>*>(vec_array_copy.get()),
           "wrong entries after append");
 
     // check append (remove_from_other, no indices)
     vec_array_copy = vec_array.copy();
-    vec_array_copy_with_indices = vec_array.copy({0, 2});
+    vec_array_copy_with_indices = vec_array.copy(Indices({0, 2}));
     vec_array_copy->append(*vec_array_copy_with_indices, true);
     check(*dynamic_cast<const NumpyVectorArray<F>*>(vec_array_copy.get()) ==
               *dynamic_cast<const NumpyVectorArray<F>*>(vec_array.copy(indices).get()),
@@ -170,13 +170,13 @@ void test_numpy_vecarray()
     check(vec_array_copy_with_indices->size() == 0, "wrong size after append");
     // check append (remove_from_other, with indices)
     vec_array_copy = vec_array.copy();
-    vec_array_copy_with_indices = vec_array.copy({0, 2});
+    vec_array_copy_with_indices = vec_array.copy(Indices({0, 2}));
     vec_array_copy->append(*vec_array_copy_with_indices, true, {1});
     check(*dynamic_cast<const NumpyVectorArray<F>*>(vec_array_copy.get()) ==
-              *dynamic_cast<const NumpyVectorArray<F>*>(vec_array.copy({0, 1, 2, 2}).get()),
+              *dynamic_cast<const NumpyVectorArray<F>*>(vec_array.copy(Indices({0, 1, 2, 2})).get()),
           "wrong entries after append");
     check(vec_array_copy_with_indices->size() == 1, "wrong size after append");
-    for (size_t j = 0; j < dim; ++j)
+    for (ssize_t j = 0; j < dim; ++j)
     {
         check(vec_array_copy_with_indices->get(0, j) == vec_array.get(0, j), "wrong entries after append");
     }
@@ -184,9 +184,9 @@ void test_numpy_vecarray()
     // check scal (scalar F, no indices)
     vec_array_copy = vec_array.copy();
     vec_array_copy->scal(F(2));
-    for (size_t i = 0; i < vec_array_copy->size(); ++i)
+    for (ssize_t i = 0; i < vec_array_copy->size(); ++i)
     {
-        for (size_t j = 0; j < dim; ++j)
+        for (ssize_t j = 0; j < dim; ++j)
         {
             check(vec_array_copy->get(i, j) == F(2) * vec_array.get(i, j), "wrong entries after scal");
         }
@@ -194,9 +194,9 @@ void test_numpy_vecarray()
     // check scal (scalar F, with indices)
     vec_array_copy = vec_array.copy();
     vec_array_copy->scal(F(2), {1});
-    for (size_t i = 0; i < size; ++i)
+    for (ssize_t i = 0; i < size; ++i)
     {
-        for (size_t j = 0; j < dim; ++j)
+        for (ssize_t j = 0; j < dim; ++j)
         {
             const auto factor = i == 1 ? F(2) : F(1);
             check(vec_array_copy->get(i, j) == factor * vec_array.get(i, j), "wrong entries after scal");
@@ -205,19 +205,19 @@ void test_numpy_vecarray()
     // check scal (vector F, no indices)
     vec_array_copy = vec_array.copy();
     vec_array_copy->scal({F(0), F(3), F(6)});
-    for (size_t i = 0; i < size; ++i)
+    for (ssize_t i = 0; i < size; ++i)
     {
-        for (size_t j = 0; j < dim; ++j)
+        for (ssize_t j = 0; j < dim; ++j)
         {
             check(vec_array_copy->get(i, j) == F(3 * i) * vec_array.get(i, j), "wrong entries after scal");
         }
     }
     // check scal (vector F, with indices)
     vec_array_copy = vec_array.copy();
-    vec_array_copy->scal({F(0), F(-1)}, {1, 2});
-    for (size_t i = 0; i < size; ++i)
+    vec_array_copy->scal({F(0), F(-1)}, Indices({1, 2}));
+    for (ssize_t i = 0; i < size; ++i)
     {
-        for (size_t j = 0; j < dim; ++j)
+        for (ssize_t j = 0; j < dim; ++j)
         {
             check(vec_array_copy->get(i, j) == (F(1) - F(i)) * vec_array.get(i, j),
                   "wrong entries after scal");
@@ -227,9 +227,9 @@ void test_numpy_vecarray()
     // check axpy (scalar F, no indices)
     vec_array_copy = vec_array.copy();
     vec_array_copy->axpy(F(2), *vec_array.copy());
-    for (size_t i = 0; i < size; ++i)
+    for (ssize_t i = 0; i < size; ++i)
     {
-        for (size_t j = 0; j < dim; ++j)
+        for (ssize_t j = 0; j < dim; ++j)
         {
             check(vec_array_copy->get(i, j) == F(3) * vec_array.get(i, j), "wrong entries after axpy");
         }
@@ -238,11 +238,11 @@ void test_numpy_vecarray()
     // check axpy (scalar F, indices)
     vec_array_copy = vec_array.copy();
     vec_array_copy->axpy(F(2), *vec_array.copy(), {1}, {2});
-    for (size_t i = 0; i < size; ++i)
+    for (ssize_t i = 0; i < size; ++i)
     {
         if (i == 1)
         {
-            for (size_t j = 0; j < dim; ++j)
+            for (ssize_t j = 0; j < dim; ++j)
             {
                 check(vec_array_copy->get(i, j) == vec_array.get(i, j) + F(2) * vec_array.get(2, j),
                       "wrong entries after axpy");
@@ -250,7 +250,7 @@ void test_numpy_vecarray()
         }
         else
         {
-            for (size_t j = 0; j < dim; ++j)
+            for (ssize_t j = 0; j < dim; ++j)
             {
                 check(vec_array_copy->get(i, j) == vec_array.get(i, j), "wrong entries after axpy");
             }
@@ -260,9 +260,9 @@ void test_numpy_vecarray()
     // check axpy (vector F, no indices)
     vec_array_copy = vec_array.copy();
     vec_array_copy->axpy({F(1), F(2), F(3)}, *vec_array.copy());
-    for (size_t i = 0; i < size; ++i)
+    for (ssize_t i = 0; i < size; ++i)
     {
-        for (size_t j = 0; j < dim; ++j)
+        for (ssize_t j = 0; j < dim; ++j)
         {
             check(vec_array_copy->get(i, j) == F(i + 2) * vec_array.get(i, j), "wrong entries after axpy");
         }
@@ -270,8 +270,8 @@ void test_numpy_vecarray()
 
     // check axpy (scalar F, indices)
     vec_array_copy = vec_array.copy();
-    vec_array_copy->axpy({F(0.5), F(1.5)}, *vec_array.copy(), {1, 2}, {0, 1});
-    for (size_t j = 0; j < dim; ++j)
+    vec_array_copy->axpy({F(0.5), F(1.5)}, *vec_array.copy(), Indices({1, 2}), Indices({0, 1}));
+    for (ssize_t j = 0; j < dim; ++j)
     {
         check(vec_array_copy->get(0, j) == vec_array.get(0, j), "wrong entries after axpy");
         check(vec_array_copy->get(1, j) == vec_array.get(1, j) + F(0.5) * vec_array.get(0, j),
@@ -298,15 +298,19 @@ void test_cpp_gram_schmidt()
 
 int main()
 {
+    std::cout << "\n\n\n==========================\n";
+    std::cout << "=== Testing gram_schmidt_cpp ===\n";
+    std::cout << "================================\n" << std::endl;
     test_cpp_gram_schmidt<double>();
+    // test NumpyVectorArray
     test_numpy_vecarray<double>();
-    std::cout << "\n\n\n======================\n";
-    std::cout << "=== Testing double ===\n";
-    std::cout << "======================\n" << std::endl;
+    std::cout << "\n\n\n=====================================\n";
+    std::cout << "=== Testing gram_schmidt (double) ===\n";
+    std::cout << "=====================================\n" << std::endl;
     test_gram_schmidt<double>();
-    std::cout << "\n\n\n===============================\n";
-    std::cout << "=== Testing complex<double> ===\n";
-    std::cout << "===============================\n" << std::endl;
+    std::cout << "\n\n\n==============================================\n";
+    std::cout << "=== Testing gram_schmidt (complex<double>) ===\n";
+    std::cout << "==============================================\n" << std::endl;
     test_gram_schmidt<std::complex<double>>();
     return 0;
 }
