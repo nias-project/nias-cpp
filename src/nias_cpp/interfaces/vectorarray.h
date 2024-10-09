@@ -1,13 +1,16 @@
 #ifndef NIAS_CPP_INTERFACES_VECTORARRAY_H
 #define NIAS_CPP_INTERFACES_VECTORARRAY_H
 
+#include <cstddef>
 #include <iostream>
 #include <memory>
+#include <optional>
 #include <stdexcept>
 #include <vector>
 
 #include <nias_cpp/concepts.h>
 #include <nias_cpp/indices.h>
+#include <nias_cpp/type_traits.h>
 #include <sys/types.h>
 
 namespace nias
@@ -20,11 +23,21 @@ class VectorArrayInterface
     using ThisType = VectorArrayInterface;
 
    public:
+    // constructors and destructor
+    VectorArrayInterface() = default;
+    virtual ~VectorArrayInterface() = default;
+
+    // copy and move constructor and assignment operators
+    VectorArrayInterface(const ThisType&) = default;
+    VectorArrayInterface(ThisType&&) = default;
+    VectorArrayInterface& operator=(const ThisType&) = default;
+    VectorArrayInterface& operator=(ThisType&&) = default;
+
     // return the number of vectors in the array
-    virtual ssize_t size() const = 0;
+    [[nodiscard]] virtual ssize_t size() const = 0;
 
     // return the dimension (length) of the vectors in the array
-    virtual ssize_t dim() const = 0;
+    [[nodiscard]] virtual ssize_t dim() const = 0;
 
     virtual bool is_compatible_array(const ThisType& other) const
     {
@@ -65,7 +78,7 @@ class VectorArrayInterface
             {
                 std::cout << get(i, j) << " ";
             }
-            std::cout << std::endl;
+            std::cout << '\n';
         }
     }
 
@@ -86,12 +99,12 @@ class ConstVectorArrayView : public VectorArrayInterface<F>
     {
     }
 
-    ssize_t size() const override
+    [[nodiscard]] ssize_t size() const override
     {
         return indices_->size(vec_array_.size());
     }
 
-    ssize_t dim() const override
+    [[nodiscard]] ssize_t dim() const override
     {
         return vec_array_.dim();
     }
@@ -132,7 +145,7 @@ class ConstVectorArrayView : public VectorArrayInterface<F>
 
    protected:
     /// \brief Calculates new indices in the original VectorArray from the view indices
-    std::optional<Indices> new_indices(const std::optional<Indices>& view_indices) const
+    [[nodiscard]] std::optional<Indices> new_indices(const std::optional<Indices>& view_indices) const
     {
         if (!view_indices)
         {

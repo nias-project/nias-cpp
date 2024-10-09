@@ -1,22 +1,31 @@
+#include <complex>
 #include <concepts>
 #include <iostream>
+#include <memory>
 #include <stdexcept>
+#include <string>
+#include <string_view>
 #include <vector>
 
 #include <nias_cpp/algorithms/gram_schmidt.h>
+#include <nias_cpp/concepts.h>
+#include <nias_cpp/indices.h>
 #include <nias_cpp/interfaces/vector.h>
 #include <nias_cpp/interfaces/vectorarray.h>
 #include <nias_cpp/interpreter.h>
+#include <nias_cpp/type_traits.h>
 #include <nias_cpp/vectorarray/list.h>
 #include <nias_cpp/vectorarray/numpy.h>
 #include <pybind11/numpy.h>
 
 #include "test_module.h"
 
+namespace
+{
 template <class V>
 void print(const std::vector<std::shared_ptr<V>>& vecs, std::string_view name)
 {
-    std::cout << "======== " << name << " ========" << std::endl;
+    std::cout << "======== " << name << " ========" << '\n';
     int i = 0;
     for (auto& vec : vecs)
     {
@@ -25,42 +34,42 @@ void print(const std::vector<std::shared_ptr<V>>& vecs, std::string_view name)
         {
             std::cout << vec->get(i) << " ";
         }
-        std::cout << std::endl;
+        std::cout << '\n';
     }
 
     // print result
-    std::cout << "Inner products: " << std::endl;
+    std::cout << "Inner products: " << '\n';
     for (auto&& vec1 : vecs)
     {
         for (auto&& vec2 : vecs)
         {
             std::cout << vec1->dot(*vec2) << " ";
         }
-        std::cout << std::endl;
+        std::cout << '\n';
     }
-    std::cout << "=======================" << std::endl;
+    std::cout << "=======================" << '\n';
 }
 
 template <nias::floating_point_or_complex F>
 void print(const nias::VectorArrayInterface<F>& vec_array, std::string_view name)
 {
-    std::cout << "======== " << name << " ========" << std::endl;
+    std::cout << "======== " << name << " ========" << '\n';
     for (ssize_t i = 0; i < vec_array.size(); ++i)
     {
         for (ssize_t j = 0; j < vec_array.dim(); ++j)
         {
             std::cout << vec_array.get(i, j) << " ";
         }
-        std::cout << std::endl;
+        std::cout << '\n';
     }
-    std::cout << "Inner products: " << std::endl;
+    std::cout << "Inner products: " << '\n';
     for (ssize_t i = 0; i < vec_array.size(); ++i)
     {
         for (ssize_t j = 0; j < vec_array.size(); ++j)
         {
             std::cout << nias::dot_product(vec_array, vec_array, {i}, {j})[0] << " ";
         }
-        std::cout << std::endl;
+        std::cout << '\n';
     }
 }
 
@@ -78,7 +87,7 @@ void test_gram_schmidt()
     using namespace nias;
 
     // Create some input vectors and print them
-    std::vector<std::shared_ptr<VectorInterface<F>>> vectors {
+    const std::vector<std::shared_ptr<VectorInterface<F>>> vectors {
         std::shared_ptr<VectorInterface<F>>(new DynamicVector {F(1.), F(2.), F(3.)}),
         std::shared_ptr<VectorInterface<F>>(new DynamicVector {F(4.), F(5.), F(6.)}),
         std::shared_ptr<VectorInterface<F>>(new DynamicVector {F(7.), F(8.), F(9.)})};
@@ -103,13 +112,14 @@ void test_numpy_vecarray()
 
     // create array
     auto array = pybind11::array_t<F>({size, dim});
-    std::iota(array.mutable_data(), array.mutable_data() + size * dim, 1);
+    // NOLINTNEXTLINE(cppcoreguidelines-pro-bounds-pointer-arithmetic)
+    std::iota(array.mutable_data(), array.mutable_data() + (size * dim), 1);
     const NumpyVectorArray<F> vec_array(array);
     for (ssize_t i = 0; i < size; ++i)
     {
         for (ssize_t j = 0; j < dim; ++j)
         {
-            check(vec_array.array().at(i, j) == F(i * dim + j + 1), "vec array has wrong entries");
+            check(vec_array.array().at(i, j) == F((i * dim) + j + 1), "vec array has wrong entries");
         }
     }
     check(vec_array.dim() == 4, "vec_array.dim() != 4");
@@ -286,31 +296,33 @@ void test_cpp_gram_schmidt()
 {
     using namespace nias;
     ensure_interpreter_is_running();
-    const size_t size = 3;
-    const size_t dim = 4;
+    const ssize_t size = 3;
+    const ssize_t dim = 4;
     auto array = pybind11::array_t<F>({size, dim});
-    std::iota(array.mutable_data(), array.mutable_data() + size * dim, 1);
+    // NOLINTNEXTLINE(cppcoreguidelines-pro-bounds-pointer-arithmetic)
+    std::iota(array.mutable_data(), array.mutable_data() + (size * dim), 1);
     NumpyVectorArray<F> vec_array(array);
     print(vec_array, "Input");
     gram_schmidt_cpp(vec_array);
     print(vec_array, "Output");
 }
+}  // namespace
 
 int main()
 {
     std::cout << "\n\n\n==========================\n";
     std::cout << "=== Testing gram_schmidt_cpp ===\n";
-    std::cout << "================================\n" << std::endl;
+    std::cout << "================================\n" << '\n';
     test_cpp_gram_schmidt<double>();
     // test NumpyVectorArray
     test_numpy_vecarray<double>();
     std::cout << "\n\n\n=====================================\n";
     std::cout << "=== Testing gram_schmidt (double) ===\n";
-    std::cout << "=====================================\n" << std::endl;
+    std::cout << "=====================================\n" << '\n';
     test_gram_schmidt<double>();
     std::cout << "\n\n\n==============================================\n";
     std::cout << "=== Testing gram_schmidt (complex<double>) ===\n";
-    std::cout << "==============================================\n" << std::endl;
+    std::cout << "==============================================\n" << '\n';
     test_gram_schmidt<std::complex<double>>();
     return 0;
 }

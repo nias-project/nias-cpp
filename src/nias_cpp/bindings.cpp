@@ -1,11 +1,13 @@
 #include <complex>
+#include <vector>
 
 #include <nias_cpp/bindings.h>
 #include <nias_cpp/indices.h>
-#include <pybind11/complex.h>
+#include <nias_cpp/type_traits.h>
+#include <pybind11/complex.h>  // IWYU pragma: keep
 #include <pybind11/pybind11.h>
 #include <pybind11/pytypes.h>
-#include <pybind11/stl.h>
+#include <pybind11/stl.h>  // IWYU pragma: keep
 
 PYBIND11_MODULE(nias_cpp, m)
 {
@@ -20,7 +22,7 @@ PYBIND11_MODULE(nias_cpp, m)
         .def(py::init<const std::vector<ssize_t>>())
         .def(py::init<const py::slice&>())
         .def(py::init(
-            [](py::list indices)
+            [](const py::list& indices)
             {
                 std::vector<ssize_t> indices_vec;
                 for (auto index : indices)
@@ -33,6 +35,7 @@ PYBIND11_MODULE(nias_cpp, m)
         .def("get", &nias::Indices::get)
         .def("as_vec", &nias::Indices::as_vec);
 
+    // for some reason, the Indices constructors are not enough for implicit conversions
     py::implicitly_convertible<py::list, nias::Indices>();
     py::implicitly_convertible<py::slice, nias::Indices>();
 

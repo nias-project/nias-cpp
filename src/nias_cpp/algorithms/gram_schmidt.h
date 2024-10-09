@@ -2,11 +2,18 @@
 #define NIAS_CPP_GRAM_SCHMIDT_H
 
 #include <iostream>
+#include <memory>
+#include <stdexcept>
+#include <vector>
 
+#include <nias_cpp/concepts.h>
 #include <nias_cpp/interfaces/vectorarray.h>
 #include <nias_cpp/interpreter.h>
+#include <nias_cpp/type_traits.h>
 #include <nias_cpp/vectorarray/list.h>
-#include <pybind11/embed.h>
+#include <pybind11/cast.h>
+#include <pybind11/pybind11.h>
+#include <pybind11/pytypes.h>
 
 namespace nias
 {
@@ -20,10 +27,10 @@ std::shared_ptr<ListVectorArray<F>> gram_schmidt(std::shared_ptr<ListVectorArray
 
     // import nias_cpp module
     namespace py = pybind11;
-    py::module_ nias_cpp_module = py::module::import("nias_cpp");
+    const py::module_ nias_cpp_module = py::module::import("nias_cpp");
 
     // get the classes we need from the Python nias module
-    py::module_ nias_cpp_vectorarray = py::module::import("nias.bindings.nias_cpp.vectorarray");
+    const py::module_ nias_cpp_vectorarray = py::module::import("nias.bindings.nias_cpp.vectorarray");
     auto NiasVecArrayImpl = nias_cpp_vectorarray.attr("NiasCppVectorArrayImpl");
     auto NiasVecArray = nias_cpp_vectorarray.attr("NiasCppVectorArray");
     auto NiasCppInnerProduct =
@@ -38,7 +45,7 @@ std::shared_ptr<ListVectorArray<F>> gram_schmidt(std::shared_ptr<ListVectorArray
     py::object result = NiasGramSchmidt(nias_vec_array, NiasCppInnerProduct(), "copy"_a = true);
 
     auto ret = result.attr("impl").attr("impl").cast<std::shared_ptr<ListVectorArray<F>>>();
-    std::cout << "done\n\n" << std::endl;
+    std::cout << "done\n\n" << '\n';
     return ret;
 }
 
@@ -50,10 +57,10 @@ void gram_schmidt_in_place(std::shared_ptr<ListVectorArray<F>> vec_array)
 
     // import nias_cpp module
     namespace py = pybind11;
-    py::module_ nias_cpp_module = py::module::import("nias_cpp");
+    const py::module_ nias_cpp_module = py::module::import("nias_cpp");
 
     // get the classes we need from the Python nias module
-    py::module_ nias_cpp_vectorarray = py::module::import("nias.bindings.nias_cpp.vectorarray");
+    const py::module_ nias_cpp_vectorarray = py::module::import("nias.bindings.nias_cpp.vectorarray");
     auto NiasVecArrayImpl = nias_cpp_vectorarray.attr("NiasCppVectorArrayImpl");
     auto NiasVecArray = nias_cpp_vectorarray.attr("NiasCppVectorArray");
     auto NiasCppInnerProduct =
@@ -66,7 +73,7 @@ void gram_schmidt_in_place(std::shared_ptr<ListVectorArray<F>> vec_array)
 
     // execute the Python gram_schmidt function
     NiasGramSchmidt(nias_vec_array, NiasCppInnerProduct(), "copy"_a = false);
-    std::cout << "done\n\n" << std::endl;
+    std::cout << "done\n\n" << '\n';
 }
 
 template <floating_point_or_complex F>

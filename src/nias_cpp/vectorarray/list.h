@@ -2,15 +2,20 @@
 #define NIAS_CPP_VECTORARRAY_LIST_H
 
 #include <algorithm>
-#include <cstddef>
+#include <functional>
 #include <memory>
+#include <optional>
 #include <set>
+#include <stdexcept>
 #include <string>
+#include <typeinfo>
 #include <vector>
 
 #include <nias_cpp/concepts.h>
+#include <nias_cpp/indices.h>
 #include <nias_cpp/interfaces/vector.h>
 #include <nias_cpp/interfaces/vectorarray.h>
+#include <nias_cpp/type_traits.h>
 
 namespace nias
 {
@@ -24,7 +29,7 @@ class ListVectorArray : public VectorArrayInterface<F>
     using InterfaceType = VectorArrayInterface<F>;
 
    public:
-    ListVectorArray(const std::vector<std::shared_ptr<VectorInterfaceType>>& vectors, size_t dim)
+    ListVectorArray(const std::vector<std::shared_ptr<VectorInterfaceType>>& vectors, ssize_t dim)
         : vectors_()
         , dim_(dim)
     {
@@ -37,7 +42,7 @@ class ListVectorArray : public VectorArrayInterface<F>
         check_vec_dimensions();
     }
 
-    ListVectorArray(std::vector<std::shared_ptr<VectorInterfaceType>>&& vectors, size_t dim)
+    ListVectorArray(std::vector<std::shared_ptr<VectorInterfaceType>>&& vectors, ssize_t dim)
         : vectors_(std::move(vectors))
         , dim_(dim)
     {
@@ -45,22 +50,23 @@ class ListVectorArray : public VectorArrayInterface<F>
         check_vec_dimensions();
     }
 
-    ~ListVectorArray()
-    {
-        // std::cout << "ListVectorArray destructor for " << this << std::endl;
-    }
+    // ~ListVectorArray()
+    //      std::cout << "ListVectorArray destructor for " << this << std::endl;
+    // }
+
+    ~ListVectorArray() override = default;
 
     ListVectorArray(const ListVectorArray& other) = delete;
     ListVectorArray(ListVectorArray&& other) = delete;
     ListVectorArray& operator=(const ListVectorArray& other) = delete;
     ListVectorArray& operator=(ListVectorArray&& other) = delete;
 
-    ssize_t size() const override
+    [[nodiscard]] ssize_t size() const override
     {
         return vectors_.size();
     }
 
-    ssize_t dim() const override
+    [[nodiscard]] ssize_t dim() const override
     {
         return dim_;
     }
@@ -142,7 +148,7 @@ class ListVectorArray : public VectorArrayInterface<F>
         // We sort in reverse order (by using std::greater as second template argument) to avoid
         // invalidating indices when removing elements from the vector
         const auto indices_vec = indices->as_vec(this->size());
-        std::set<ssize_t, std::greater<ssize_t>> sorted_indices(indices_vec.begin(), indices_vec.end());
+        std::set<ssize_t, std::greater<>> sorted_indices(indices_vec.begin(), indices_vec.end());
         for (auto&& i : sorted_indices)
         {
             vectors_.erase(vectors_.begin() + i);
@@ -180,7 +186,6 @@ class ListVectorArray : public VectorArrayInterface<F>
                 const auto alpha_index = alpha.size() == 1 ? 0 : i;
                 vectors_[i]->scal(alpha_index);
             }
-            return;
         }
         else
         {
@@ -209,7 +214,7 @@ class ListVectorArray : public VectorArrayInterface<F>
         {
             const auto this_index = indices ? indices->get(i, this->size()) : i;
             // x can either have the same length as this or length 1
-            ssize_t x_index;
+            ssize_t x_index = 0;
             if (x_size == this_size)
             {
                 x_index = x_indices ? x_indices->get(i, x.size()) : i;

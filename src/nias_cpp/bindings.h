@@ -1,14 +1,19 @@
 #ifndef NIAS_CPP_BINDINGS_H
 #define NIAS_CPP_BINDINGS_H
 
+#include <complex>
 #include <concepts>
 #include <memory>
 #include <optional>
+#include <stdexcept>
 #include <string>
+#include <vector>
 
 #include <nias_cpp/algorithms/gram_schmidt.h>
+#include <nias_cpp/indices.h>
 #include <nias_cpp/interfaces/vector.h>
 #include <nias_cpp/interfaces/vectorarray.h>
+#include <nias_cpp/type_traits.h>
 #include <nias_cpp/vectorarray/list.h>
 #include <nias_cpp/vectorarray/numpy.h>
 #include <pybind11/detail/common.h>
@@ -21,7 +26,7 @@ namespace nias
 
 template <class F>
     requires std::floating_point<F> || std::is_same_v<F, std::complex<typename F::value_type>>
-auto bind_nias_vectorinterface(pybind11::module& m, std::string name = "VectorInterface")
+auto bind_nias_vectorinterface(pybind11::module& m, const std::string& name = "VectorInterface")
 {
     namespace py = pybind11;
     using VecInterface = VectorInterface<F>;
@@ -34,7 +39,7 @@ auto bind_nias_vectorinterface(pybind11::module& m, std::string name = "VectorIn
         using VecInterface::VecInterface;
 
         /* Trampolines (need one for each virtual function) */
-        ssize_t dim() const override
+        [[nodiscard]] ssize_t dim() const override
         {
             PYBIND11_OVERRIDE_PURE_NAME(ssize_t,      /* Return type */
                                         VecInterface, /* Parent class */
@@ -116,7 +121,7 @@ auto bind_nias_vectorinterface(pybind11::module& m, std::string name = "VectorIn
 
 template <class F>
     requires std::floating_point<F> || std::is_same_v<F, std::complex<typename F::value_type>>
-auto bind_nias_listvectorarray(pybind11::module& m, std::string field_type_name)
+auto bind_nias_listvectorarray(pybind11::module& m, const std::string& field_type_name)
 {
     namespace py = pybind11;
     using VecArray = ListVectorArray<F>;
@@ -130,7 +135,7 @@ auto bind_nias_listvectorarray(pybind11::module& m, std::string field_type_name)
         using VecArrayInterface::VecArrayInterface;
 
         /* Trampolines (need one for each virtual function) */
-        ssize_t size() const override
+        [[nodiscard]] ssize_t size() const override
         {
             PYBIND11_OVERRIDE_PURE_NAME(ssize_t,           /* Return type */
                                         VecArrayInterface, /* Parent class */
@@ -139,7 +144,7 @@ auto bind_nias_listvectorarray(pybind11::module& m, std::string field_type_name)
             );
         }
 
-        ssize_t dim() const override
+        [[nodiscard]] ssize_t dim() const override
         {
             PYBIND11_OVERRIDE_PURE(ssize_t,           /* Return type */
                                    VecArrayInterface, /* Parent class */
@@ -292,7 +297,7 @@ auto bind_nias_listvectorarray(pybind11::module& m, std::string field_type_name)
 
 template <class F>
     requires std::floating_point<F> || std::is_same_v<F, std::complex<typename F::value_type>>
-auto bind_cpp_gram_schmidt(pybind11::module& m, std::string field_type_name)
+auto bind_cpp_gram_schmidt(pybind11::module& m, const std::string& field_type_name)
 {
     m.def((field_type_name + "_gram_schmidt_cpp").c_str(),
           [](const pybind11::array_t<F>& numpy_array)

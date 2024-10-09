@@ -3,12 +3,17 @@
 
 #include <concepts>
 #include <memory>
+#include <optional>
 #include <set>
+#include <stdexcept>
 #include <string>
+#include <typeinfo>
 #include <vector>
 
+#include <nias_cpp/indices.h>
 #include <nias_cpp/interfaces/vector.h>
 #include <nias_cpp/interfaces/vectorarray.h>
+#include <nias_cpp/type_traits.h>
 #include <pybind11/numpy.h>
 
 namespace nias
@@ -23,7 +28,7 @@ class NumpyVectorArray : public VectorArrayInterface<F>
     using InterfaceType = VectorArrayInterface<F>;
 
    public:
-    NumpyVectorArray(pybind11::array_t<F> array)
+    explicit NumpyVectorArray(const pybind11::array_t<F>& array)
         : array_(array)
     {
         // Check if the array has the correct data type
@@ -68,12 +73,12 @@ class NumpyVectorArray : public VectorArrayInterface<F>
         return array_;
     }
 
-    ssize_t size() const override
+    [[nodiscard]] ssize_t size() const override
     {
         return array_.shape(0);
     }
 
-    ssize_t dim() const override
+    [[nodiscard]] ssize_t dim() const override
     {
         return array_.shape(1);
     }
@@ -94,22 +99,19 @@ class NumpyVectorArray : public VectorArrayInterface<F>
         {
             return std::make_shared<ThisType>(pybind11::array_t<F>(array_.request()));
         }
-        else
-        {
-            pybind11::array_t<F> sub_array({indices->size(this->size()), dim()});
-            ssize_t i = 0;  // index for sub_array
-            indices->for_each(
-                [this, &i, &sub_array](ssize_t j)
+        pybind11::array_t<F> sub_array({indices->size(this->size()), dim()});
+        ssize_t i = 0;  // index for sub_array
+        indices->for_each(
+            [this, &i, &sub_array](ssize_t j)
+            {
+                for (ssize_t k = 0; k < dim(); ++k)
                 {
-                    for (ssize_t k = 0; k < dim(); ++k)
-                    {
-                        sub_array.mutable_at(i, k) = array_.at(j, k);
-                    }
-                    ++i;
-                },
-                this->size());
-            return std::make_shared<ThisType>(sub_array);
-        }
+                    sub_array.mutable_at(i, k) = array_.at(j, k);
+                }
+                ++i;
+            },
+            this->size());
+        return std::make_shared<ThisType>(sub_array);
     }
 
     void append(InterfaceType& other, bool remove_from_other = false,
@@ -176,7 +178,10 @@ class NumpyVectorArray : public VectorArrayInterface<F>
         // We first sort and deduplicate indices by converting to a std::set
         const auto indices_vec = indices->as_vec(this->size());
         std::set<ssize_t> unique_indices(indices_vec.begin(), indices_vec.end());
-        assert(unique_indices.size() <= size());
+        if (unique_indices.size() > size())
+        {
+            throw std::invalid_argument("Indices contain invalid indices");
+        }
         const ssize_t new_size = size() - unique_indices.size();
         std::vector<ssize_t> indices_to_keep;
         for (ssize_t i = 0; i < size(); ++i)
@@ -254,7 +259,7 @@ class NumpyVectorArray : public VectorArrayInterface<F>
         {
             const auto this_index = indices ? indices->get(i, size()) : i;
             // x can either have the same length as this or length 1
-            ssize_t x_index;
+            ssize_t x_index = 0;
             if (x_size == this_size)
             {
                 x_index = x_indices ? x_indices->get(i, x.size()) : i;
