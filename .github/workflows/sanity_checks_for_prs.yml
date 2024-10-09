@@ -71,7 +71,6 @@ jobs:
           PR_NUMBER: ${{ github.event.pull_request.number }}
         run: |
           import requests
-          import json
           import os
           headers = {'Authorization': f'token {os.environ["GITHUB_TOKEN"]}'}
           repo = os.environ["GITHUB_REPOSITORY"]

@@ -1,18 +1,24 @@
 #ifndef NIAS_CPP_BINDINGS_H
 #define NIAS_CPP_BINDINGS_H
 
+#include <complex>
 #include <concepts>
-#include <cstddef>
 #include <memory>
+#include <optional>
+#include <stdexcept>
 #include <string>
+#include <vector>
 
 #include <nias_cpp/algorithms/gram_schmidt.h>
+#include <nias_cpp/indices.h>
 #include <nias_cpp/interfaces/vector.h>
 #include <nias_cpp/interfaces/vectorarray.h>
+#include <nias_cpp/type_traits.h>
 #include <nias_cpp/vectorarray/list.h>
 #include <nias_cpp/vectorarray/numpy.h>
 #include <pybind11/detail/common.h>
 #include <pybind11/pybind11.h>
+#include <pybind11/pytypes.h>
 
 namespace nias
 {
@@ -20,7 +26,7 @@ namespace nias
 
 template <class F>
     requires std::floating_point<F> || std::is_same_v<F, std::complex<typename F::value_type>>
-auto bind_nias_vectorinterface(pybind11::module& m, std::string name = "VectorInterface")
+auto bind_nias_vectorinterface(pybind11::module& m, const std::string& name = "VectorInterface")
 {
     namespace py = pybind11;
     using VecInterface = VectorInterface<F>;
@@ -33,9 +39,9 @@ auto bind_nias_vectorinterface(pybind11::module& m, std::string name = "VectorIn
         using VecInterface::VecInterface;
 
         /* Trampolines (need one for each virtual function) */
-        size_t dim() const override
+        [[nodiscard]] ssize_t dim() const override
         {
-            PYBIND11_OVERRIDE_PURE_NAME(size_t,       /* Return type */
+            PYBIND11_OVERRIDE_PURE_NAME(ssize_t,      /* Return type */
                                         VecInterface, /* Parent class */
                                         "__len__",    /* Name of function in Python */
                                         dot,          /* Name of function in C++ */
@@ -76,7 +82,7 @@ auto bind_nias_vectorinterface(pybind11::module& m, std::string name = "VectorIn
                                    alpha, x);
         }
 
-        F& get(size_t i) override
+        F& get(ssize_t i) override
         {
             throw std::invalid_argument("Not implemented yet");
             PYBIND11_OVERRIDE_PURE_NAME(F&,            /* Return type */
@@ -87,7 +93,7 @@ auto bind_nias_vectorinterface(pybind11::module& m, std::string name = "VectorIn
             );
         }
 
-        const F& get(size_t i) const override
+        const F& get(ssize_t i) const override
         {
             throw std::invalid_argument("Not implemented yet");
             PYBIND11_OVERRIDE_PURE_NAME(const F&,      /* Return type */
@@ -115,7 +121,7 @@ auto bind_nias_vectorinterface(pybind11::module& m, std::string name = "VectorIn
 
 template <class F>
     requires std::floating_point<F> || std::is_same_v<F, std::complex<typename F::value_type>>
-auto bind_nias_listvectorarray(pybind11::module& m, std::string field_type_name)
+auto bind_nias_listvectorarray(pybind11::module& m, const std::string& field_type_name)
 {
     namespace py = pybind11;
     using VecArray = ListVectorArray<F>;
@@ -129,18 +135,18 @@ auto bind_nias_listvectorarray(pybind11::module& m, std::string field_type_name)
         using VecArrayInterface::VecArrayInterface;
 
         /* Trampolines (need one for each virtual function) */
-        size_t size() const override
+        [[nodiscard]] ssize_t size() const override
         {
-            PYBIND11_OVERRIDE_PURE_NAME(size_t,            /* Return type */
+            PYBIND11_OVERRIDE_PURE_NAME(ssize_t,           /* Return type */
                                         VecArrayInterface, /* Parent class */
                                         "__len__",         /* Name of function in Python */
                                         size,              /* Name of function in C++ */
             );
         }
 
-        size_t dim() const override
+        [[nodiscard]] ssize_t dim() const override
         {
-            PYBIND11_OVERRIDE_PURE(size_t,            /* Return type */
+            PYBIND11_OVERRIDE_PURE(ssize_t,           /* Return type */
                                    VecArrayInterface, /* Parent class */
                                    dim,               /* Name of function in C++ */
             );
@@ -155,7 +161,7 @@ auto bind_nias_listvectorarray(pybind11::module& m, std::string field_type_name)
             );
         }
 
-        F get(size_t i, size_t j) const override
+        F get(ssize_t i, ssize_t j) const override
         {
             PYBIND11_OVERRIDE_PURE(F,                 /* Return type */
                                    VecArrayInterface, /* Parent class */
@@ -165,7 +171,7 @@ auto bind_nias_listvectorarray(pybind11::module& m, std::string field_type_name)
         }
 
         // copy (a subset of) the VectorArray to a new VectorArray
-        std::shared_ptr<VecArrayInterface> copy(const std::vector<size_t>& indices = {}) const
+        std::shared_ptr<VecArrayInterface> copy(const std::optional<Indices>& indices = {}) const
         {
             PYBIND11_OVERRIDE_PURE(std::shared_ptr<VecArrayInterface>, /* Return type */
                                    VecArrayInterface,                  /* Parent class */
@@ -175,7 +181,7 @@ auto bind_nias_listvectorarray(pybind11::module& m, std::string field_type_name)
         }
 
         void append(VecArrayInterface& other, bool remove_from_other = false,
-                    const std::vector<size_t>& other_indices = {}) override
+                    const std::optional<Indices>& other_indices = {}) override
         {
             PYBIND11_OVERRIDE_PURE(void,              /* Return type */
                                    VecArrayInterface, /* Parent class */
@@ -184,7 +190,7 @@ auto bind_nias_listvectorarray(pybind11::module& m, std::string field_type_name)
             );
         }
 
-        void scal(const std::vector<F>& alpha, const std::vector<size_t>& indices = {}) override
+        void scal(const std::vector<F>& alpha, const std::optional<Indices>& indices = {}) override
         {
             PYBIND11_OVERRIDE_PURE(void,              /* Return type */
                                    VecArrayInterface, /* Parent class */
@@ -193,7 +199,7 @@ auto bind_nias_listvectorarray(pybind11::module& m, std::string field_type_name)
             );
         }
 
-        virtual void scal(F alpha, const std::vector<size_t>& indices = {})
+        virtual void scal(F alpha, const std::optional<Indices>& indices = {})
         {
             PYBIND11_OVERRIDE(void,              /* Return type */
                               VecArrayInterface, /* Parent class */
@@ -203,7 +209,8 @@ auto bind_nias_listvectorarray(pybind11::module& m, std::string field_type_name)
         }
 
         virtual void axpy(const std::vector<F>& alpha, const VecArrayInterface& x,
-                          const std::vector<size_t>& indices = {}, const std::vector<size_t>& x_indices = {})
+                          const std::optional<Indices>& indices = {},
+                          const std::optional<Indices>& x_indices = {})
         {
             PYBIND11_OVERRIDE_PURE(void,              /* Return type */
                                    VecArrayInterface, /* Parent class */
@@ -212,13 +219,21 @@ auto bind_nias_listvectorarray(pybind11::module& m, std::string field_type_name)
             );
         }
 
-        void axpy(F alpha, const VecArrayInterface& x, const std::vector<size_t>& indices = {},
-                  const std::vector<size_t>& x_indices = {}) override
+        void axpy(F alpha, const VecArrayInterface& x, const std::optional<Indices>& indices = {},
+                  const std::optional<Indices>& x_indices = {}) override
         {
             PYBIND11_OVERRIDE(void,              /* Return type */
                               VecArrayInterface, /* Parent class */
                               axpy,              /* Name of function in C++ (must match Python name) */
                               alpha, x, indices, x_indices /* Argument(s) */
+            );
+        }
+
+        void print() override
+        {
+            PYBIND11_OVERRIDE(void,              /* Return type */
+                              VecArrayInterface, /* Parent class */
+                              print              /* Name of function in C++ (must match Python name) */
             );
         }
     };
@@ -234,13 +249,13 @@ auto bind_nias_listvectorarray(pybind11::module& m, std::string field_type_name)
         .def("copy", &VecArrayInterface::copy)
         .def("append", &VecArrayInterface::append)
         // .def("delete", &VecArrayInterface::delete)
-        .def("scal", py::overload_cast<F, const std::vector<size_t>&>(&VecArrayInterface::scal))
-        .def("scal",
-             py::overload_cast<const std::vector<F>&, const std::vector<size_t>&>(&VecArrayInterface::scal))
-        .def("axpy", py::overload_cast<F, const nias::VectorArrayInterface<F>&, const std::vector<size_t>&,
-                                       const std::vector<size_t>&>(&VecArrayInterface::axpy))
+        .def("scal", py::overload_cast<F, const std::optional<Indices>&>(&VecArrayInterface::scal))
+        .def("scal", py::overload_cast<const std::vector<F>&, const std::optional<Indices>&>(
+                         &VecArrayInterface::scal))
+        .def("axpy", py::overload_cast<F, const nias::VectorArrayInterface<F>&, const std::optional<Indices>&,
+                                       const std::optional<Indices>&>(&VecArrayInterface::axpy))
         .def("axpy", py::overload_cast<const std::vector<F>&, const nias::VectorArrayInterface<F>&,
-                                       const std::vector<size_t>&, const std::vector<size_t>&>(
+                                       const std::optional<Indices>&, const std::optional<Indices>&>(
                          &VecArrayInterface::axpy))
         .def("is_compatible_array", &VecArrayInterface::is_compatible_array);
 
@@ -253,32 +268,44 @@ auto bind_nias_listvectorarray(pybind11::module& m, std::string field_type_name)
                      return v.size();
                  })
             .def_property_readonly("dim", &VecArray::dim)
-            .def("get", py::overload_cast<size_t>(&VecArray::get, py::const_),
+            .def("get", py::overload_cast<ssize_t>(&VecArray::get, py::const_),
                  py::return_value_policy::reference)
-            .def("copy", &VecArray::copy)
-            .def("append", &VecArray::append)
-            .def("delete", &VecArray::delete_vectors)
-            .def("scal", py::overload_cast<F, const std::vector<size_t>&>(&VecArray::scal))
+            .def("copy", &VecArray::copy, py::arg("indices") = py::none())
+            .def("append", &VecArray::append, py::arg("other"), py::arg("remove_from_other") = false,
+                 py::arg("other_indices") = py::none())
+            .def("delete", &VecArray::delete_vectors, py::arg("indices"))
+            .def("scal", py::overload_cast<F, const std::optional<Indices>&>(&VecArray::scal),
+                 py::arg("alpha"), py::arg("indices") = py::none())
             .def("scal",
-                 py::overload_cast<const std::vector<F>&, const std::vector<size_t>&>(&VecArray::scal))
-            .def("axpy", py::overload_cast<F, const VecArrayInterface&, const std::vector<size_t>&,
-                                           const std::vector<size_t>&>(&VecArray::axpy))
+                 py::overload_cast<const std::vector<F>&, const std::optional<Indices>&>(&VecArray::scal),
+                 py::arg("alpha"), py::arg("indices") = py::none())
+            .def("axpy",
+                 py::overload_cast<F, const VecArrayInterface&, const std::optional<Indices>&,
+                                   const std::optional<Indices>&>(&VecArray::axpy),
+                 py::arg("alpha"), py::arg("x"), py::arg("indices") = py::none(),
+                 py::arg("x_indices") = py::none())
             .def("axpy",
                  py::overload_cast<const std::vector<F>&, const VecArrayInterface&,
-                                   const std::vector<size_t>&, const std::vector<size_t>&>(&VecArray::axpy))
-            .def("is_compatible_array", &VecArray::is_compatible_array);
+                                   const std::optional<Indices>&, const std::optional<Indices>&>(
+                     &VecArray::axpy),
+                 py::arg("alpha"), py::arg("x"), py::arg("indices") = py::none(),
+                 py::arg("x_indices") = py::none())
+            .def("is_compatible_array", &VecArray::is_compatible_array)
+            .def("print", &VecArray::print);
     return ret;
 }
 
 template <class F>
     requires std::floating_point<F> || std::is_same_v<F, std::complex<typename F::value_type>>
-auto bind_cpp_gram_schmidt(pybind11::module& m, std::string field_type_name)
+auto bind_cpp_gram_schmidt(pybind11::module& m, const std::string& field_type_name)
 {
     m.def((field_type_name + "_gram_schmidt_cpp").c_str(),
-          [](pybind11::array_t<F>& numpy_array)
+          [](const pybind11::array_t<F>& numpy_array)
           {
-              NumpyVectorArray<F> vec_array(numpy_array);
+              auto numpy_array_copy = pybind11::array_t<F>(numpy_array.request());
+              NumpyVectorArray<F> vec_array(numpy_array_copy);
               gram_schmidt_cpp(vec_array);
+              return vec_array.array();
           });
 }
 

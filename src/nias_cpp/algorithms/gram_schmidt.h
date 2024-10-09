@@ -1,13 +1,19 @@
 #ifndef NIAS_CPP_GRAM_SCHMIDT_H
 #define NIAS_CPP_GRAM_SCHMIDT_H
 
-#include <cstddef>
 #include <iostream>
+#include <memory>
+#include <stdexcept>
+#include <vector>
 
+#include <nias_cpp/concepts.h>
 #include <nias_cpp/interfaces/vectorarray.h>
 #include <nias_cpp/interpreter.h>
+#include <nias_cpp/type_traits.h>
 #include <nias_cpp/vectorarray/list.h>
-#include <pybind11/embed.h>
+#include <pybind11/cast.h>
+#include <pybind11/pybind11.h>
+#include <pybind11/pytypes.h>
 
 namespace nias
 {
@@ -21,10 +27,10 @@ std::shared_ptr<ListVectorArray<F>> gram_schmidt(std::shared_ptr<ListVectorArray
 
     // import nias_cpp module
     namespace py = pybind11;
-    py::module_ nias_cpp_module = py::module::import("nias_cpp");
+    const py::module_ nias_cpp_module = py::module::import("nias_cpp");
 
     // get the classes we need from the Python nias module
-    py::module_ nias_cpp_vectorarray = py::module::import("nias.bindings.nias_cpp.vectorarray");
+    const py::module_ nias_cpp_vectorarray = py::module::import("nias.bindings.nias_cpp.vectorarray");
     auto NiasVecArrayImpl = nias_cpp_vectorarray.attr("NiasCppVectorArrayImpl");
     auto NiasVecArray = nias_cpp_vectorarray.attr("NiasCppVectorArray");
     auto NiasCppInnerProduct =
@@ -39,7 +45,7 @@ std::shared_ptr<ListVectorArray<F>> gram_schmidt(std::shared_ptr<ListVectorArray
     py::object result = NiasGramSchmidt(nias_vec_array, NiasCppInnerProduct(), "copy"_a = true);
 
     auto ret = result.attr("impl").attr("impl").cast<std::shared_ptr<ListVectorArray<F>>>();
-    std::cout << "done\n\n" << std::endl;
+    std::cout << "done\n\n" << '\n';
     return ret;
 }
 
@@ -51,10 +57,10 @@ void gram_schmidt_in_place(std::shared_ptr<ListVectorArray<F>> vec_array)
 
     // import nias_cpp module
     namespace py = pybind11;
-    py::module_ nias_cpp_module = py::module::import("nias_cpp");
+    const py::module_ nias_cpp_module = py::module::import("nias_cpp");
 
     // get the classes we need from the Python nias module
-    py::module_ nias_cpp_vectorarray = py::module::import("nias.bindings.nias_cpp.vectorarray");
+    const py::module_ nias_cpp_vectorarray = py::module::import("nias.bindings.nias_cpp.vectorarray");
     auto NiasVecArrayImpl = nias_cpp_vectorarray.attr("NiasCppVectorArrayImpl");
     auto NiasVecArray = nias_cpp_vectorarray.attr("NiasCppVectorArray");
     auto NiasCppInnerProduct =
@@ -67,12 +73,12 @@ void gram_schmidt_in_place(std::shared_ptr<ListVectorArray<F>> vec_array)
 
     // execute the Python gram_schmidt function
     NiasGramSchmidt(nias_vec_array, NiasCppInnerProduct(), "copy"_a = false);
-    std::cout << "done\n\n" << std::endl;
+    std::cout << "done\n\n" << '\n';
 }
 
 template <floating_point_or_complex F>
 std::vector<F> dot_product(const VectorArrayInterface<F>& lhs, const VectorArrayInterface<F>& rhs,
-                           std::vector<size_t> lhs_indices, std::vector<size_t> rhs_indices)
+                           std::vector<ssize_t> lhs_indices, std::vector<ssize_t> rhs_indices)
 {
     const auto lhs_size = lhs_indices.empty() ? lhs.size() : lhs_indices.size();
     const auto rhs_size = rhs_indices.empty() ? rhs.size() : rhs_indices.size();
@@ -81,9 +87,9 @@ std::vector<F> dot_product(const VectorArrayInterface<F>& lhs, const VectorArray
         throw std::invalid_argument("lhs and rhs must have the same size and dimension");
     }
     std::vector<F> ret(lhs_size, F(0.));
-    for (size_t i = 0; i < lhs_size; ++i)
+    for (ssize_t i = 0; i < lhs_size; ++i)
     {
-        for (size_t j = 0; j < lhs.dim(); ++j)
+        for (ssize_t j = 0; j < lhs.dim(); ++j)
         {
             ret[i] += lhs.get(lhs_indices.empty() ? i : lhs_indices[i], j) *
                       rhs.get(rhs_indices.empty() ? i : rhs_indices[i], j);
@@ -97,9 +103,9 @@ void gram_schmidt_cpp(VectorArrayInterface<F>& vec_array)
 {
     constexpr F atol = 1e-15;
     std::vector<bool> remove(vec_array.size(), false);
-    for (size_t i = 0; i < vec_array.size(); ++i)
+    for (ssize_t i = 0; i < vec_array.size(); ++i)
     {
-        for (size_t j = 0; j < i; j++)
+        for (ssize_t j = 0; j < i; j++)
         {
             if (remove[j])
             {
@@ -120,8 +126,8 @@ void gram_schmidt_cpp(VectorArrayInterface<F>& vec_array)
             vec_array.scal(1. / std::sqrt(norm2), {i});
         }
     }
-    std::vector<size_t> indices_to_remove;
-    for (size_t i = 0; i < vec_array.size(); ++i)
+    std::vector<ssize_t> indices_to_remove;
+    for (ssize_t i = 0; i < vec_array.size(); ++i)
     {
         if (remove[i])
         {
