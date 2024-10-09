@@ -2,6 +2,7 @@ import numpy as np
 from nias.base.operators import IdentityOperator, OperatorBasedInnerProduct
 from nias.bindings.numpy.vectorarrays import NumpyVectorSpace
 from nias.linalg.gram_schmidt import gram_schmidt
+
 from nias_cpp import double_gram_schmidt_cpp
 
 # create test array
