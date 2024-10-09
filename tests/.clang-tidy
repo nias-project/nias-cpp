@@ -1,0 +1,7 @@
+---
+
+InheritParentConfig: true
+Checks: >
+  -*-magic-numbers, This would trigger for all of the compare values in float compare for example,
+  -readability-function-cognitive-complexity, Due to catch2 macro expansion this triggers for a lot of code making it useless,
+  -bugprone-exception-escape,

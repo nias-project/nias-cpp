@@ -1,0 +1,77 @@
+---
+# Note that the tests and/or examples subdir might have a sub-config that disables some checks.
+
+HeaderFilterRegex: (src|tests|examples)/.*
+ExcludeHeaderFilterRegex: .*/ut.hpp
+WarningsAsErrors: '*,-clang-diagnostic-unused-function'
+Checks: >
+  *,
+  We enable all warnings by default. This ensures we don't miss new and useful
+  warnings when a new version of clang-tidy is dropped.  The * to enable everything needs to be the first entry in the list.
+  Otherwise everything else gets ignored.
+
+  IMPORTANT
+  clang-tidy doesn't support comments but we can simulate comments by just
+  writing text directly here. These are then interpreted as warnings and will
+  be dropped. As long as you start every sentence with a capital letter and
+  don't use commas in your "comments" you should be fine.
+
+
+  We then disable individual checks with -<check_id> where <check_id> can be one
+  of https://clang.llvm.org/extra/clang-tidy/checks/list.html
+
+  Warnings that are rarely useful,
+  -altera-*, Checks related to OpenCL programming for FPGAs. Not relevant,
+  -abseil-*, We're not using Abseil,
+  -android-*,
+  -fuchsia-*, Fuchsia specific,
+  -zircon-*, Zircon specific,
+  -linuxkernel*,
+  -mpi-*,
+  -objc-*, Objective-c not relevant,
+  -llvmlibc-*, We want to use glibc,
+  -misc-misplaced-const,
+  -misc-no-recursion,
+  -readability-function-cognitive-complexity,
+
+  These don't match our general guidance,
+  -modernize-use-trailing-return-type,
+  -google-readability-braces-around-statements,
+  -readability-identifier-length,
+  This warns even for 'using namespace' in a .cpp file. We don't want that,
+  -google-build-using-namespace,
+
+  These warrant more discussion,
+  -cppcoreguidelines-avoid-const-or-ref-data-members,
+  -bugprone-easily-swappable-parameters,
+  -readability-avoid-const-params-in-decls,
+  -cppcoreguidelines-non-private-member-variables-in-classes,
+  -misc-non-private-member-variables-in-classes, This should be a duplicate of the above?,
+  -google-default-arguments,
+
+  Cannot use due a bug in clang-tidy (https://github.com/llvm/llvm-project/issues/52682),
+  -llvm-header-guard,
+
+  This warns for the build/linux_clang/tests/oasys/core/shared_object.h file (which is included
+  in our HeaderFilterRegex since it contains tests in its path)
+  The proper fix would be to exclude this file (or the whole build directory) from the check but
+  that is not possible/very hard to do since the regex syntax is very limited. Once we have
+  clang-tidy v19 we can use ExcludeHeaderFilterRegex and reenable the check,
+  -readability-avoid-unconditional-preprocessor-if,
+
+  This warns for any TODO left in source and could be useful,
+  -google-readability-todo,
+
+# clang-tidy can auto-run clang-format for us. Tell it which style to use.
+FormatStyle: file
+# The misc-include-cleaner check basically uses (a reduced version of) include-what-you-use to remove unused headers and add missing ones.
+# It works surprisingly well in most cases but sometimes it removes headers that are actually needed or adds system or private headers.
+# Luckily, we can specify headers that should be ignored by this check which we will do in the following.
+# - Do not allow to add sys/types.h and bits/chrono.h which are system/private headers
+# - Completely disable this check for Eigen since it seems to be completely confused by it (sometimes it just removes all Eigen headers
+# though they are clearly used, sometimes it replaces headers like Eigen/SparseCore by many headers from Eigen/src/*)
+CheckOptions:
+  - { key: misc-include-cleaner.IgnoreHeaders, value: .*sys/types.h;.*bits/chrono.h;Eigen/.*;__msvc_chrono.hpp;fmt.*ranges.h;nlohmann/json.*.hpp;pybind11/detail/.* }
+  # See https://clang.llvm.org/extra/clang-tidy/checks/readability/identifier-naming.html for a list of possible options
+  - { key: readability-identifier-naming.NamespaceCase,          value: lower_case }
+  - { key: readability-identifier-naming.NamespaceIgnoredRegexp,      value: "Catch" }

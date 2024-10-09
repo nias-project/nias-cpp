@@ -117,5 +117,11 @@ if(NIAS_CPP_MASTER_PROJECT)
         OVERRIDE_FIND_PACKAGE)
     FetchContent_MakeAvailable(ut)
     find_package(ut REQUIRED)
+    file(REMOVE ${ut_SOURCE_DIR}/.clang-tidy) # gives errors in our clang-tidy setup
+
     add_subdirectory(tests)
+
+    list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/cmake")
+    include(ClangTidySetup)
+    inspect_with_clang_tidy(src tests)
 endif()
