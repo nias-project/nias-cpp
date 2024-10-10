@@ -4,6 +4,7 @@
 #include <array>
 #include <functional>
 #include <initializer_list>
+#include <optional>
 #include <set>
 #include <stdexcept>
 #include <variant>
@@ -66,7 +67,7 @@ class Indices
       */
     [[nodiscard]] std::vector<ssize_t> as_vec(ssize_t length) const;
 
-    std::set<ssize_t> unique_indices(ssize_t length) const;
+    [[nodiscard]] std::set<ssize_t> unique_indices(ssize_t length) const;
 
    private:
     // compute start, stop, step, and slicelength for a slice
@@ -107,6 +108,8 @@ class Indices
     std::variant<std::vector<ssize_t>, pybind11::slice> indices_;
 };
 
+// Convenience class to not have to write Indices(pybind11::slice(start, stop, step)) when creating a slice
+// TODO: Drop this class?
 class Slice : public Indices
 {
    public:

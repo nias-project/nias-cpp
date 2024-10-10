@@ -29,7 +29,11 @@ class ListVectorArray : public VectorArrayInterface<F>
     using InterfaceType = VectorArrayInterface<F>;
 
    public:
-    // TODO: Add default constructor and append method to add vectors (not vectorarrays)
+    // Create an empty ListVectorArray with the given dimension
+    explicit ListVectorArray(ssize_t dim)
+        : dim_(dim)
+    {
+    }
 
     ListVectorArray(const std::vector<std::shared_ptr<VectorInterfaceType>>& vectors, ssize_t dim)
         : vectors_()
@@ -139,6 +143,21 @@ class ListVectorArray : public VectorArrayInterface<F>
                           : append_without_removal(dynamic_cast<ThisType&>(other), other_indices);
     }
 
+    // TODO: Think about append signatures
+    void append(const std::shared_ptr<VectorInterfaceType>& new_vector)
+    {
+        vectors_.push_back(new_vector->copy());
+    }
+
+    void append(const std::vector<std::shared_ptr<VectorInterfaceType>>& new_vectors)
+    {
+        vectors_.reserve(vectors_.size() + new_vectors.size());
+        for (const auto& vec : new_vectors)
+        {
+            vectors_.push_back(vec->copy());
+        }
+    }
+
     void delete_vectors(const std::optional<Indices>& indices) override
     {
         if (!indices)
@@ -168,6 +187,9 @@ class ListVectorArray : public VectorArrayInterface<F>
         }
         else
         {
+            // scaling the same vector multiple times is most likely not intended,
+            // so we require uniqueness for indices
+            this->check_indices_unique(*indices);
             indices->for_each(
                 [this, alpha](ssize_t i)
                 {
@@ -186,18 +208,25 @@ class ListVectorArray : public VectorArrayInterface<F>
             for (ssize_t i = 0; i < this->size(); ++i)
             {
                 const auto alpha_index = alpha.size() == 1 ? 0 : i;
-                vectors_[i]->scal(alpha_index);
+                vectors_[i]->scal(alpha[alpha_index]);
             }
         }
         else
         {
+            // scaling the same vector multiple times is most likely not intended,
+            // so we require uniqueness for indices
+            this->check_indices_unique(*indices);
             check(alpha.size() == indices->size(this->size()) || alpha.size() == 1,
                   "alpha must be scalar or have the same length as the array.");
+            ssize_t alpha_index = 0;
             indices->for_each(
-                [this, &alpha](ssize_t i)
+                [this, &alpha, &alpha_index](ssize_t i)
                 {
-                    const auto alpha_index = alpha.size() == 1 ? 0 : i;
                     vectors_[i]->scal(alpha[alpha_index]);
+                    if (alpha.size() > 1)
+                    {
+                        ++alpha_index;
+                    }
                 },
                 this->size());
         }
@@ -206,12 +235,24 @@ class ListVectorArray : public VectorArrayInterface<F>
     void axpy(const std::vector<F>& alpha, const InterfaceType& x, const std::optional<Indices>& indices = {},
               const std::optional<Indices>& x_indices = {}) override
     {
-        check(is_list_vector_array(x), "axpy is not implemented if x is not a ListVectorArray");
-        const auto this_size = indices ? indices->size(this->size()) : this->size();
+        check(this->is_compatible_array(x), "incompatible dimensions.");
+        if (indices)
+        {
+            // We do not want to write to the same index multiple times, so we require uniqueness for indices.
+            // Note that we do not require uniqueness for x_indices, it is okay to use
+            // the same vector (read-only) multiple times on the right-hand side.
+            this->check_indices_unique(*indices);
+        }
+        const auto this_size = indices ? indices->size(size()) : size();
         const auto x_size = x_indices ? x_indices->size(x.size()) : x.size();
         check(x_size == this_size || x_size == 1, "x must have length 1 or the same length as this");
+        if (this_size == 0)
+        {
+            return;
+        }
         check(alpha.size() == this_size || alpha.size() == 1,
               "alpha must be scalar or have the same length as x");
+        check(is_list_vector_array(x), "axpy is not implemented if x is not a ListVectorArray");
         for (ssize_t i = 0; i < this_size; ++i)
         {
             const auto this_index = indices ? indices->get(i, this->size()) : i;
@@ -304,11 +345,12 @@ class ListVectorArray : public VectorArrayInterface<F>
         else
         {
             vectors_.reserve(vectors_.size() + other_indices->size(other.size()));
-            // move selected entries of other to the end of this
+            // copy selected entries of other to the end of this
             other_indices->for_each(
                 [this, &other](ssize_t i)
                 {
-                    vectors_.push_back(std::move(other.vectors_[i]));
+                    // we cannot move here because there might be duplicated indices
+                    vectors_.push_back(other.vectors_[i]->copy());
                 },
                 other.size());
             other.delete_vectors(other_indices);

@@ -3,12 +3,12 @@
 #include <iostream>
 #include <memory>
 #include <string_view>
+#include <tuple>
 #include <vector>
 
 #include <boost/ut.hpp>
 #include <nias_cpp/algorithms/gram_schmidt.h>
 #include <nias_cpp/concepts.h>
-#include <nias_cpp/indices.h>
 #include <nias_cpp/interfaces/vector.h>
 #include <nias_cpp/interfaces/vectorarray.h>
 #include <nias_cpp/interpreter.h>
@@ -112,18 +112,16 @@ void test_cpp_gram_schmidt()
 
 int main()
 {
+    // TODO: This test needs to find the nias_cpp library (nias_cpp.cpython-312-x86_64-linux-gnu.so on Linux) or
+    // (e.g. if run from VSCode) it fails with errors like:
+    // "Unable to convert call argument '0' of type 'std::shared_ptr<nias::ListVectorArray<float> >' to Python object"
+    // Copying the library from the build to the tests folder (build/tests) fixes the problem.
     using namespace boost::ut;
     using namespace nias;
-    std::cout << "\n\n\n==========================\n";
-    std::cout << "=== Testing gram_schmidt_cpp ===\n";
-    std::cout << "================================\n" << '\n';
     "gram_schmidt_cpp"_test = []
     {
         test_cpp_gram_schmidt<double>();
     };
-    std::cout << "\n\n\n=====================================\n";
-    std::cout << "=== Testing gram_schmidt ===\n";
-    std::cout << "=====================================\n" << '\n';
     "gram_schmidt"_test = []<floating_point_or_complex F>
     {
         test_gram_schmidt<F>();

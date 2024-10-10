@@ -1,18 +1,19 @@
+#include <algorithm>
 #include <concepts>
+#include <limits>
 #include <optional>
+#include <set>
 #include <string>
 #include <string_view>
+#include <tuple>
 #include <vector>
 
 #include <boost/ut.hpp>
-#include <nias_cpp/algorithms/gram_schmidt.h>
 #include <nias_cpp/concepts.h>
 #include <nias_cpp/indices.h>
-#include <nias_cpp/interfaces/vector.h>
 #include <nias_cpp/interfaces/vectorarray.h>
 #include <nias_cpp/interpreter.h>
 #include <nias_cpp/type_traits.h>
-#include <nias_cpp/vectorarray/list.h>
 #include <nias_cpp/vectorarray/numpy.h>
 #include <pybind11/numpy.h>
 
@@ -87,6 +88,7 @@ bool approx_equal(const VectorArrayInterface<F>& lhs, const VectorArrayInterface
 
 int main()
 {
+    // TODO: Clean up, quite a lot of code duplication etc, but it works for now
     using namespace nias;
     using namespace boost::ut;
     using namespace boost::ut::bdd;
@@ -313,8 +315,9 @@ int main()
                         expect(exactly_equal(*v_copy2, v));
                         // non-empty indices
                         for (auto indices_set :
-                             {std::set<ssize_t>({0, std::min(ssize_t(2), size - 1)}), std::set<ssize_t>({0}),
-                              std::set<ssize_t> {-1, 0, std::min(ssize_t(1), size - 1)}})
+                             {std::set<ssize_t>({0, std::min(static_cast<ssize_t>(2), size - 1)}),
+                              std::set<ssize_t>({0}),
+                              std::set<ssize_t> {-1, 0, std::min(static_cast<ssize_t>(1), size - 1)}})
                         {
                             // reset vectorarrays
                             v_copy1 = v.copy();
@@ -395,9 +398,9 @@ int main()
                         {
                             for (ssize_t j = 0; j < dim; ++j)
                             {
-                                expect(v_copy1->get(i, j) == v.get(i, j) + alpha[i] * x.get(i, j))
+                                expect(v_copy1->get(i, j) == v.get(i, j) + (alpha[i] * x.get(i, j)))
                                     << "result of axpy should be correct";
-                                expect(v_copy2->get(i, j) == v.get(i, j) + alpha[0] * x.get(i, j))
+                                expect(v_copy2->get(i, j) == v.get(i, j) + (alpha[0] * x.get(i, j)))
                                     << "result of axpy should be correct";
                             }
                         }
@@ -417,13 +420,14 @@ int main()
 
                         // non-empty indices
                         for (auto indices_set :
-                             {std::set<ssize_t>({0, std::min(ssize_t(2), size - 1)}), std::set<ssize_t>({0}),
-                              std::set<ssize_t> {-1, 0, std::min(ssize_t(1), size - 1)}})
+                             {std::set<ssize_t>({0, std::min(static_cast<ssize_t>(2), size - 1)}),
+                              std::set<ssize_t>({0}),
+                              std::set<ssize_t> {-1, 0, std::min(static_cast<ssize_t>(1), size - 1)}})
                         {
-                            for (auto x_indices_set :
-                                 {std::set<ssize_t>({0, std::min(ssize_t(2), size - 1)}),
+                            for (const auto& x_indices_set :
+                                 {std::set<ssize_t>({0, std::min(static_cast<ssize_t>(2), size - 1)}),
                                   std::set<ssize_t>({0}),
-                                  std::set<ssize_t> {-1, 0, std::min(ssize_t(1), size - 1)}})
+                                  std::set<ssize_t> {-1, 0, std::min(static_cast<ssize_t>(1), size - 1)}})
                             {
                                 // reset vectorarrays
                                 v_copy1 = v.copy();
@@ -488,7 +492,7 @@ int main()
                                             {
                                                 expect(approx_equal(
                                                     v_copy->get(v_index, j),
-                                                    v.get(v_index, j) + F(42) * x.get(x_index, j)))
+                                                    v.get(v_index, j) + (F(42) * x.get(x_index, j))))
                                                     << "entries should have the correct entries";
                                             }
                                             if (same_size)

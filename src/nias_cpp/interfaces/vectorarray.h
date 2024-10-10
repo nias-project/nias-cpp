@@ -1,7 +1,6 @@
 #ifndef NIAS_CPP_INTERFACES_VECTORARRAY_H
 #define NIAS_CPP_INTERFACES_VECTORARRAY_H
 
-#include <cstddef>
 #include <iostream>
 #include <memory>
 #include <optional>
@@ -102,7 +101,7 @@ class ConstVectorArrayView : public VectorArrayInterface<F>
         {
             std::cerr << i << " ";
         }
-        std::cerr << std::endl;
+        std::cerr << '\n';
         view_indices->for_each(
             [&new_indices_vec, &old_indices_vec](ssize_t i)
             {
@@ -114,7 +113,7 @@ class ConstVectorArrayView : public VectorArrayInterface<F>
         {
             std::cerr << i << " ";
         }
-        std::cerr << std::endl;
+        std::cerr << '\n';
         return Indices(new_indices_vec);
     }
 

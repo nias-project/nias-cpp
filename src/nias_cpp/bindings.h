@@ -271,8 +271,10 @@ auto bind_nias_listvectorarray(pybind11::module& m, const std::string& field_typ
             .def("get", py::overload_cast<ssize_t>(&VecArray::get, py::const_),
                  py::return_value_policy::reference)
             .def("copy", &VecArray::copy, py::arg("indices") = py::none())
-            .def("append", &VecArray::append, py::arg("other"), py::arg("remove_from_other") = false,
-                 py::arg("other_indices") = py::none())
+            .def(
+                "append",
+                py::overload_cast<VecArrayInterface&, bool, const std::optional<Indices>&>(&VecArray::append),
+                py::arg("other"), py::arg("remove_from_other") = false, py::arg("other_indices") = py::none())
             .def("delete", &VecArray::delete_vectors, py::arg("indices"))
             .def("scal", py::overload_cast<F, const std::optional<Indices>&>(&VecArray::scal),
                  py::arg("alpha"), py::arg("indices") = py::none())

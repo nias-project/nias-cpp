@@ -19,6 +19,16 @@ namespace nias
 {
 
 
+/**
+ * \brief Gram-Schmidt orthogonalization via Python
+ *
+ * Performs Gram-Schmidt orthogonalization on a ListVectorArray by calling the
+ * Gram-Schmidt orthogonalization algorithm from the NiAS Python module. The
+ * resulting orthogonalized vectors are stored in a new ListVectorArray, the
+ * original array is not modified.
+ *
+ * \returns A new ListVectorArray containing the orthogonalized vectors.
+ */
 template <floating_point_or_complex F>
 std::shared_ptr<ListVectorArray<F>> gram_schmidt(std::shared_ptr<ListVectorArray<F>> vec_array)
 {
@@ -49,6 +59,13 @@ std::shared_ptr<ListVectorArray<F>> gram_schmidt(std::shared_ptr<ListVectorArray
     return ret;
 }
 
+/**
+ * \brief Gram-Schmidt orthogonalization via Python (in-place)
+ *
+ * Performs Gram-Schmidt orthogonalization on a ListVectorArray by calling the
+ * Gram-Schmidt orthogonalization algorithm from the NiAS Python module. Directly
+ * modifies the input ListVectorArray in-place.
+ */
 template <floating_point_or_complex F>
 void gram_schmidt_in_place(std::shared_ptr<ListVectorArray<F>> vec_array)
 {
@@ -76,6 +93,9 @@ void gram_schmidt_in_place(std::shared_ptr<ListVectorArray<F>> vec_array)
     std::cout << "done\n\n" << '\n';
 }
 
+/**
+ * \brief Component-wise Euclidean dot product of two vector arrays
+*/
 template <floating_point_or_complex F>
 std::vector<F> dot_product(const VectorArrayInterface<F>& lhs, const VectorArrayInterface<F>& rhs,
                            std::vector<ssize_t> lhs_indices, std::vector<ssize_t> rhs_indices)
@@ -98,6 +118,9 @@ std::vector<F> dot_product(const VectorArrayInterface<F>& lhs, const VectorArray
     return ret;
 }
 
+/**
+ * \brief Simple C++ implementation of the Gram-Schmidt orthogonalization algorithm
+ */
 template <floating_point_or_complex F>
 void gram_schmidt_cpp(VectorArrayInterface<F>& vec_array)
 {

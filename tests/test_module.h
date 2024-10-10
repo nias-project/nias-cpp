@@ -11,6 +11,7 @@
 #include <nias_cpp/interfaces/vector.h>
 #include <nias_cpp/type_traits.h>
 
+// Example Vector class for testing
 template <class F>
 class DynamicVector : public nias::VectorInterface<F>
 {

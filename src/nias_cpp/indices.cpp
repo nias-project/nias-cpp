@@ -134,7 +134,7 @@ std::vector<ssize_t> Indices::as_vec(ssize_t length) const
 std::set<ssize_t> Indices::unique_indices(ssize_t length) const
 {
     const auto indices_vec = as_vec(length);
-    return std::set<ssize_t>(indices_vec.begin(), indices_vec.end());
+    return {indices_vec.begin(), indices_vec.end()};
 }
 
 }  // namespace nias
