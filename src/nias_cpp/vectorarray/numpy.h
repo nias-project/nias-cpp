@@ -28,6 +28,7 @@ class NumpyVectorArray : public VectorArrayInterface<F>
     using InterfaceType = VectorArrayInterface<F>;
 
    public:
+    // TODO: We shoudl be able to pass a numpy array from Python without copy
     explicit NumpyVectorArray(const pybind11::array_t<F>& array)
         : array_(array)
     {
@@ -90,6 +91,8 @@ class NumpyVectorArray : public VectorArrayInterface<F>
 
     F get(ssize_t i, ssize_t j) const override
     {
+        check(i >= 0 && i < size(), "index i out of range");
+        check(j >= 0 && j < dim(), "index j out of range");
         return array_.at(i, j);
     }
 
@@ -216,6 +219,9 @@ class NumpyVectorArray : public VectorArrayInterface<F>
         }
         else
         {
+            // scaling the same vector multiple times is most likely not intended,
+            // so we require uniqueness for indices
+            this->check_indices_unique(*indices);
             indices->for_each(
                 [this, alpha](ssize_t i)
                 {
@@ -233,6 +239,12 @@ class NumpyVectorArray : public VectorArrayInterface<F>
         const auto this_size = indices ? indices->size(size()) : size();
         check(alpha.size() == this_size || alpha.size() == 1,
               "alpha must be scalar or have the same length as the array.");
+        if (indices)
+        {
+            // scaling the same vector multiple times is most likely not intended
+            // so we require uniqueness for indices
+            this->check_indices_unique(*indices);
+        }
         for (ssize_t i = 0; i < this_size; ++i)
         {
             const auto index = indices ? indices->get(i, size()) : i;
@@ -248,13 +260,23 @@ class NumpyVectorArray : public VectorArrayInterface<F>
               const std::optional<Indices>& x_indices = {}) override
     {
         check(this->is_compatible_array(x), "incompatible dimensions.");
+        if (indices)
+        {
+            // We do not want to write to the same index multiple times, so we require uniqueness for indices.
+            // Note that we do not require uniqueness for x_indices, it is okay to use
+            // the same vector (read-only) multiple times on the right-hand side.
+            this->check_indices_unique(*indices);
+        }
         const auto this_size = indices ? indices->size(size()) : size();
         const auto x_size = x_indices ? x_indices->size(x.size()) : x.size();
         check(x_size == this_size || x_size == 1, "x must have length 1 or the same length as this");
+        if (this_size == 0)
+        {
+            return;
+        }
         check(alpha.size() == this_size || alpha.size() == 1,
               "alpha must be scalar or have the same length as x");
         check(is_numpy_vector_array(x), "axpy is not implemented if x is not a NumpyVectorArray");
-
         for (ssize_t i = 0; i < this_size; ++i)
         {
             const auto this_index = indices ? indices->get(i, size()) : i;

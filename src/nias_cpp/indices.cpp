@@ -2,6 +2,7 @@
 
 #include <functional>
 #include <initializer_list>
+#include <set>
 #include <stdexcept>
 #include <utility>
 #include <variant>
@@ -21,6 +22,11 @@ Indices::Indices(ssize_t index)
 
 Indices::Indices(const std::vector<ssize_t>& indices)
     : indices_(indices)
+{
+}
+
+Indices::Indices(const std::set<ssize_t>& indices)
+    : indices_(std::vector<ssize_t>(indices.begin(), indices.end()))
 {
 }
 
@@ -53,7 +59,7 @@ ssize_t Indices::get(ssize_t i, ssize_t length) const
 {
     if (std::holds_alternative<std::vector<ssize_t>>(indices_))
     {
-        return std::get<std::vector<ssize_t>>(indices_)[i];
+        return positive_index(std::get<std::vector<ssize_t>>(indices_)[i], length);
     }
     const auto [start, stop, step, slicelength] = compute(length);
     if (i < 0 || i >= slicelength)
@@ -125,5 +131,10 @@ std::vector<ssize_t> Indices::as_vec(ssize_t length) const
     return indices;
 }
 
+std::set<ssize_t> Indices::unique_indices(ssize_t length) const
+{
+    const auto indices_vec = as_vec(length);
+    return std::set<ssize_t>(indices_vec.begin(), indices_vec.end());
+}
 
 }  // namespace nias

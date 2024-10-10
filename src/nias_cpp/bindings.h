@@ -229,7 +229,7 @@ auto bind_nias_listvectorarray(pybind11::module& m, const std::string& field_typ
             );
         }
 
-        void print() override
+        void print() const override
         {
             PYBIND11_OVERRIDE(void,              /* Return type */
                               VecArrayInterface, /* Parent class */
@@ -300,6 +300,7 @@ template <class F>
 auto bind_cpp_gram_schmidt(pybind11::module& m, const std::string& field_type_name)
 {
     m.def((field_type_name + "_gram_schmidt_cpp").c_str(),
+          // TODO: Should take a Python Nias Vectorarray
           [](const pybind11::array_t<F>& numpy_array)
           {
               auto numpy_array_copy = pybind11::array_t<F>(numpy_array.request());

@@ -29,6 +29,8 @@ class ListVectorArray : public VectorArrayInterface<F>
     using InterfaceType = VectorArrayInterface<F>;
 
    public:
+    // TODO: Add default constructor and append method to add vectors (not vectorarrays)
+
     ListVectorArray(const std::vector<std::shared_ptr<VectorInterfaceType>>& vectors, ssize_t dim)
         : vectors_()
         , dim_(dim)
