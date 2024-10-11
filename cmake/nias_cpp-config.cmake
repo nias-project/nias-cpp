@@ -30,6 +30,8 @@ function(nias_cpp_build_library target_name)
         ${ARG_UNPARSED_ARGUMENTS}
         ${_NIAS_CPP_DIR}/src/nias_cpp/algorithms/gram_schmidt.h
         ${_NIAS_CPP_DIR}/src/nias_cpp/concepts.h
+        ${_NIAS_CPP_DIR}/src/nias_cpp/indices.h
+        ${_NIAS_CPP_DIR}/src/nias_cpp/indices.cpp
         ${_NIAS_CPP_DIR}/src/nias_cpp/interpreter.h
         ${_NIAS_CPP_DIR}/src/nias_cpp/interpreter.cpp
         ${_NIAS_CPP_DIR}/src/nias_cpp/interfaces/vector.h

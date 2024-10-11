@@ -5,12 +5,13 @@
 #include <initializer_list>
 #include <memory>
 #include <type_traits>
-#include <utility>
 #include <vector>
 // #include <iostream>
 
 #include <nias_cpp/interfaces/vector.h>
+#include <nias_cpp/type_traits.h>
 
+// Example Vector class for testing
 template <class F>
 class DynamicVector : public nias::VectorInterface<F>
 {
@@ -21,41 +22,52 @@ class DynamicVector : public nias::VectorInterface<F>
     // constructors
     DynamicVector() = default;
 
-    DynamicVector(size_t dim, F value = 0.)
+    explicit DynamicVector(ssize_t dim, F value = 0.)
         : data_(dim, value) {};
 
     DynamicVector(std::initializer_list<F> init_list)
         : data_(init_list) {};
 
-    DynamicVector(const DynamicVector& other)
-        : data_(other.data_) {
-            // std::cout << "Example Vector copy constructor" << std::endl;
-        };
+    // destructor
+    ~DynamicVector() override = default;
 
-    DynamicVector(DynamicVector&& other)
-        : data_(std::move(other.data_)) {
-            // std::cout << "Example Vector move constructor" << std::endl;
-        };
+    // copy and move constructors and assignment operators
+    DynamicVector(const DynamicVector& other) = default;
+    DynamicVector(DynamicVector&& other) noexcept = default;
+    DynamicVector& operator=(const DynamicVector& other) = default;
+    DynamicVector& operator=(DynamicVector&& other) noexcept = default;
 
-    ~DynamicVector() override
-    {
-        // std::cout << "DynamicVector destructor for " << this << std::endl;
-    }
+    // functions which include printing for debugging
 
-    // DynamicVector copy and move assignment operators
-    DynamicVector& operator=(const DynamicVector& other)
-    {
-        // std::cout << "Example Vector copy assignment" << std::endl;
-        data_ = other.data_;
-        return *this;
-    }
-
-    DynamicVector& operator=(DynamicVector&& other)
-    {
-        // std::cout << "Example Vector move assignment" << std::endl;
-        data_ = std::move(other.data_);
-        return *this;
-    }
+    // DynamicVector(const DynamicVector& other)
+    //     : data_(other.data_) {
+    //         // std::cout << "Example Vector copy constructor" << std::endl;
+    //     };
+    //
+    // DynamicVector(DynamicVector&& other) noexcept
+    //     : data_(std::move(other.data_)) {
+    //           // std::cout << "Example Vector move constructor" << std::endl;
+    //       };
+    //
+    // ~DynamicVector() override
+    // {
+    //     // std::cout << "DynamicVector destructor for " << this << std::endl;
+    // }
+    //
+    // // DynamicVector copy and move assignment operators
+    // DynamicVector& operator=(const DynamicVector& other)
+    // {
+    //     // std::cout << "Example Vector copy assignment" << std::endl;
+    //     data_ = other.data_;
+    //     return *this;
+    // }
+    //
+    // DynamicVector& operator=(DynamicVector&& other) noexcept
+    // {
+    //     // std::cout << "Example Vector move assignment" << std::endl;
+    //     data_ = std::move(other.data_);
+    //     return *this;
+    // }
 
     // DynamicVector iterators
     Iterator begin()
@@ -68,46 +80,46 @@ class DynamicVector : public nias::VectorInterface<F>
         return data_.end();
     }
 
-    ConstIterator begin() const
+    [[nodiscard]] ConstIterator begin() const
     {
         return data_.begin();
     }
 
-    ConstIterator end() const
+    [[nodiscard]] ConstIterator end() const
     {
         return data_.end();
     }
 
     // DynamicVector accessors
-    F& get(size_t i) override
+    F& get(ssize_t i) override
     {
         return data_[i];
     }
 
-    const F& get(size_t i) const override
+    [[nodiscard]] const F& get(ssize_t i) const override
     {
         return data_[i];
     }
 
     // DynamicVector methods
-    size_t dim() const override
+    [[nodiscard]] ssize_t dim() const override
     {
         return data_.size();
     }
 
-    std::shared_ptr<nias::VectorInterface<F>> copy() const override
+    [[nodiscard]] std::shared_ptr<nias::VectorInterface<F>> copy() const override
     {
         // std::cout << "Copy called!" << std::endl;
         return std::make_shared<DynamicVector>(*this);
     }
 
-    F dot(const nias::VectorInterface<F>& other) const override
+    [[nodiscard]] F dot(const nias::VectorInterface<F>& other) const override
     {
         // We cannot use
         // return std::inner_product(begin(), end(), other.begin(), 0.0);
         // because VectorInterface does not define iterators
         F ret = 0;
-        for (size_t i = 0; i < dim(); ++i)
+        for (ssize_t i = 0; i < dim(); ++i)
         {
             if constexpr (std::is_floating_point_v<F>)
             {
@@ -138,7 +150,7 @@ class DynamicVector : public nias::VectorInterface<F>
         //                            return a + alpha * b;
         //                        });
         // because VectorInterface does not define iterators
-        for (size_t i = 0; i < dim(); ++i)
+        for (ssize_t i = 0; i < dim(); ++i)
         {
             data_[i] += alpha * x.get(i);
         }

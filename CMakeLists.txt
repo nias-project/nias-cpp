@@ -59,5 +59,15 @@ find_package(nias_cpp PATHS ${CMAKE_CURRENT_SOURCE_DIR}/cmake NO_DEFAULT_PATH)
 
 # add tests if this is the master project
 if(NIAS_CPP_MASTER_PROJECT)
+    include(FetchContent)
+    # add boost-ext/ut testing framework
+    FetchContent_Declare(
+        ut
+        GIT_REPOSITORY https://github.com/boost-ext/ut
+        GIT_TAG v2.0.0
+        # CMAKE_ARGS -DCMAKE_INSTALL_PREFIX=${CMAKE_BINARY_DIR}/extern/ut
+        OVERRIDE_FIND_PACKAGE)
+    FetchContent_MakeAvailable(ut)
+    find_package(ut REQUIRED)
     add_subdirectory(tests)
 endif()
