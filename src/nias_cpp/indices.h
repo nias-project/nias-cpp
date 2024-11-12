@@ -17,7 +17,7 @@ namespace nias
 {
 
 
-class Indices
+class __attribute__((visibility("default"))) Indices
 {
    public:
     /// The default constructor initializes indices_ to an empty vector

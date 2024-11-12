@@ -174,6 +174,13 @@ class VectorArrayInterface
     // return the dimension (length) of the vectors in the array
     [[nodiscard]] virtual ssize_t dim() const = 0;
 
+    // Hack to get the scalar type on the Python side by calling type(impl.scalar_zero())
+    // TODO: Find a better way to do this
+    [[nodiscard]] F scalar_zero() const
+    {
+        return F(0);
+    }
+
     virtual bool is_compatible_array(const ThisType& other) const
     {
         return dim() == other.dim();

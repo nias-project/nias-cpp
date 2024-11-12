@@ -2,6 +2,7 @@
 #define NIAS_CPP_VECTORARRAY_LIST_H
 
 #include <algorithm>
+#include <format>
 #include <functional>
 #include <memory>
 #include <optional>
@@ -86,11 +87,13 @@ class ListVectorArray : public VectorArrayInterface<F>
     {
         if (i < 0 || i >= size())
         {
-            throw std::out_of_range("ListVectorArray: index i out of range");
+            throw std::out_of_range(
+                std::format("ListVectorArray: index i={} out of range for {}x{} array", i, size(), dim()));
         }
         if (j < 0 || j >= dim())
         {
-            throw std::out_of_range("ListVectorArray: index j out of range");
+            throw std::out_of_range(
+                std::format("ListVectorArray: index j={} out of range for {}x{} array", j, size(), dim()));
         }
         return vectors_[i]->get(j);
     }
@@ -99,7 +102,8 @@ class ListVectorArray : public VectorArrayInterface<F>
     {
         if (i < 0 || i >= size())
         {
-            throw std::out_of_range("ListVectorArray: index i out of range");
+            throw std::out_of_range(
+                std::format("ListVectorArray: index i={} out of range for {}x{} array", i, size(), dim()));
         }
         return *vectors_[i];
     }
