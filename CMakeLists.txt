@@ -52,7 +52,14 @@ endif()
 find_package(Python REQUIRED COMPONENTS Interpreter Development.Module)
 
 # add pybind11
-add_subdirectory(extern/pybind11)
+include(FetchContent)
+FetchContent_Declare(
+    pybind11
+    GIT_REPOSITORY https://github.com/pybind/pybind11
+    GIT_TAG v2.13.6
+    OVERRIDE_FIND_PACKAGE)
+FetchContent_MakeAvailable(pybind11)
+find_package(pybind11 REQUIRED)
 
 # find our own package
 find_package(nias_cpp PATHS ${CMAKE_CURRENT_SOURCE_DIR}/cmake NO_DEFAULT_PATH)
