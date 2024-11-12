@@ -51,12 +51,18 @@ endif()
 
 find_package(Python REQUIRED COMPONENTS Interpreter Development.Module)
 
+# parse pyproject.toml to get pybind11 version
+execute_process(
+    COMMAND uv run --no-project --with toml cmake/parse_pyproject_toml.py pybind11
+    WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
+    OUTPUT_VARIABLE PYBIND11_VERSION)
+
 # add pybind11
 include(FetchContent)
 FetchContent_Declare(
     pybind11
     GIT_REPOSITORY https://github.com/pybind/pybind11
-    GIT_TAG v2.13.6
+    GIT_TAG "v${PYBIND11_VERSION}"
     OVERRIDE_FIND_PACKAGE)
 FetchContent_MakeAvailable(pybind11)
 find_package(pybind11 REQUIRED)
