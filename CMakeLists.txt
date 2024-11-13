@@ -113,8 +113,7 @@ if(NIAS_CPP_MASTER_PROJECT)
     FetchContent_Declare(
         ut
         GIT_REPOSITORY https://github.com/boost-ext/ut
-        GIT_TAG v2.0.0
-        # CMAKE_ARGS -DCMAKE_INSTALL_PREFIX=${CMAKE_BINARY_DIR}/extern/ut
+        GIT_TAG v2.1.1
         OVERRIDE_FIND_PACKAGE)
     FetchContent_MakeAvailable(ut)
     find_package(ut REQUIRED)

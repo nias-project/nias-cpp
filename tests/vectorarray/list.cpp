@@ -9,7 +9,6 @@
 #include <tuple>
 #include <vector>
 
-#include <boost/ut.hpp>
 #include <nias_cpp/concepts.h>
 #include <nias_cpp/indices.h>
 #include <nias_cpp/interfaces/vector.h>
@@ -19,6 +18,7 @@
 #include <nias_cpp/vectorarray/list.h>
 #include <pybind11/numpy.h>
 
+#include "../boost_ut_no_module.h"
 #include "../test_module.h"
 
 namespace

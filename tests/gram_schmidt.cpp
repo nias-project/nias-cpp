@@ -6,7 +6,6 @@
 #include <tuple>
 #include <vector>
 
-#include <boost/ut.hpp>
 #include <nias_cpp/algorithms/gram_schmidt.h>
 #include <nias_cpp/concepts.h>
 #include <nias_cpp/interfaces/vector.h>
@@ -17,6 +16,7 @@
 #include <nias_cpp/vectorarray/numpy.h>
 #include <pybind11/numpy.h>
 
+#include "boost_ut_no_module.h"
 #include "test_module.h"
 
 namespace

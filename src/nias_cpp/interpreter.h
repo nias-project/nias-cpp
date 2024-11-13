@@ -1,6 +1,8 @@
 #ifndef NIAS_CPP_INTERPRETER_H
 #define NIAS_CPP_INTERPRETER_H
 
+#include "nias_cpp_export.h"
+
 namespace nias
 {
 
@@ -12,7 +14,7 @@ namespace nias
 // py::finalize_interpreter() instead of py::scoped_interpreter but that does not work for
 // me either.
 // Maybe https://github.com/pybind/pybind11/pull/4769 plays a role here, too.
-void ensure_interpreter_is_running();
+void NIAS_CPP_EXPORT ensure_interpreter_is_running();
 
 
 }  // namespace nias

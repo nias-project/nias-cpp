@@ -156,7 +156,7 @@ class NumpyVectorArray : public VectorArrayInterface<F>
                 std::set<ssize_t> unique_indices(other_indices_vec.begin(), other_indices_vec.end());
                 // now remove entries corresponding to unique_indices from other
                 check(unique_indices.size() <= other.size(), "unique_indices contains invalid indices");
-                const auto new_size = other.size() - unique_indices.size();
+                const ssize_t new_size = other.size() - std::ssize(unique_indices);
                 pybind11::array_t<F> new_array_other(std::vector<ssize_t> {new_size, dim()});
                 ssize_t j = 0;  // index for new_array_other
                 for (ssize_t i = 0; i < other.size(); ++i)
