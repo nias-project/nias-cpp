@@ -92,6 +92,20 @@ find_package(pybind11 REQUIRED)
 # find our own package
 find_package(nias_cpp PATHS ${CMAKE_CURRENT_SOURCE_DIR}/cmake NO_DEFAULT_PATH)
 
+# generate export header
+include(GenerateExportHeader)
+generate_export_header(
+    nias_cpp
+    BASE_NAME
+    nias_cpp
+    EXPORT_MACRO_NAME
+    NIAS_CPP_EXPORT
+    EXPORT_FILE_NAME
+    nias_cpp_export.h
+    STATIC_DEFINE
+    NIAS_CPP_STATIC)
+install(FILES "${PROJECT_BINARY_DIR}/nias_cpp_export.h" DESTINATION "${NIAS_CPP_INCLUDE_INSTALL_DIR}")
+
 # add tests if this is the master project
 if(NIAS_CPP_MASTER_PROJECT)
     include(FetchContent)

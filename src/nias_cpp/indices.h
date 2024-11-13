@@ -13,11 +13,13 @@
 #include <nias_cpp/type_traits.h>
 #include <pybind11/pytypes.h>
 
+#include "nias_cpp_export.h"
+
 namespace nias
 {
 
 
-class __attribute__((visibility("default"))) Indices
+class NIAS_CPP_EXPORT Indices
 {
    public:
     /// The default constructor initializes indices_ to an empty vector
@@ -110,7 +112,7 @@ class __attribute__((visibility("default"))) Indices
 
 // Convenience class to not have to write Indices(pybind11::slice(start, stop, step)) when creating a slice
 // TODO: Drop this class?
-class Slice : public Indices
+class NIAS_CPP_EXPORT Slice : public Indices
 {
    public:
     Slice(std::optional<ssize_t> start, std::optional<ssize_t> stop,

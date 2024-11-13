@@ -43,7 +43,7 @@ function(nias_cpp_build_library target_name)
 
     target_include_directories(${target_name} SYSTEM PUBLIC ${_NIAS_CPP_DIR}/src)
 
-    target_include_directories(${target_name} SYSTEM PUBLIC ${_NIAS_CPP_DIR}/extern)
+    target_include_directories(${target_name} PUBLIC ${CMAKE_BINARY_DIR} ${NIAS_CPP_INSTALL_INCLUDE_DIR})
 
     target_link_libraries(${target_name} PUBLIC pybind11::pybind11 pybind11::embed)
 

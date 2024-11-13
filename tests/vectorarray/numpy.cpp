@@ -147,8 +147,8 @@ int main()
                                                  std::vector<ssize_t> {-1, 0, 1}})
                         {
                             const auto indices = Indices(indices_vec);
-                            const auto max_index = *std::max_element(indices_vec.begin(), indices_vec.end());
-                            const auto min_index = *std::min_element(indices_vec.begin(), indices_vec.end());
+                            const auto max_index = *std::ranges::max_element(indices_vec);
+                            const auto min_index = *std::ranges::min_element(indices_vec);
                             if (max_index >= size || min_index < -size)
                             {
                                 expect(throws(
