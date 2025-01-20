@@ -30,6 +30,7 @@ function(nias_cpp_build_library target_name)
         SHARED
         ${ARG_UNPARSED_ARGUMENTS}
         ${_NIAS_CPP_DIR}/src/nias_cpp/algorithms/gram_schmidt.h
+        ${_NIAS_CPP_DIR}/src/nias_cpp/checked_integer_cast.h
         ${_NIAS_CPP_DIR}/src/nias_cpp/concepts.h
         ${_NIAS_CPP_DIR}/src/nias_cpp/indices.h
         ${_NIAS_CPP_DIR}/src/nias_cpp/indices.cpp

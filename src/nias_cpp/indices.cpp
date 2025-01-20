@@ -8,6 +8,7 @@
 #include <variant>
 #include <vector>
 
+#include <nias_cpp/checked_integer_cast.h>
 #include <nias_cpp/type_traits.h>
 #include <pybind11/pytypes.h>
 
@@ -45,11 +46,7 @@ ssize_t Indices::size(ssize_t length) const
     if (std::holds_alternative<std::vector<ssize_t>>(indices_))
     {
         const auto ret = std::get<std::vector<ssize_t>>(indices_).size();
-        if (!std::in_range<ssize_t>(ret))
-        {
-            throw std::out_of_range("size() result is out of range");
-        }
-        return static_cast<ssize_t>(ret);
+        return checked_integer_cast<ssize_t>(ret);
     }
     auto [start, stop, step, slicelength] = compute(length);
     return slicelength;
@@ -59,7 +56,8 @@ ssize_t Indices::get(ssize_t i, ssize_t length) const
 {
     if (std::holds_alternative<std::vector<ssize_t>>(indices_))
     {
-        return positive_index(std::get<std::vector<ssize_t>>(indices_)[i], length);
+        return positive_index(std::get<std::vector<ssize_t>>(indices_)[checked_integer_cast<size_t>(i)],
+                              length);
     }
     const auto [start, stop, step, slicelength] = compute(length);
     if (i < 0 || i >= slicelength)
@@ -112,7 +110,7 @@ std::vector<ssize_t> Indices::as_vec(ssize_t length) const
     }
     const auto [start, stop, step, slicelength] = compute(length);
     std::vector<ssize_t> indices;
-    indices.reserve(slicelength);
+    indices.reserve(checked_integer_cast<size_t>(slicelength));
     if (step > 0)
     {
         for (ssize_t i = start; i < stop; i += step)
