@@ -11,13 +11,29 @@ you can use the following commands:
 
 ```bash
 python3 -m venv venv
-. venv/bin/activate
+source venv/bin/activate
 pip install .
 mkdir build && cd build
 cmake ..
 make
 ./tests/test_gram_schmidt
 ```
+
+Alternatively, you can use `uv` for the first steps
+
+```bash
+uv venv
+uv pip install .
+source .venv/bin/activate
+```
+
+Additional compiler flags can be added as usual, e.g., you can use
+
+```bash
+cmake -GNinja -DCMAKE_BUILD_TYPE=Debug -Wall -Wextra ..
+```
+
+to use ninja instead of make and build with debugging information and additional warnings.
 
 To run the python test, copy the test over to the build directory and run it with the python interpreter:
 

@@ -8,7 +8,7 @@ namespace nias
 
 void ensure_interpreter_is_running()
 {
-    static auto interpreter = pybind11::scoped_interpreter {};
+    static auto interpreter = pybind11::scoped_interpreter{};
 }
 
 

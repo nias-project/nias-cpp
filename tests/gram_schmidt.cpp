@@ -78,10 +78,10 @@ void test_gram_schmidt()
     using namespace nias;
 
     // Create some input vectors and print them
-    const std::vector<std::shared_ptr<VectorInterface<F>>> vectors {
-        std::shared_ptr<VectorInterface<F>>(new DynamicVector {F(1.), F(2.), F(3.)}),
-        std::shared_ptr<VectorInterface<F>>(new DynamicVector {F(4.), F(5.), F(6.)}),
-        std::shared_ptr<VectorInterface<F>>(new DynamicVector {F(7.), F(8.), F(9.)})};
+    const std::vector<std::shared_ptr<VectorInterface<F>>> vectors{
+        std::shared_ptr<VectorInterface<F>>(new DynamicVector{F(1.), F(2.), F(3.)}),
+        std::shared_ptr<VectorInterface<F>>(new DynamicVector{F(4.), F(5.), F(6.)}),
+        std::shared_ptr<VectorInterface<F>>(new DynamicVector{F(7.), F(8.), F(9.)})};
     print(vectors, "Input");
 
     // Perform Gram-Schmidt orthogonalization and print result
@@ -125,6 +125,6 @@ int main()
     "gram_schmidt"_test = []<floating_point_or_complex F>
     {
         test_gram_schmidt<F>();
-    } | std::tuple<float, double, std::complex<float>, std::complex<double>> {};
+    } | std::tuple<float, double, std::complex<float>, std::complex<double>>{};
     return 0;
 }

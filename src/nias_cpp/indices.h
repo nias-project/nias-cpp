@@ -6,7 +6,6 @@
 #include <initializer_list>
 #include <optional>
 #include <set>
-#include <stdexcept>
 #include <variant>
 #include <vector>
 
@@ -41,7 +40,7 @@ class NIAS_CPP_EXPORT Indices
     Indices(std::initializer_list<ssize_t> indices);
 
     /**
-      * \brief Get number of indices for sequence of given length
+      * \brief Get number of indices for a sequence of given length
       *
       * Returns the number of indices in the Indices object. Since the indices can
       * be a slice, the length of the sequence the indices are applied to is needed.
@@ -49,12 +48,21 @@ class NIAS_CPP_EXPORT Indices
     [[nodiscard]] ssize_t size(ssize_t length) const;
 
     /**
-      * \brief Get i-th index for sequence of given length
+      * \brief Get i-th index for a sequence of given length
       *
       * Since the stored indices can be a slice, the i-th index depends on the length
       * of the sequence the indices are applied.
       */
     [[nodiscard]] ssize_t get(ssize_t i, ssize_t length) const;
+
+    /**
+      * \brief Check that all indices are valid for a sequence of given length
+      *
+      * If we hold a list of indices, we check that all indices i fulfill -length <= i <= length-1.
+      * If we hold a slice, we do not have to check anything as slices will just be empty if they
+      * do not fit the sequence (e.g., for a sequence vec of length 10 in Python, vec[20:30] will just be empty)
+      */
+    void check_valid(ssize_t length) const;
 
     /**
       * \brief Apply a function for each index
@@ -73,39 +81,12 @@ class NIAS_CPP_EXPORT Indices
 
    private:
     // compute start, stop, step, and slicelength for a slice
-    [[nodiscard]] std::array<ssize_t, 4> compute(ssize_t length) const
-    {
-        if (!std::holds_alternative<pybind11::slice>(indices_))
-        {
-            throw std::runtime_error("compute can only be called if indices_ holds a slice");
-        }
-        ssize_t start = 0;
-        ssize_t stop = 0;
-        ssize_t step = 0;
-        ssize_t slicelength = 0;
-        // slice.compute calls PySlice_GetIndicesEx (from the Python C-API) which in turn calls PySlice_Unpack and then PySlice_AdjustIndices, see
-        // https://github.com/python/cpython/blob/main/Objects/sliceobject.c
-        // length is the length of the sequence which the slice is applied to, and slicelength is the length of the resulting slice (number of indices in the slice)
-        // PySlice_AdjustIndices adjust start and stop indices automatically to fit within the bounds of the sequence (depending on the sign of step)
-        std::get<pybind11::slice>(indices_).compute(length, &start, &stop, &step, &slicelength);
-        return {start, stop, step, slicelength};
-    }
+    [[nodiscard]] std::array<ssize_t, 4> compute(ssize_t length) const;
 
     // a valid index i for a sequence of length n in Python fulfills  -n <= i <= n-1
     // we cannot check this in the constructor because the length of the sequence is not known at that point,
     // so we have to check it here. Since we want a list of valid C++ indices, we also have to convert negative indices to positive ones.
-    [[nodiscard]] static ssize_t positive_index(ssize_t index, ssize_t length)
-    {
-        if (index < 0)
-        {
-            index += length;
-        }
-        if (index < 0 || index >= length)
-        {
-            throw std::out_of_range("Index must be between -length and length - 1");
-        }
-        return index;
-    }
+    [[nodiscard]] static ssize_t positive_index(ssize_t index, ssize_t length);
 
     std::variant<std::vector<ssize_t>, pybind11::slice> indices_;
 };

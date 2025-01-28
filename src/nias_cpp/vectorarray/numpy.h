@@ -28,14 +28,14 @@ class NumpyVectorArray : public VectorArrayInterface<F>
     using InterfaceType = VectorArrayInterface<F>;
 
    public:
-    // TODO: We shoudl be able to pass a numpy array from Python without copy
+    // TODO: We should be able to pass a numpy array from Python without copy
     explicit NumpyVectorArray(const pybind11::array_t<F>& array)
         : array_(array)
     {
         // Check if the array has the correct data type
         if (array.dtype() != pybind11::dtype::of<F>())
         {
-            throw std::invalid_argument("NumpyVectorArray: array must have F data type");
+            throw std::invalid_argument("NumpyVectorArray: array must have F as data type");
         }
 
         // Check if the array is one-dimensional
@@ -43,6 +43,11 @@ class NumpyVectorArray : public VectorArrayInterface<F>
         {
             throw std::invalid_argument("NumpyVectorArray: array must be two-dimensional");
         }
+    }
+
+    explicit NumpyVectorArray(ssize_t size, ssize_t dim)
+        : array_({size, dim})
+    {
     }
 
     bool operator==(const NumpyVectorArray& other) const
@@ -91,9 +96,14 @@ class NumpyVectorArray : public VectorArrayInterface<F>
 
     F get(ssize_t i, ssize_t j) const override
     {
-        check(i >= 0 && i < size(), "index i out of range");
-        check(j >= 0 && j < dim(), "index j out of range");
+        this->check_indices(i, j);
         return array_.at(i, j);
+    }
+
+    void set(ssize_t i, ssize_t j, F value) override
+    {
+        this->check_indices(i, j);
+        array_.mutable_at(i, j) = value;
     }
 
     std::shared_ptr<InterfaceType> copy(const std::optional<Indices>& indices = {}) const override
@@ -147,7 +157,7 @@ class NumpyVectorArray : public VectorArrayInterface<F>
             auto& old_array_other = dynamic_cast<ThisType&>(other).array_;
             if (!other_indices)
             {
-                old_array_other = pybind11::array_t<F>(std::vector<ssize_t> {0, dim()});
+                old_array_other = pybind11::array_t<F>(std::vector<ssize_t>{0, dim()});
             }
             else
             {
@@ -157,7 +167,7 @@ class NumpyVectorArray : public VectorArrayInterface<F>
                 // now remove entries corresponding to unique_indices from other
                 check(unique_indices.size() <= other.size(), "unique_indices contains invalid indices");
                 const ssize_t new_size = other.size() - std::ssize(unique_indices);
-                pybind11::array_t<F> new_array_other(std::vector<ssize_t> {new_size, dim()});
+                pybind11::array_t<F> new_array_other(std::vector<ssize_t>{new_size, dim()});
                 ssize_t j = 0;  // index for new_array_other
                 for (ssize_t i = 0; i < other.size(); ++i)
                 {
@@ -303,7 +313,7 @@ class NumpyVectorArray : public VectorArrayInterface<F>
     void axpy(F alpha, const InterfaceType& x, const std::optional<Indices>& indices = {},
               const std::optional<Indices>& x_indices = {})
     {
-        axpy(std::vector<F> {alpha}, x, indices, x_indices);
+        axpy(std::vector<F>{alpha}, x, indices, x_indices);
     }
 
    private:

@@ -2,7 +2,6 @@
 #define NIAS_CPP_VECTORARRAY_LIST_H
 
 #include <algorithm>
-#include <format>
 #include <functional>
 #include <memory>
 #include <optional>
@@ -83,28 +82,21 @@ class ListVectorArray : public VectorArrayInterface<F>
         return dim() == other.dim();
     }
 
-    F get(ssize_t i, ssize_t j) const
+    F get(ssize_t i, ssize_t j) const override
     {
-        if (i < 0 || i >= size())
-        {
-            throw std::out_of_range(
-                std::format("ListVectorArray: index i={} out of range for {}x{} array", i, size(), dim()));
-        }
-        if (j < 0 || j >= dim())
-        {
-            throw std::out_of_range(
-                std::format("ListVectorArray: index j={} out of range for {}x{} array", j, size(), dim()));
-        }
+        this->check_indices(i, j);
         return vectors_[i]->get(j);
+    }
+
+    void set(ssize_t i, ssize_t j, F value) override
+    {
+        this->check_indices(i, j);
+        vectors_[i]->get(j) = value;
     }
 
     const VectorInterfaceType& get(ssize_t i) const
     {
-        if (i < 0 || i >= size())
-        {
-            throw std::out_of_range(
-                std::format("ListVectorArray: index i={} out of range for {}x{} array", i, size(), dim()));
-        }
+        this->check_first_index(i);
         return *vectors_[i];
     }
 
@@ -128,6 +120,7 @@ class ListVectorArray : public VectorArrayInterface<F>
         }
         else
         {
+            indices->check_valid(this->size());
             copied_vectors.reserve(indices->size(this->size()));
             indices->for_each(
                 [this, &copied_vectors](ssize_t i)
@@ -169,6 +162,7 @@ class ListVectorArray : public VectorArrayInterface<F>
             vectors_.clear();
             return;
         }
+        indices->check_valid(this->size());
         // We first sort and deduplicate indices by converting to a std::set
         // We sort in reverse order (by using std::greater as second template argument) to avoid
         // invalidating indices when removing elements from the vector
@@ -191,6 +185,7 @@ class ListVectorArray : public VectorArrayInterface<F>
         }
         else
         {
+            indices->check_valid(this->size());
             // scaling the same vector multiple times is most likely not intended,
             // so we require uniqueness for indices
             this->check_indices_unique(*indices);
@@ -217,6 +212,7 @@ class ListVectorArray : public VectorArrayInterface<F>
         }
         else
         {
+            indices->check_valid(this->size());
             // scaling the same vector multiple times is most likely not intended,
             // so we require uniqueness for indices
             this->check_indices_unique(*indices);
@@ -242,10 +238,15 @@ class ListVectorArray : public VectorArrayInterface<F>
         check(this->is_compatible_array(x), "incompatible dimensions.");
         if (indices)
         {
+            indices->check_valid(this->size());
             // We do not want to write to the same index multiple times, so we require uniqueness for indices.
             // Note that we do not require uniqueness for x_indices, it is okay to use
             // the same vector (read-only) multiple times on the right-hand side.
             this->check_indices_unique(*indices);
+        }
+        if (x_indices)
+        {
+            x_indices->check_valid(x.size());
         }
         const auto this_size = indices ? indices->size(size()) : size();
         const auto x_size = x_indices ? x_indices->size(x.size()) : x.size();
@@ -280,7 +281,7 @@ class ListVectorArray : public VectorArrayInterface<F>
     void axpy(F alpha, const InterfaceType& x, const std::optional<Indices>& indices = {},
               const std::optional<Indices>& x_indices = {}) override
     {
-        axpy(std::vector<F> {alpha}, x, indices, x_indices);
+        axpy(std::vector<F>{alpha}, x, indices, x_indices);
     }
 
    private:
@@ -327,6 +328,7 @@ class ListVectorArray : public VectorArrayInterface<F>
         }
         else
         {
+            other_indices->check_valid(other.size());
             vectors_.reserve(vectors_.size() + other_indices->size(other.size()));
             other_indices->for_each(
                 [this, &other](ssize_t i)
@@ -348,6 +350,7 @@ class ListVectorArray : public VectorArrayInterface<F>
         }
         else
         {
+            other_indices->check_valid(other.size());
             vectors_.reserve(vectors_.size() + other_indices->size(other.size()));
             // copy selected entries of other to the end of this
             other_indices->for_each(

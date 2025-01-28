@@ -4,7 +4,6 @@
 #include <initializer_list>
 #include <set>
 #include <stdexcept>
-#include <utility>
 #include <variant>
 #include <vector>
 
@@ -17,7 +16,7 @@ namespace nias
 
 
 Indices::Indices(ssize_t index)
-    : indices_(std::vector<ssize_t> {index})
+    : indices_(std::vector<ssize_t>{index})
 {
 }
 
@@ -65,6 +64,20 @@ ssize_t Indices::get(ssize_t i, ssize_t length) const
         throw std::out_of_range("Index out of range");
     }
     return start + (i * step);
+}
+
+void Indices::check_valid(ssize_t length) const
+{
+    if (std::holds_alternative<std::vector<ssize_t>>(indices_))
+    {
+        for (auto&& index : std::get<std::vector<ssize_t>>(indices_))
+        {
+            if (index < -length || index >= length)
+            {
+                throw std::out_of_range("Index must be between -length and length - 1");
+            }
+        }
+    }
 }
 
 void Indices::for_each(const std::function<void(ssize_t)>& func, ssize_t length) const
@@ -133,6 +146,37 @@ std::set<ssize_t> Indices::unique_indices(ssize_t length) const
 {
     const auto indices_vec = as_vec(length);
     return {indices_vec.begin(), indices_vec.end()};
+}
+
+std::array<ssize_t, 4> Indices::compute(ssize_t length) const
+{
+    if (!std::holds_alternative<pybind11::slice>(indices_))
+    {
+        throw std::runtime_error("compute can only be called if indices_ holds a slice");
+    }
+    ssize_t start = 0;
+    ssize_t stop = 0;
+    ssize_t step = 0;
+    ssize_t slicelength = 0;
+    // slice.compute calls PySlice_GetIndicesEx (from the Python C-API) which in turn calls PySlice_Unpack and then PySlice_AdjustIndices, see
+    // https://github.com/python/cpython/blob/main/Objects/sliceobject.c
+    // length is the length of the sequence which the slice is applied to, and slicelength is the length of the resulting slice (number of indices in the slice)
+    // PySlice_AdjustIndices adjust start and stop indices automatically to fit within the bounds of the sequence (depending on the sign of step)
+    std::get<pybind11::slice>(indices_).compute(length, &start, &stop, &step, &slicelength);
+    return {start, stop, step, slicelength};
+}
+
+ssize_t Indices::positive_index(ssize_t index, ssize_t length)
+{
+    if (index < 0)
+    {
+        index += length;
+    }
+    if (index < 0 || index >= length)
+    {
+        throw std::out_of_range("Index must be between -length and length - 1");
+    }
+    return index;
 }
 
 }  // namespace nias

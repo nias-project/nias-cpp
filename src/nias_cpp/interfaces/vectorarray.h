@@ -1,6 +1,7 @@
 #ifndef NIAS_CPP_INTERFACES_VECTORARRAY_H
 #define NIAS_CPP_INTERFACES_VECTORARRAY_H
 
+#include <format>
 #include <iostream>
 #include <memory>
 #include <optional>
@@ -75,9 +76,16 @@ class ConstVectorArrayView : public VectorArrayInterface<F>
         return vec_array_.get(indices_ ? indices_->get(i, vec_array_.size()) : i, j);
     }
 
+    virtual void set(ssize_t /*i*/, ssize_t /*j*/, F /*value*/) override
+    {
+        throw std::runtime_error(
+            "ConstVectorArrayView: cannot modify vector array entries through a const view.");
+    }
+
     virtual void delete_vectors(const std::optional<Indices>& /*indices*/)
     {
-        throw std::runtime_error("ConstVectorArrayView: delete_vectors is not implemented.");
+        throw std::runtime_error(
+            "ConstVectorArrayView: cannot delete vectors from vector array through a const view.");
     }
 
    protected:
@@ -148,6 +156,11 @@ class VectorArrayView : public ConstVectorArrayView<F>
         vec_array_.axpy(alpha, x, indices, x_indices);
     }
 
+    virtual void set(ssize_t i, ssize_t j, F value) override
+    {
+        vec_array_.set(this->indices_ ? this->indices_->get(i, vec_array_.size()) : i, j, value);
+    }
+
    private:
     VectorArrayInterface<F>& vec_array_;
 };
@@ -158,6 +171,8 @@ class VectorArrayInterface
     using ThisType = VectorArrayInterface;
 
    public:
+    using ScalarType = F;
+
     // constructors and destructor
     VectorArrayInterface() = default;
     virtual ~VectorArrayInterface() = default;
@@ -198,7 +213,7 @@ class VectorArrayInterface
 
     virtual void scal(F alpha, const std::optional<Indices>& indices = {})
     {
-        scal(std::vector<F> {alpha}, indices);
+        scal(std::vector<F>{alpha}, indices);
     }
 
     virtual void axpy(const std::vector<F>& alpha, const ThisType& x,
@@ -208,11 +223,15 @@ class VectorArrayInterface
     virtual void axpy(F alpha, const ThisType& x, const std::optional<Indices>& indices = {},
                       const std::optional<Indices>& x_indices = {})
     {
-        axpy(std::vector<F> {alpha}, x, indices, x_indices);
+        axpy(std::vector<F>{alpha}, x, indices, x_indices);
     }
 
-    // TODO: Remove
     virtual F get(ssize_t i, ssize_t j) const = 0;
+
+    virtual void set(ssize_t /*i*/, ssize_t /*j*/, F /*value*/)
+    {
+        throw std::runtime_error("VectorArrayInterface: set is not implemented.");
+    }
 
     virtual void print() const
     {
@@ -240,7 +259,31 @@ class VectorArrayInterface
     virtual void delete_vectors(const std::optional<Indices>& indices) = 0;
 
    protected:
-    void check_indices_unique(const Indices& indices)
+    void check_first_index(ssize_t i) const
+    {
+        if (i < 0 || i >= size())
+        {
+            throw std::out_of_range(
+                std::format("ListVectorArray: index i={} out of range for {}x{} array", i, size(), dim()));
+        }
+    }
+
+    void check_second_index(ssize_t j) const
+    {
+        if (j < 0 || j >= dim())
+        {
+            throw std::out_of_range(
+                std::format("ListVectorArray: index j={} out of range for {}x{} array", j, size(), dim()));
+        }
+    }
+
+    void check_indices(ssize_t i, ssize_t j) const
+    {
+        check_first_index(i);
+        check_second_index(j);
+    }
+
+    void check_indices_unique(const Indices& indices) const
     {
         if (!(indices.unique_indices(size()).size() == indices.size(size())))
         {
