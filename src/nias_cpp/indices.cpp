@@ -3,11 +3,11 @@
 #include <functional>
 #include <initializer_list>
 #include <set>
-#include <stdexcept>
 #include <variant>
 #include <vector>
 
 #include <nias_cpp/checked_integer_cast.h>
+#include <nias_cpp/exceptions.h>
 #include <nias_cpp/type_traits.h>
 #include <pybind11/pytypes.h>
 
@@ -61,7 +61,7 @@ ssize_t Indices::get(ssize_t i, ssize_t length) const
     const auto [start, stop, step, slicelength] = compute(length);
     if (i < 0 || i >= slicelength)
     {
-        throw std::out_of_range("Index out of range");
+        throw InvalidIndexError("Index out of range");
     }
     return start + (i * step);
 }
@@ -74,7 +74,7 @@ void Indices::check_valid(ssize_t length) const
         {
             if (index < -length || index >= length)
             {
-                throw std::out_of_range("Index must be between -length and length - 1");
+                throw InvalidIndexError("Index must be between -length and length - 1");
             }
         }
     }
@@ -152,7 +152,7 @@ std::array<ssize_t, 4> Indices::compute(ssize_t length) const
 {
     if (!std::holds_alternative<pybind11::slice>(indices_))
     {
-        throw std::runtime_error("compute can only be called if indices_ holds a slice");
+        throw InvalidStateError("compute can only be called if indices_ holds a slice");
     }
     ssize_t start = 0;
     ssize_t stop = 0;
@@ -174,7 +174,7 @@ ssize_t Indices::positive_index(ssize_t index, ssize_t length)
     }
     if (index < 0 || index >= length)
     {
-        throw std::out_of_range("Index must be between -length and length - 1");
+        throw InvalidIndexError("Index must be between -length and length - 1");
     }
     return index;
 }

@@ -6,12 +6,12 @@
 #include <memory>
 #include <optional>
 #include <set>
-#include <stdexcept>
 #include <string>
 #include <typeinfo>
 #include <vector>
 
 #include <nias_cpp/concepts.h>
+#include <nias_cpp/exceptions.h>
 #include <nias_cpp/indices.h>
 #include <nias_cpp/interfaces/vector.h>
 #include <nias_cpp/interfaces/vectorarray.h>
@@ -186,9 +186,6 @@ class ListVectorArray : public VectorArrayInterface<F>
         else
         {
             indices->check_valid(this->size());
-            // scaling the same vector multiple times is most likely not intended,
-            // so we require uniqueness for indices
-            this->check_indices_unique(*indices);
             indices->for_each(
                 [this, alpha](ssize_t i)
                 {
@@ -202,31 +199,22 @@ class ListVectorArray : public VectorArrayInterface<F>
     {
         if (!indices)
         {
-            check(alpha.size() == this->size() || alpha.size() == 1,
-                  "alpha must be scalar or have the same length as the array.");
+            check(alpha.size() == this->size(), "alpha must have the same length as the array.");
             for (ssize_t i = 0; i < this->size(); ++i)
             {
-                const auto alpha_index = alpha.size() == 1 ? 0 : i;
-                vectors_[i]->scal(alpha[alpha_index]);
+                vectors_[i]->scal(alpha[i]);
             }
         }
         else
         {
             indices->check_valid(this->size());
-            // scaling the same vector multiple times is most likely not intended,
-            // so we require uniqueness for indices
-            this->check_indices_unique(*indices);
-            check(alpha.size() == indices->size(this->size()) || alpha.size() == 1,
-                  "alpha must be scalar or have the same length as the array.");
+            check(alpha.size() == indices->size(this->size()), "alpha must have the same length as indices");
             ssize_t alpha_index = 0;
             indices->for_each(
                 [this, &alpha, &alpha_index](ssize_t i)
                 {
                     vectors_[i]->scal(alpha[alpha_index]);
-                    if (alpha.size() > 1)
-                    {
-                        ++alpha_index;
-                    }
+                    ++alpha_index;
                 },
                 this->size());
         }
@@ -239,10 +227,6 @@ class ListVectorArray : public VectorArrayInterface<F>
         if (indices)
         {
             indices->check_valid(this->size());
-            // We do not want to write to the same index multiple times, so we require uniqueness for indices.
-            // Note that we do not require uniqueness for x_indices, it is okay to use
-            // the same vector (read-only) multiple times on the right-hand side.
-            this->check_indices_unique(*indices);
         }
         if (x_indices)
         {
@@ -302,7 +286,7 @@ class ListVectorArray : public VectorArrayInterface<F>
     {
         if (!condition)
         {
-            throw std::invalid_argument("ListVectorArray: " + message);
+            throw InvalidArgumentError("ListVectorArray: " + message);
         }
     }
 

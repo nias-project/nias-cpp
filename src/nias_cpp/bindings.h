@@ -5,11 +5,11 @@
 #include <concepts>
 #include <memory>
 #include <optional>
-#include <stdexcept>
 #include <string>
 #include <vector>
 
 #include <nias_cpp/algorithms/gram_schmidt.h>
+#include <nias_cpp/exceptions.h>
 #include <nias_cpp/indices.h>
 #include <nias_cpp/interfaces/vector.h>
 #include <nias_cpp/interfaces/vectorarray.h>
@@ -84,7 +84,7 @@ auto bind_nias_vectorinterface(pybind11::module& m, const std::string& name = "V
 
         F& get(ssize_t i) override
         {
-            throw std::invalid_argument("Not implemented yet");
+            throw NotImplementedError("Not implemented yet");
             PYBIND11_OVERRIDE_PURE_NAME(F&,            /* Return type */
                                         VecInterface,  /* Parent class */
                                         "__setitem__", /* Name of function in Python */
@@ -95,7 +95,7 @@ auto bind_nias_vectorinterface(pybind11::module& m, const std::string& name = "V
 
         const F& get(ssize_t i) const override
         {
-            throw std::invalid_argument("Not implemented yet");
+            throw NotImplementedError("Not implemented yet");
             PYBIND11_OVERRIDE_PURE_NAME(const F&,      /* Return type */
                                         VecInterface,  /* Parent class */
                                         "__getitem__", /* Name of function in Python */

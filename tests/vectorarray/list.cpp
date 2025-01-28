@@ -15,12 +15,9 @@
 
 int main()
 {
-    // TODO: Clean up, quite a lot of code duplication etc, but it works for now
     using namespace nias;
     using namespace boost::ut;
-    using namespace boost::ut::bdd;
     ensure_interpreter_is_running();
-
 
     "ListVectorArray"_test = []<std::floating_point F>()
     {

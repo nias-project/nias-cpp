@@ -5,7 +5,6 @@
 #include <memory>
 #include <optional>
 #include <set>
-#include <stdexcept>
 #include <string>
 #include <typeinfo>
 #include <vector>
@@ -35,13 +34,13 @@ class NumpyVectorArray : public VectorArrayInterface<F>
         // Check if the array has the correct data type
         if (array.dtype() != pybind11::dtype::of<F>())
         {
-            throw std::invalid_argument("NumpyVectorArray: array must have F as data type");
+            throw InvalidArgumentError("NumpyVectorArray: array must have F as data type");
         }
 
         // Check if the array is one-dimensional
         if (array.ndim() != 2)
         {
-            throw std::invalid_argument("NumpyVectorArray: array must be two-dimensional");
+            throw InvalidArgumentError("NumpyVectorArray: array must be two-dimensional");
         }
     }
 
@@ -112,6 +111,7 @@ class NumpyVectorArray : public VectorArrayInterface<F>
         {
             return std::make_shared<ThisType>(pybind11::array_t<F>(array_.request()));
         }
+        indices->check_valid(this->size());
         pybind11::array_t<F> sub_array({indices->size(this->size()), dim()});
         ssize_t i = 0;  // index for sub_array
         indices->for_each(
@@ -131,6 +131,10 @@ class NumpyVectorArray : public VectorArrayInterface<F>
                 const std::optional<Indices>& other_indices = {}) override
     {
         check(is_numpy_vector_array(other), "append is not (yet) implemented if x is not a NumpyVectorArray");
+        if (other_indices)
+        {
+            other_indices->check_valid(other.size());
+        }
         const ssize_t other_size = other_indices ? other_indices->size(other.size()) : other.size();
         pybind11::array_t<F> new_array({size() + other_size, dim()});
         // copy old data
@@ -193,7 +197,7 @@ class NumpyVectorArray : public VectorArrayInterface<F>
         std::set<ssize_t> unique_indices(indices_vec.begin(), indices_vec.end());
         if (unique_indices.size() > size())
         {
-            throw std::invalid_argument("Indices contain invalid indices");
+            throw InvalidArgumentError("Indices contain invalid indices");
         }
         const ssize_t new_size = size() - unique_indices.size();
         std::vector<ssize_t> indices_to_keep;
@@ -229,9 +233,7 @@ class NumpyVectorArray : public VectorArrayInterface<F>
         }
         else
         {
-            // scaling the same vector multiple times is most likely not intended,
-            // so we require uniqueness for indices
-            this->check_indices_unique(*indices);
+            indices->check_valid(this->size());
             indices->for_each(
                 [this, alpha](ssize_t i)
                 {
@@ -246,23 +248,32 @@ class NumpyVectorArray : public VectorArrayInterface<F>
 
     void scal(const std::vector<F>& alpha, const std::optional<Indices>& indices = {}) override
     {
-        const auto this_size = indices ? indices->size(size()) : size();
-        check(alpha.size() == this_size || alpha.size() == 1,
-              "alpha must be scalar or have the same length as the array.");
-        if (indices)
+        if (!indices)
         {
-            // scaling the same vector multiple times is most likely not intended
-            // so we require uniqueness for indices
-            this->check_indices_unique(*indices);
-        }
-        for (ssize_t i = 0; i < this_size; ++i)
-        {
-            const auto index = indices ? indices->get(i, size()) : i;
-            const auto alpha_index = alpha.size() == 1 ? 0 : i;
-            for (ssize_t j = 0; j < dim(); ++j)
+            check(alpha.size() == this->size(), "alpha must have the same length as the array.");
+            for (ssize_t i = 0; i < size(); ++i)
             {
-                array_.mutable_at(index, j) *= alpha[alpha_index];
+                for (ssize_t j = 0; j < dim(); ++j)
+                {
+                    array_.mutable_at(i, j) *= alpha[i];
+                }
             }
+        }
+        else
+        {
+            indices->check_valid(this->size());
+            check(alpha.size() == indices->size(this->size()), "alpha must have the same length as indices");
+            ssize_t alpha_index = 0;
+            indices->for_each(
+                [this, &alpha, &alpha_index](ssize_t i)
+                {
+                    for (ssize_t j = 0; j < dim(); ++j)
+                    {
+                        array_.mutable_at(i, j) *= alpha[alpha_index];
+                        ++alpha_index;
+                    }
+                },
+                this->size());
         }
     }
 
@@ -334,7 +345,7 @@ class NumpyVectorArray : public VectorArrayInterface<F>
     {
         if (!condition)
         {
-            throw std::invalid_argument("NumpyVectorArray: " + message);
+            throw InvalidArgumentError("NumpyVectorArray: " + message);
         }
     }
 

@@ -5,10 +5,10 @@
 #include <iostream>
 #include <memory>
 #include <optional>
-#include <stdexcept>
 #include <vector>
 
 #include <nias_cpp/concepts.h>
+#include <nias_cpp/exceptions.h>
 #include <nias_cpp/indices.h>
 #include <nias_cpp/type_traits.h>
 #include <sys/types.h>
@@ -56,19 +56,19 @@ class ConstVectorArrayView : public VectorArrayInterface<F>
                 const std::optional<Indices>& /*other_indices*/ = {}) override
     {
         // TODO: Add custom Nias exception
-        throw std::runtime_error("ConstVectorArrayView: append is not implemented (call copy() first).");
+        throw NotImplementedError("ConstVectorArrayView: append is not implemented (call copy() first).");
     }
 
     void scal(const std::vector<F>& /*alpha*/, const std::optional<Indices>& /*view_indices*/ = {}) override
     {
-        throw std::runtime_error("ConstVectorArrayView: scal is not implemented, use VectorArrayView.");
+        throw NotImplementedError("ConstVectorArrayView: scal is not implemented, use VectorArrayView.");
     }
 
     void axpy(const std::vector<F>& /*alpha*/, const InterfaceType& /*x*/,
               const std::optional<Indices>& /*view_indices*/ = {},
               const std::optional<Indices>& /*x_indices*/ = {})
     {
-        throw std::runtime_error("ConstVectorArrayView: axpy is not implemented, use VectorArrayView.");
+        throw NotImplementedError("ConstVectorArrayView: axpy is not implemented, use VectorArrayView.");
     }
 
     F get(ssize_t i, ssize_t j) const override
@@ -78,13 +78,13 @@ class ConstVectorArrayView : public VectorArrayInterface<F>
 
     virtual void set(ssize_t /*i*/, ssize_t /*j*/, F /*value*/) override
     {
-        throw std::runtime_error(
+        throw NotImplementedError(
             "ConstVectorArrayView: cannot modify vector array entries through a const view.");
     }
 
     virtual void delete_vectors(const std::optional<Indices>& /*indices*/)
     {
-        throw std::runtime_error(
+        throw NotImplementedError(
             "ConstVectorArrayView: cannot delete vectors from vector array through a const view.");
     }
 
@@ -230,7 +230,7 @@ class VectorArrayInterface
 
     virtual void set(ssize_t /*i*/, ssize_t /*j*/, F /*value*/)
     {
-        throw std::runtime_error("VectorArrayInterface: set is not implemented.");
+        throw NotImplementedError("VectorArrayInterface: set is not implemented.");
     }
 
     virtual void print() const
@@ -263,7 +263,7 @@ class VectorArrayInterface
     {
         if (i < 0 || i >= size())
         {
-            throw std::out_of_range(
+            throw InvalidIndexError(
                 std::format("ListVectorArray: index i={} out of range for {}x{} array", i, size(), dim()));
         }
     }
@@ -272,7 +272,7 @@ class VectorArrayInterface
     {
         if (j < 0 || j >= dim())
         {
-            throw std::out_of_range(
+            throw InvalidIndexError(
                 std::format("ListVectorArray: index j={} out of range for {}x{} array", j, size(), dim()));
         }
     }
@@ -281,14 +281,6 @@ class VectorArrayInterface
     {
         check_first_index(i);
         check_second_index(j);
-    }
-
-    void check_indices_unique(const Indices& indices) const
-    {
-        if (!(indices.unique_indices(size()).size() == indices.size(size())))
-        {
-            throw std::invalid_argument("Indices have to be unique for this function!");
-        }
     }
 };
 

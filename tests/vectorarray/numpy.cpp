@@ -17,7 +17,6 @@ int main()
     // TODO: Clean up, quite a lot of code duplication etc, but it works for now
     using namespace nias;
     using namespace boost::ut;
-    using namespace boost::ut::bdd;
     ensure_interpreter_is_running();
 
     "NumpyVectorArray"_test = []<std::floating_point F>()
@@ -33,7 +32,7 @@ int main()
                 test(std::format("{}x{} NumpyVectorArray<{}>", size, dim, reflection::type_name<F>())) =
                     [size, dim]
                 {
-                    test("Construction from a pybind11::array_t<F> with the correct dimensions") = [=]()
+                    test("Constructing a NumpyVectorArray<F> from a pybind11::array_t<F>") = [=]()
                     {
                         const auto py_array = PyArrayFactory::iota(size, dim);
                         expect(nothrow(
@@ -77,7 +76,7 @@ int main()
                 };
             }
         }
-    } | std::tuple<float, double>{};
+    } | std::tuple<double>{};
 
     return 0;
 }

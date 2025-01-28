@@ -32,6 +32,8 @@ function(nias_cpp_build_library target_name)
         ${_NIAS_CPP_DIR}/src/nias_cpp/algorithms/gram_schmidt.h
         ${_NIAS_CPP_DIR}/src/nias_cpp/checked_integer_cast.h
         ${_NIAS_CPP_DIR}/src/nias_cpp/concepts.h
+        ${_NIAS_CPP_DIR}/src/nias_cpp/exceptions.h
+        ${_NIAS_CPP_DIR}/src/nias_cpp/exceptions.cpp
         ${_NIAS_CPP_DIR}/src/nias_cpp/indices.h
         ${_NIAS_CPP_DIR}/src/nias_cpp/indices.cpp
         ${_NIAS_CPP_DIR}/src/nias_cpp/interpreter.h
