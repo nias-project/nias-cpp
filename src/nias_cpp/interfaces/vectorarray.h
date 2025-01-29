@@ -46,27 +46,28 @@ class ConstVectorArrayView : public VectorArrayInterface<F>
         return vec_array_.dim();
     }
 
-    std::shared_ptr<InterfaceType> copy(const std::optional<Indices>& view_indices = {}) const
+    std::shared_ptr<InterfaceType> copy(const std::optional<Indices>& view_indices = std::nullopt) const
     {
         const auto indices = new_indices(view_indices);
         return vec_array_.copy(indices);
     }
 
     void append(InterfaceType& /*other*/, bool /*remove_from_other*/ = false,
-                const std::optional<Indices>& /*other_indices*/ = {}) override
+                const std::optional<Indices>& /*other_indices*/ = std::nullopt) override
     {
         // TODO: Add custom Nias exception
         throw NotImplementedError("ConstVectorArrayView: append is not implemented (call copy() first).");
     }
 
-    void scal(const std::vector<F>& /*alpha*/, const std::optional<Indices>& /*view_indices*/ = {}) override
+    void scal(const std::vector<F>& /*alpha*/,
+              const std::optional<Indices>& /*view_indices*/ = std::nullopt) override
     {
         throw NotImplementedError("ConstVectorArrayView: scal is not implemented, use VectorArrayView.");
     }
 
     void axpy(const std::vector<F>& /*alpha*/, const InterfaceType& /*x*/,
-              const std::optional<Indices>& /*view_indices*/ = {},
-              const std::optional<Indices>& /*x_indices*/ = {})
+              const std::optional<Indices>& /*view_indices*/ = std::nullopt,
+              const std::optional<Indices>& /*x_indices*/ = std::nullopt)
     {
         throw NotImplementedError("ConstVectorArrayView: axpy is not implemented, use VectorArrayView.");
     }
@@ -142,15 +143,15 @@ class VectorArrayView : public ConstVectorArrayView<F>
     {
     }
 
-    void scal(const std::vector<F>& alpha, const std::optional<Indices>& view_indices = {}) override
+    void scal(const std::vector<F>& alpha, const std::optional<Indices>& view_indices = std::nullopt) override
     {
         const auto indices = this->new_indices(view_indices);
         vec_array_.scal(alpha, indices);
     }
 
     void axpy(const std::vector<F>& alpha, const InterfaceType& x,
-              const std::optional<Indices>& view_indices = {},
-              const std::optional<Indices>& x_indices = {}) override
+              const std::optional<Indices>& view_indices = std::nullopt,
+              const std::optional<Indices>& x_indices = std::nullopt) override
     {
         const auto indices = this->new_indices(view_indices);
         vec_array_.axpy(alpha, x, indices, x_indices);
@@ -183,10 +184,10 @@ class VectorArrayInterface
     VectorArrayInterface& operator=(const ThisType&) = default;
     VectorArrayInterface& operator=(ThisType&&) = default;
 
-    // return the number of vectors in the array
+    /// \brief return the number of vectors in the array
     [[nodiscard]] virtual ssize_t size() const = 0;
 
-    // return the dimension (length) of the vectors in the array
+    /// \brief return the dimension (length) of the vectors in the array
     [[nodiscard]] virtual ssize_t dim() const = 0;
 
     // Hack to get the scalar type on the Python side by calling type(impl.scalar_zero())
@@ -196,38 +197,103 @@ class VectorArrayInterface
         return F(0);
     }
 
+    /**
+     * \brief Checks that other is compatible with this VectorArray
+     * \todo What does that mean exactly? Currently only checks dimensions.
+     */
     virtual bool is_compatible_array(const ThisType& other) const
     {
         return dim() == other.dim();
     }
 
-    // copy (a subset of) the VectorArray to a new VectorArray
-    // TODO: Should this be a unique ptr?
-    // TODO: Return a view?
-    virtual std::shared_ptr<ThisType> copy(const std::optional<Indices>& indices = {}) const = 0;
+    /**
+     * \brief Copies (a subset of) the VectorArray to a new VectorArray
+     *
+     * Copies the vectors corresponding to \c indices to a new VectorArray (in the order given by <tt>indices</tt>).
+     * If no indices are given, all vectors are copied.
+     *
+     * \param indices: Indices of the vectors to copy. If std::nullopt (the default), all vectors are copied.
+     * \note Indices do not have to be unique. If indices are repeated, the returned VectorArray
+     * will contain multiple copies of the corresponding vector.
+     * \todo: Should this be a unique ptr?
+     * \todo: Return a view?
+     */
+    virtual std::shared_ptr<ThisType> copy(const std::optional<Indices>& indices = std::nullopt) const = 0;
 
+    /**
+     * \brief Appends (a subset of) another VectorArray to this VectorArray
+     *
+     * Appends the vectors of \c other corresponding to \c other_indices to this VectorArray (in the order
+     * given by \c other_indices). If no indices are given, all vectors are appended.
+     *
+     * \param other: The VectorArray to append.
+     * \param remove_from_other: If true, the vectors are removed from \c other after appending.
+     * \param other_indices: Indices of the vectors to append. If std::nullopt (the default), all vectors are appended.
+     * \note Indices in \c other_indices do not have to be unique. If indices are repeated, the corresponding vector
+     * is simply appended multiple times.
+     */
     virtual void append(ThisType& other, bool remove_from_other = false,
-                        const std::optional<Indices>& other_indices = {}) = 0;
+                        const std::optional<Indices>& other_indices = std::nullopt) = 0;
 
-    virtual void scal(const std::vector<F>& alpha, const std::optional<Indices>& indices = {}) = 0;
+    /**
+     * \brief Scales (a subset of) the vectors by entries of alpha
+     *
+     * If no indices are given, alpha has to have the same size as the VectorArray, and each vector is scaled by the
+     * respective entry of alpha. If indices are given, there must be as many indices as there are entries in alpha.
+     *
+     * \param alpha: The scaling factors.
+     * \param indices: Indices of the vectors to scale. If std::nullopt (the default), all vectors are scaled.
+     */
+    virtual void scal(const std::vector<F>& alpha, const std::optional<Indices>& indices = std::nullopt) = 0;
 
-    virtual void scal(F alpha, const std::optional<Indices>& indices = {})
+    /**
+     * \brief Scales (a subset of) the vectors by a scalar alpha
+     *
+     * Behaves like the vector-valued version of \c scal called with an alpha vector of size 1
+     */
+    virtual void scal(F alpha, const std::optional<Indices>& indices = std::nullopt)
     {
         scal(std::vector<F>{alpha}, indices);
     }
 
+    /**
+     * \brief axpy operation on (a subset of) the VectorArray
+     *
+     * Computes <tt>y = y + alpha * x</tt>, where y is this VectorArray. If \c indices are given,
+     * the operation is performed on the respective vectors only. If \c x_indices are given, only
+     * the respective vectors of \c x are used.
+     * Both \c alpha and \c x can either have size 1 or the same size as the VectorArray (after
+     * applying both \c indices and <tt>x_indices</tt>). In the former case, the value of
+     * \c alpha or \c x is used for all vectors.
+     *
+     * \param alpha: The scaling factors.
+     * \param x: The VectorArray to add.
+     * \param indices: Indices for this VectorArray. If std::nullopt (the default), all vectors are used.
+     * \param x_indices: Indices for x. If std::nullopt (the default), all vectors from x are used.
+     */
     virtual void axpy(const std::vector<F>& alpha, const ThisType& x,
-                      const std::optional<Indices>& indices = {},
-                      const std::optional<Indices>& x_indices = {}) = 0;
+                      const std::optional<Indices>& indices = std::nullopt,
+                      const std::optional<Indices>& x_indices = std::nullopt) = 0;
 
-    virtual void axpy(F alpha, const ThisType& x, const std::optional<Indices>& indices = {},
-                      const std::optional<Indices>& x_indices = {})
+    /**
+     * \brief axpy operation with fixed alpha on (a subset of) the VectorArray
+     *
+     * Behaves like the vector-valued version of \c axpy called with an alpha vector of size 1
+     */
+    virtual void axpy(F alpha, const ThisType& x, const std::optional<Indices>& indices = std::nullopt,
+                      const std::optional<Indices>& x_indices = std::nullopt)
     {
         axpy(std::vector<F>{alpha}, x, indices, x_indices);
     }
 
+    /**
+     * \brief Returns the j-th entry of the i-th vector
+     */
     virtual F get(ssize_t i, ssize_t j) const = 0;
 
+    /**
+     * \brief Sets the j-th entry of the i-th vector to \c value
+     */
     virtual void set(ssize_t /*i*/, ssize_t /*j*/, F /*value*/)
     {
         throw NotImplementedError("VectorArrayInterface: set is not implemented.");
@@ -246,19 +312,31 @@ class VectorArrayInterface
         }
     }
 
+    /**
+     * \brief Returns a view on the vectors corresponding to the given indices
+     */
     virtual VectorArrayView<F> operator[](const Indices& indices)
     {
         return VectorArrayView<F>(*this, indices);
     }
 
+    /**
+     * \brief Returns a const view on the vectors corresponding to the given indices
+     */
     virtual ConstVectorArrayView<F> operator[](const Indices& indices) const
     {
         return ConstVectorArrayView<F>(*this, indices);
     }
 
+    /**
+     * \brief Deletes the vectors corresponding to the given indices
+     */
     virtual void delete_vectors(const std::optional<Indices>& indices) = 0;
 
    protected:
+    /**
+     * \brief Checks that the first index i is in the range [0, size())
+     */
     void check_first_index(ssize_t i) const
     {
         if (i < 0 || i >= size())
@@ -268,6 +346,9 @@ class VectorArrayInterface
         }
     }
 
+    /**
+     * \brief Checks that the second index j is in the range [0, dim())
+     */
     void check_second_index(ssize_t j) const
     {
         if (j < 0 || j >= dim())
@@ -277,6 +358,9 @@ class VectorArrayInterface
         }
     }
 
+    /**
+     * \brief Checks that both indices are in range
+     */
     void check_indices(ssize_t i, ssize_t j) const
     {
         check_first_index(i);

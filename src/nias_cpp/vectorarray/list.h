@@ -105,7 +105,7 @@ class ListVectorArray : public VectorArrayInterface<F>
         return vectors_;
     }
 
-    std::shared_ptr<InterfaceType> copy(const std::optional<Indices>& indices = {}) const override
+    std::shared_ptr<InterfaceType> copy(const std::optional<Indices>& indices = std::nullopt) const override
     {
         // std::cout << "Copy called in VecArray!" << std::endl;
         std::vector<std::shared_ptr<VectorInterfaceType>> copied_vectors;
@@ -133,7 +133,7 @@ class ListVectorArray : public VectorArrayInterface<F>
     }
 
     void append(InterfaceType& other, bool remove_from_other = false,
-                const std::optional<Indices>& other_indices = {}) override
+                const std::optional<Indices>& other_indices = std::nullopt) override
     {
         check(is_list_vector_array(other), "append is not (yet) implemented if x is not a ListVectorArray");
         remove_from_other ? append_with_removal(dynamic_cast<ThisType&>(other), other_indices)
@@ -174,28 +174,7 @@ class ListVectorArray : public VectorArrayInterface<F>
         }
     }
 
-    void scal(F alpha, const std::optional<Indices>& indices = {}) override
-    {
-        if (!indices)
-        {
-            for (auto& vector : vectors_)
-            {
-                vector->scal(alpha);
-            }
-        }
-        else
-        {
-            indices->check_valid(this->size());
-            indices->for_each(
-                [this, alpha](ssize_t i)
-                {
-                    vectors_[i]->scal(alpha);
-                },
-                this->size());
-        }
-    }
-
-    void scal(const std::vector<F>& alpha, const std::optional<Indices>& indices = {}) override
+    void scal(const std::vector<F>& alpha, const std::optional<Indices>& indices = std::nullopt) override
     {
         if (!indices)
         {
@@ -220,8 +199,11 @@ class ListVectorArray : public VectorArrayInterface<F>
         }
     }
 
-    void axpy(const std::vector<F>& alpha, const InterfaceType& x, const std::optional<Indices>& indices = {},
-              const std::optional<Indices>& x_indices = {}) override
+    using InterfaceType::scal;
+
+    void axpy(const std::vector<F>& alpha, const InterfaceType& x,
+              const std::optional<Indices>& indices = std::nullopt,
+              const std::optional<Indices>& x_indices = std::nullopt) override
     {
         check(this->is_compatible_array(x), "incompatible dimensions.");
         if (indices)
@@ -262,11 +244,7 @@ class ListVectorArray : public VectorArrayInterface<F>
         }
     }
 
-    void axpy(F alpha, const InterfaceType& x, const std::optional<Indices>& indices = {},
-              const std::optional<Indices>& x_indices = {}) override
-    {
-        axpy(std::vector<F>{alpha}, x, indices, x_indices);
-    }
+    using InterfaceType::axpy;
 
    private:
     bool is_list_vector_array(const InterfaceType& other) const
@@ -300,7 +278,8 @@ class ListVectorArray : public VectorArrayInterface<F>
               "All vectors must have the same length.");
     }
 
-    void append_without_removal(const ThisType& other, const std::optional<Indices>& other_indices = {})
+    void append_without_removal(const ThisType& other,
+                                const std::optional<Indices>& other_indices = std::nullopt)
     {
         if (!other_indices)
         {

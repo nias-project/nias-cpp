@@ -172,7 +172,7 @@ auto bind_nias_listvectorarray(pybind11::module& m, const std::string& field_typ
         }
 
         // copy (a subset of) the VectorArray to a new VectorArray
-        std::shared_ptr<VecArrayInterface> copy(const std::optional<Indices>& indices = {}) const
+        std::shared_ptr<VecArrayInterface> copy(const std::optional<Indices>& indices = std::nullopt) const
         {
             PYBIND11_OVERRIDE_PURE(std::shared_ptr<VecArrayInterface>, /* Return type */
                                    VecArrayInterface,                  /* Parent class */
@@ -182,7 +182,7 @@ auto bind_nias_listvectorarray(pybind11::module& m, const std::string& field_typ
         }
 
         void append(VecArrayInterface& other, bool remove_from_other = false,
-                    const std::optional<Indices>& other_indices = {}) override
+                    const std::optional<Indices>& other_indices = std::nullopt) override
         {
             PYBIND11_OVERRIDE_PURE(void,              /* Return type */
                                    VecArrayInterface, /* Parent class */
@@ -191,7 +191,7 @@ auto bind_nias_listvectorarray(pybind11::module& m, const std::string& field_typ
             );
         }
 
-        void scal(const std::vector<F>& alpha, const std::optional<Indices>& indices = {}) override
+        void scal(const std::vector<F>& alpha, const std::optional<Indices>& indices = std::nullopt) override
         {
             PYBIND11_OVERRIDE_PURE(void,              /* Return type */
                                    VecArrayInterface, /* Parent class */
@@ -200,7 +200,7 @@ auto bind_nias_listvectorarray(pybind11::module& m, const std::string& field_typ
             );
         }
 
-        virtual void scal(F alpha, const std::optional<Indices>& indices = {})
+        virtual void scal(F alpha, const std::optional<Indices>& indices = std::nullopt)
         {
             PYBIND11_OVERRIDE(void,              /* Return type */
                               VecArrayInterface, /* Parent class */
@@ -210,8 +210,8 @@ auto bind_nias_listvectorarray(pybind11::module& m, const std::string& field_typ
         }
 
         virtual void axpy(const std::vector<F>& alpha, const VecArrayInterface& x,
-                          const std::optional<Indices>& indices = {},
-                          const std::optional<Indices>& x_indices = {})
+                          const std::optional<Indices>& indices = std::nullopt,
+                          const std::optional<Indices>& x_indices = std::nullopt)
         {
             PYBIND11_OVERRIDE_PURE(void,              /* Return type */
                                    VecArrayInterface, /* Parent class */
@@ -220,8 +220,8 @@ auto bind_nias_listvectorarray(pybind11::module& m, const std::string& field_typ
             );
         }
 
-        void axpy(F alpha, const VecArrayInterface& x, const std::optional<Indices>& indices = {},
-                  const std::optional<Indices>& x_indices = {}) override
+        void axpy(F alpha, const VecArrayInterface& x, const std::optional<Indices>& indices = std::nullopt,
+                  const std::optional<Indices>& x_indices = std::nullopt) override
         {
             PYBIND11_OVERRIDE(void,              /* Return type */
                               VecArrayInterface, /* Parent class */
