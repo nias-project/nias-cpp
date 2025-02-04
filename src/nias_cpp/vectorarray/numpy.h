@@ -130,7 +130,8 @@ class NumpyVectorArray : public VectorArrayInterface<F>
     void append(InterfaceType& other, bool remove_from_other = false,
                 const std::optional<Indices>& other_indices = std::nullopt) override
     {
-        check(is_numpy_vector_array(other), "append is not (yet) implemented if x is not a NumpyVectorArray");
+        this->check(is_numpy_vector_array(other),
+                    "append is not (yet) implemented if x is not a NumpyVectorArray");
         if (other_indices)
         {
             other_indices->check_valid(other.size());
@@ -169,7 +170,7 @@ class NumpyVectorArray : public VectorArrayInterface<F>
                 const auto other_indices_vec = other_indices->as_vec(other.size());
                 std::set<ssize_t> unique_indices(other_indices_vec.begin(), other_indices_vec.end());
                 // now remove entries corresponding to unique_indices from other
-                check(unique_indices.size() <= other.size(), "unique_indices contains invalid indices");
+                this->check(unique_indices.size() <= other.size(), "unique_indices contains invalid indices");
                 const ssize_t new_size = other.size() - std::ssize(unique_indices);
                 pybind11::array_t<F> new_array_other(std::vector<ssize_t>{new_size, dim()});
                 ssize_t j = 0;  // index for new_array_other
@@ -177,7 +178,7 @@ class NumpyVectorArray : public VectorArrayInterface<F>
                 {
                     if (!unique_indices.contains(i))
                     {
-                        check(j < new_size, "j is out of bounds");
+                        this->check(j < new_size, "j is out of bounds");
                         for (ssize_t k = 0; k < dim(); ++k)
                         {
                             new_array_other.mutable_at(j, k) = old_array_other.at(i, k);
@@ -219,76 +220,6 @@ class NumpyVectorArray : public VectorArrayInterface<F>
         array_ = new_array;
     }
 
-    void scal(const std::vector<F>& alpha, const std::optional<Indices>& indices = std::nullopt) override
-    {
-        if (!indices)
-        {
-            check(alpha.size() == 1 || alpha.size() == this->size(),
-                  "alpha must have size 1 or the same size as the array.");
-            for (ssize_t i = 0; i < size(); ++i)
-            {
-                const auto alpha_index = alpha.size() == 1 ? 0 : i;
-                for (ssize_t j = 0; j < dim(); ++j)
-                {
-                    array_.mutable_at(i, j) *= alpha[alpha_index];
-                }
-            }
-        }
-        else
-        {
-            indices->check_valid(this->size());
-            check(alpha.size() == 1 || alpha.size() == indices->size(this->size()),
-                  "alpha must have size 1 or the same size as indices");
-            ssize_t alpha_index = 0;
-            indices->for_each(
-                [this, &alpha, &alpha_index](ssize_t i)
-                {
-                    for (ssize_t j = 0; j < dim(); ++j)
-                    {
-                        array_.mutable_at(i, j) *= alpha[alpha_index];
-                    }
-                    if (alpha.size() > 1)
-                    {
-                        ++alpha_index;
-                    }
-                },
-                this->size());
-        }
-    }
-
-    void axpy(const std::vector<F>& alpha, const InterfaceType& x,
-              const std::optional<Indices>& indices = std::nullopt,
-              const std::optional<Indices>& x_indices = std::nullopt) override
-    {
-        check(this->is_compatible_array(x), "incompatible dimensions.");
-        if (indices)
-        {
-            indices->check_valid(size());
-            check(size() == 0 || indices->size(size()) > 0, "indices must not be empty");
-        }
-        if (x_indices)
-        {
-            x_indices->check_valid(x.size());
-        }
-        const auto this_size = indices ? indices->size(size()) : size();
-        const auto x_size = x_indices ? x_indices->size(x.size()) : x.size();
-        check(x_size == this_size || x_size == 1, "x must have length 1 or the same length as this");
-        check(alpha.size() == this_size || alpha.size() == 1,
-              "alpha must be scalar or have the same length as this");
-        for (ssize_t i = 0; i < this_size; ++i)
-        {
-            const auto this_index = indices ? indices->get(i, size()) : i;
-            // x and alpha can either have the same length as this or length 1
-            ssize_t x_index = x_size == 1 ? i : 0;
-            x_index = x_indices ? x_indices->get(x_index, x.size()) : x_index;
-            const auto alpha_index = alpha.size() == 1 ? 0 : i;
-            for (ssize_t j = 0; j < dim(); ++j)
-            {
-                array_.mutable_at(this_index, j) += alpha[alpha_index] * x.get(x_index, j);
-            }
-        }
-    }
-
    private:
     bool is_numpy_vector_array(const InterfaceType& other) const
     {
@@ -300,14 +231,6 @@ class NumpyVectorArray : public VectorArrayInterface<F>
         catch (std::bad_cast&)
         {
             return false;
-        }
-    }
-
-    void check(const bool condition, const std::string& message) const
-    {
-        if (!condition)
-        {
-            throw InvalidArgumentError("NumpyVectorArray: " + message);
         }
     }
 

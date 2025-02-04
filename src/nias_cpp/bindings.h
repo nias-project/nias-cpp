@@ -191,16 +191,17 @@ auto bind_nias_listvectorarray(pybind11::module& m, const std::string& field_typ
             );
         }
 
-        void scal(const std::vector<F>& alpha, const std::optional<Indices>& indices = std::nullopt) override
+        virtual void scal(const std::vector<F>& alpha,
+                          const std::optional<Indices>& indices = std::nullopt) override
         {
-            PYBIND11_OVERRIDE_PURE(void,              /* Return type */
-                                   VecArrayInterface, /* Parent class */
-                                   scal,              /* Name of function in C++ (must match Python name) */
-                                   alpha, indices     /* Argument(s) */
+            PYBIND11_OVERRIDE(void,              /* Return type */
+                              VecArrayInterface, /* Parent class */
+                              scal,              /* Name of function in C++ (must match Python name) */
+                              alpha, indices     /* Argument(s) */
             );
         }
 
-        virtual void scal(F alpha, const std::optional<Indices>& indices = std::nullopt)
+        virtual void scal(F alpha, const std::optional<Indices>& indices = std::nullopt) override
         {
             PYBIND11_OVERRIDE(void,              /* Return type */
                               VecArrayInterface, /* Parent class */
@@ -211,17 +212,18 @@ auto bind_nias_listvectorarray(pybind11::module& m, const std::string& field_typ
 
         virtual void axpy(const std::vector<F>& alpha, const VecArrayInterface& x,
                           const std::optional<Indices>& indices = std::nullopt,
-                          const std::optional<Indices>& x_indices = std::nullopt)
+                          const std::optional<Indices>& x_indices = std::nullopt) override
         {
-            PYBIND11_OVERRIDE_PURE(void,              /* Return type */
-                                   VecArrayInterface, /* Parent class */
-                                   axpy,              /* Name of function in C++ (must match Python name) */
-                                   alpha, x, indices, x_indices /* Argument(s) */
+            PYBIND11_OVERRIDE(void,              /* Return type */
+                              VecArrayInterface, /* Parent class */
+                              axpy,              /* Name of function in C++ (must match Python name) */
+                              alpha, x, indices, x_indices /* Argument(s) */
             );
         }
 
-        void axpy(F alpha, const VecArrayInterface& x, const std::optional<Indices>& indices = std::nullopt,
-                  const std::optional<Indices>& x_indices = std::nullopt) override
+        virtual void axpy(F alpha, const VecArrayInterface& x,
+                          const std::optional<Indices>& indices = std::nullopt,
+                          const std::optional<Indices>& x_indices = std::nullopt) override
         {
             PYBIND11_OVERRIDE(void,              /* Return type */
                               VecArrayInterface, /* Parent class */

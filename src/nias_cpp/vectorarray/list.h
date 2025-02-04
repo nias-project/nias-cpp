@@ -174,77 +174,8 @@ class ListVectorArray : public VectorArrayInterface<F>
         }
     }
 
-    void scal(const std::vector<F>& alpha, const std::optional<Indices>& indices = std::nullopt) override
-    {
-        if (!indices)
-        {
-            check(alpha.size() == this->size(), "alpha must have the same length as the array.");
-            for (ssize_t i = 0; i < this->size(); ++i)
-            {
-                vectors_[i]->scal(alpha[i]);
-            }
-        }
-        else
-        {
-            indices->check_valid(this->size());
-            check(alpha.size() == indices->size(this->size()), "alpha must have the same length as indices");
-            ssize_t alpha_index = 0;
-            indices->for_each(
-                [this, &alpha, &alpha_index](ssize_t i)
-                {
-                    vectors_[i]->scal(alpha[alpha_index]);
-                    ++alpha_index;
-                },
-                this->size());
-        }
-    }
-
-    using InterfaceType::scal;
-
-    void axpy(const std::vector<F>& alpha, const InterfaceType& x,
-              const std::optional<Indices>& indices = std::nullopt,
-              const std::optional<Indices>& x_indices = std::nullopt) override
-    {
-        check(this->is_compatible_array(x), "incompatible dimensions.");
-        if (indices)
-        {
-            indices->check_valid(this->size());
-        }
-        if (x_indices)
-        {
-            x_indices->check_valid(x.size());
-        }
-        const auto this_size = indices ? indices->size(size()) : size();
-        const auto x_size = x_indices ? x_indices->size(x.size()) : x.size();
-        check(x_size == this_size || x_size == 1, "x must have length 1 or the same length as this");
-        if (this_size == 0)
-        {
-            return;
-        }
-        check(alpha.size() == this_size || alpha.size() == 1,
-              "alpha must be scalar or have the same length as x");
-        check(is_list_vector_array(x), "axpy is not implemented if x is not a ListVectorArray");
-        for (ssize_t i = 0; i < this_size; ++i)
-        {
-            const auto this_index = indices ? indices->get(i, this->size()) : i;
-            // x can either have the same length as this or length 1
-            ssize_t x_index = 0;
-            if (x_size == this_size)
-            {
-                x_index = x_indices ? x_indices->get(i, x.size()) : i;
-            }
-            else
-            {
-                // x has length 1
-                x_index = x_indices ? x_indices->get(0, x.size()) : 0;
-            }
-            const auto alpha_index = alpha.size() == 1 ? 0 : i;
-            vectors_[this_index]->axpy(alpha[alpha_index],
-                                       *dynamic_cast<const ThisType&>(x).vectors_[x_index]);
-        }
-    }
-
     using InterfaceType::axpy;
+    using InterfaceType::scal;
 
    private:
     bool is_list_vector_array(const InterfaceType& other) const

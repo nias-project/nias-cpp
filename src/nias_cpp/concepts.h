@@ -51,6 +51,10 @@ concept complex = is_complex_v<T>;
 template <class T>
 concept floating_point_or_complex = std::floating_point<T> || complex<T>;
 
+// Concept for printing
+template <class T>
+concept ostreamable = requires(T t, std::ostream& os) { os << t; };
+
 
 }  // namespace nias
 

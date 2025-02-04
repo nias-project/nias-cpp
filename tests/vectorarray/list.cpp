@@ -17,6 +17,7 @@ int main()
 {
     using namespace nias;
     using namespace boost::ut;
+    using namespace boost::ut::bdd;
     ensure_interpreter_is_running();
 
     "ListVectorArray"_test = []<std::floating_point F>()
@@ -40,22 +41,22 @@ int main()
                     };
 
                     const auto v = VecArrayFactory::iota(size, dim);
-                    test("Copying") = [&]()
+                    scenario("Copying") = [&]()
                     {
                         check_copy(*v, size, dim);
                     };
 
-                    test("append") = [&]()
+                    scenario("append") = [&]()
                     {
                         check_append<VecArray>(*v, size, dim);
                     };
 
-                    test("scal") = [&]()
+                    scenario("scal") = [&]()
                     {
                         check_scal(*v, size, dim);
                     };
 
-                    test("axpy") = [&]()
+                    scenario("axpy") = [&]()
                     {
                         check_axpy<VecArray>(*v, size, dim);
                     };

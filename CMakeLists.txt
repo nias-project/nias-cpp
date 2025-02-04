@@ -3,8 +3,8 @@
 # License: BSD 2-Clause License (https://opensource.org/licenses/BSD-2-Clause)
 
 # Require CMake 3.15+ (matching scikit-build-core) Use new versions of all
-# policies up to CMake 3.30
-cmake_minimum_required(VERSION 3.15...3.30)
+# policies up to CMake 3.31
+cmake_minimum_required(VERSION 3.15...3.31)
 project(
     ${SKBUILD_PROJECT_NAME}
     VERSION ${SKBUILD_PROJECT_VERSION}
@@ -113,7 +113,7 @@ if(NIAS_CPP_MASTER_PROJECT)
     FetchContent_Declare(
         ut
         GIT_REPOSITORY https://github.com/boost-ext/ut
-        GIT_TAG v2.1.1
+        GIT_TAG v2.3.0
         OVERRIDE_FIND_PACKAGE)
     FetchContent_MakeAvailable(ut)
     find_package(ut REQUIRED)

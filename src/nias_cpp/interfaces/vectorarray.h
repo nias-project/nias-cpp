@@ -244,7 +244,42 @@ class VectorArrayInterface
      * \param alpha: The scaling factors.
      * \param indices: Indices of the vectors to scale. If std::nullopt (the default), all vectors are scaled.
      */
-    virtual void scal(const std::vector<F>& alpha, const std::optional<Indices>& indices = std::nullopt) = 0;
+    virtual void scal(const std::vector<F>& alpha, const std::optional<Indices>& indices = std::nullopt)
+    {
+        if (!indices)
+        {
+            check(alpha.size() == 1 || alpha.size() == this->size(),
+                  "alpha must have size 1 or the same size as the array.");
+            for (ssize_t i = 0; i < size(); ++i)
+            {
+                const auto alpha_index = alpha.size() == 1 ? 0 : i;
+                for (ssize_t j = 0; j < dim(); ++j)
+                {
+                    this->set(i, j, this->get(i, j) * alpha[alpha_index]);
+                }
+            }
+        }
+        else
+        {
+            indices->check_valid(this->size());
+            check(alpha.size() == 1 || alpha.size() == indices->size(this->size()),
+                  "alpha must have size 1 or the same size as indices");
+            ssize_t alpha_index = 0;
+            indices->for_each(
+                [this, &alpha, &alpha_index](ssize_t i)
+                {
+                    for (ssize_t j = 0; j < dim(); ++j)
+                    {
+                        this->set(i, j, this->get(i, j) * alpha[alpha_index]);
+                    }
+                    if (alpha.size() > 1)
+                    {
+                        ++alpha_index;
+                    }
+                },
+                this->size());
+        }
+    }
 
     /**
      * \brief Scales (a subset of) the vectors by a scalar alpha
@@ -273,7 +308,35 @@ class VectorArrayInterface
      */
     virtual void axpy(const std::vector<F>& alpha, const ThisType& x,
                       const std::optional<Indices>& indices = std::nullopt,
-                      const std::optional<Indices>& x_indices = std::nullopt) = 0;
+                      const std::optional<Indices>& x_indices = std::nullopt)
+    {
+        check(this->is_compatible_array(x), "incompatible dimensions.");
+        if (indices)
+        {
+            indices->check_valid(size());
+        }
+        if (x_indices)
+        {
+            x_indices->check_valid(x.size());
+        }
+        const auto this_size = indices ? indices->size(size()) : size();
+        const auto x_size = x_indices ? x_indices->size(x.size()) : x.size();
+        check(x_size == this_size || x_size == 1, "x must have length 1 or the same length as this");
+        check(alpha.size() == this_size || alpha.size() == 1,
+              "alpha must be scalar or have the same length as this");
+        for (ssize_t i = 0; i < this_size; ++i)
+        {
+            const auto this_index = indices ? indices->get(i, size()) : i;
+            // x and alpha can either have the same length as this or length 1
+            ssize_t x_index = x_size == 1 ? 0 : i;
+            x_index = x_indices ? x_indices->get(x_index, x.size()) : x_index;
+            const auto alpha_index = alpha.size() == 1 ? 0 : i;
+            for (ssize_t j = 0; j < dim(); ++j)
+            {
+                this->set(this_index, j, this->get(this_index, j) + alpha[alpha_index] * x.get(x_index, j));
+            }
+        }
+    }
 
     /**
      * \brief axpy operation with fixed alpha on (a subset of) the VectorArray
@@ -294,22 +357,26 @@ class VectorArrayInterface
     /**
      * \brief Sets the j-th entry of the i-th vector to \c value
      */
-    virtual void set(ssize_t /*i*/, ssize_t /*j*/, F /*value*/)
-    {
-        throw NotImplementedError("VectorArrayInterface: set is not implemented.");
-    }
+    virtual void set(ssize_t i, ssize_t j, F value) = 0;
 
     virtual void print() const
     {
-        std::cerr << "VectorArray with " << size() << " vectors of dimension " << dim() << std::endl;
-        for (ssize_t i = 0; i < size(); ++i)
+        std::cerr << *this;
+    }
+
+    friend std::ostream& operator<<(std::ostream& os, const ThisType& vec_array)
+    {
+        os << "VectorArray with " << vec_array.size() << " vectors of dimension " << vec_array.dim()
+           << std::endl;
+        for (ssize_t i = 0; i < vec_array.size(); ++i)
         {
-            for (ssize_t j = 0; j < dim(); ++j)
+            for (ssize_t j = 0; j < vec_array.dim(); ++j)
             {
-                std::cerr << get(i, j) << " ";
+                os << vec_array.get(i, j) << " ";
             }
-            std::cerr << '\n';
+            os << '\n';
         }
+        return os;
     }
 
     /**
@@ -365,6 +432,14 @@ class VectorArrayInterface
     {
         check_first_index(i);
         check_second_index(j);
+    }
+
+    void check(const bool condition, const std::string& message) const
+    {
+        if (!condition)
+        {
+            throw InvalidArgumentError(message);
+        }
     }
 };
 

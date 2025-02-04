@@ -17,6 +17,7 @@ int main()
     // TODO: Clean up, quite a lot of code duplication etc, but it works for now
     using namespace nias;
     using namespace boost::ut;
+    using namespace boost::ut::bdd;
     ensure_interpreter_is_running();
 
     "NumpyVectorArray"_test = []<std::floating_point F>()
@@ -29,8 +30,8 @@ int main()
         {
             for (ssize_t dim : {0, 1, 3, 4})
             {
-                test(std::format("{}x{} NumpyVectorArray<{}>", size, dim, reflection::type_name<F>())) =
-                    [size, dim]
+                test(std::format("NumpyVectorArray<{}> of size {} and dim {}", reflection::type_name<F>(),
+                                 size, dim)) = [size, dim]()
                 {
                     test("Constructing a NumpyVectorArray<F> from a pybind11::array_t<F>") = [=]()
                     {
@@ -54,29 +55,29 @@ int main()
                     };
 
                     const auto v = VecArrayFactory::iota(size, dim);
-                    test("Copying") = [&]()
+                    scenario("Copying") = [&]()
                     {
                         check_copy(*v, size, dim);
                     };
 
-                    test("append") = [&]()
+                    scenario("append") = [&]()
                     {
                         check_append<VecArray>(*v, size, dim);
                     };
 
-                    test("scal") = [&]()
+                    scenario("scal") = [&]()
                     {
                         check_scal(*v, size, dim);
                     };
 
-                    test("axpy") = [&]()
+                    scenario("axpy") = [&]()
                     {
                         check_axpy<VecArray>(*v, size, dim);
                     };
                 };
             }
         }
-    } | std::tuple<double>{};
+    } | std::tuple<float, double>{};
 
     return 0;
 }
