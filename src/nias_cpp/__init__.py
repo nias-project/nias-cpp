@@ -19,6 +19,6 @@ def cmake_dir() -> str:
 
 __all__ = (
     "__version__",
-    "include_dir",
     "cmake_dir",
+    "include_dir",
 )
