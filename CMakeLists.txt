@@ -79,15 +79,18 @@ execute_process(
     WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
     OUTPUT_VARIABLE PYBIND11_VERSION)
 
-# add pybind11
-include(FetchContent)
-FetchContent_Declare(
-    pybind11
-    GIT_REPOSITORY https://github.com/pybind/pybind11
-    GIT_TAG "v${PYBIND11_VERSION}"
-    OVERRIDE_FIND_PACKAGE)
-FetchContent_MakeAvailable(pybind11)
 find_package(pybind11 REQUIRED)
+if(NOT pybind11_FOUND)
+    # add pybind11
+    include(FetchContent)
+    FetchContent_Declare(
+        pybind11
+        GIT_REPOSITORY https://github.com/pybind/pybind11
+        GIT_TAG "v${PYBIND11_VERSION}"
+        OVERRIDE_FIND_PACKAGE)
+    FetchContent_MakeAvailable(pybind11)
+    find_package(pybind11 REQUIRED)
+endif()
 
 # find our own package
 find_package(nias_cpp PATHS ${CMAKE_CURRENT_SOURCE_DIR}/cmake NO_DEFAULT_PATH)
