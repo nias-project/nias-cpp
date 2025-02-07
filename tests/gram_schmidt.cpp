@@ -97,7 +97,7 @@ template <std::floating_point F>
 void test_cpp_gram_schmidt()
 {
     using namespace nias;
-    ensure_interpreter_is_running();
+    ensure_interpreter_and_venv_are_active();
     const ssize_t size = 3;
     const ssize_t dim = 4;
     auto array = pybind11::array_t<F>({size, dim});

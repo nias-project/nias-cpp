@@ -12,6 +12,7 @@
 #include <nias_cpp/type_traits.h>
 #include <nias_cpp/vectorarray/list.h>
 #include <pybind11/cast.h>
+#include <pybind11/eval.h>
 #include <pybind11/pybind11.h>
 #include <pybind11/pytypes.h>
 
@@ -33,11 +34,11 @@ template <floating_point_or_complex F>
 std::shared_ptr<ListVectorArray<F>> gram_schmidt(std::shared_ptr<ListVectorArray<F>> vec_array)
 {
     std::cout << "\n\nPerforming Gram-Schmidt orthogonalization... ";
-    ensure_interpreter_is_running();
+    ensure_interpreter_and_venv_are_active();
 
     // import nias_cpp module
     namespace py = pybind11;
-    const py::module_ nias_cpp_module = py::module::import("nias_cpp");
+    const py::module_ nias_cpp_module = py::module::import("nias_cpp_bindings");
 
     // get the classes we need from the Python nias module
     const py::module_ nias_cpp_vectorarray = py::module::import("nias.bindings.nias_cpp.vectorarray");
@@ -70,11 +71,11 @@ template <floating_point_or_complex F>
 void gram_schmidt_in_place(std::shared_ptr<ListVectorArray<F>> vec_array)
 {
     std::cout << "\n\nPerforming in-place Gram-Schmidt orthogonalization... ";
-    ensure_interpreter_is_running();
+    ensure_interpreter_and_venv_are_active();
 
     // import nias_cpp module
     namespace py = pybind11;
-    const py::module_ nias_cpp_module = py::module::import("nias_cpp");
+    const py::module_ nias_cpp_module = py::module::import("nias_cpp_bindings");
 
     // get the classes we need from the Python nias module
     const py::module_ nias_cpp_vectorarray = py::module::import("nias.bindings.nias_cpp.vectorarray");

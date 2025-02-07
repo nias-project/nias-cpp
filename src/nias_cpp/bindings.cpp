@@ -9,7 +9,7 @@
 #include <pybind11/pytypes.h>
 #include <pybind11/stl.h>  // IWYU pragma: keep
 
-PYBIND11_MODULE(nias_cpp, m)
+PYBIND11_MODULE(nias_cpp_bindings, m)
 {
     namespace py = pybind11;
 

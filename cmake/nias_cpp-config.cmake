@@ -25,9 +25,8 @@ function(nias_cpp_build_library target_name)
         return()
     endif()
 
-    pybind11_add_module(
-        ${target_name}
-        SHARED
+    add_library(
+        ${target_name} SHARED
         ${ARG_UNPARSED_ARGUMENTS}
         ${_NIAS_CPP_DIR}/src/nias_cpp/algorithms/gram_schmidt.h
         ${_NIAS_CPP_DIR}/src/nias_cpp/checked_integer_cast.h
@@ -41,17 +40,17 @@ function(nias_cpp_build_library target_name)
         ${_NIAS_CPP_DIR}/src/nias_cpp/interfaces/vector.h
         ${_NIAS_CPP_DIR}/src/nias_cpp/interfaces/vectorarray.h
         ${_NIAS_CPP_DIR}/src/nias_cpp/vectorarray/list.h
-        ${_NIAS_CPP_DIR}/src/nias_cpp/vectorarray/numpy.h
-        ${_NIAS_CPP_DIR}/src/nias_cpp/bindings.h
-        ${_NIAS_CPP_DIR}/src/nias_cpp/bindings.cpp)
+        ${_NIAS_CPP_DIR}/src/nias_cpp/vectorarray/numpy.h)
 
-    target_include_directories(${target_name} SYSTEM PUBLIC ${_NIAS_CPP_DIR}/src)
+    pybind11_add_module(${target_name}_bindings MODULE ${_NIAS_CPP_DIR}/src/nias_cpp/bindings.h
+                        ${_NIAS_CPP_DIR}/src/nias_cpp/bindings.cpp)
 
-    target_include_directories(${target_name} PUBLIC ${CMAKE_BINARY_DIR} ${NIAS_CPP_INSTALL_INCLUDE_DIR})
-
-    target_link_libraries(${target_name} PUBLIC pybind11::pybind11 pybind11::embed)
-
-    set_target_properties(${target_name} PROPERTIES LINKER_LANGUAGE CXX)
+    foreach(target ${target_name} ${target_name}_bindings)
+        target_include_directories(${target} SYSTEM PUBLIC ${_NIAS_CPP_DIR}/src)
+        target_include_directories(${target} PUBLIC ${CMAKE_BINARY_DIR} ${NIAS_CPP_INSTALL_INCLUDE_DIR})
+        target_link_libraries(${target} PUBLIC pybind11::pybind11 pybind11::embed)
+        set_target_properties(${target} PROPERTIES LINKER_LANGUAGE CXX)
+    endforeach()
 endfunction()
 
 function(nias_cpp_add_module name)
@@ -63,3 +62,4 @@ function(nias_cpp_add_module name)
 endfunction()
 
 nias_cpp_build_library(nias_cpp)
+target_link_libraries(nias_cpp_bindings PUBLIC nias_cpp)

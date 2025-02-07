@@ -11,6 +11,7 @@ name = "nias_cpp"
 version = "0.1.0"
 description = "C++ bindings for NIAS - Numerics in Abstract Spaces"
 readme = "README.md"
+requires-python = ">=3.10"
 authors = [
   {name = "Felix Schindler", email = "felix.schindler@uni-muenster.de"},
   {name = "Tobias Leibner", email = "tobias.leibner@arup.com"}
@@ -21,4 +22,6 @@ dependencies = [
 ]
 
 [tool.scikit-build]
+# disable C++ file inclusion, rely on CMake to install the C++ files (see CMakelists.txt)
+sdist.exclude = ["*.cpp", "*.h"]
 wheel.expand-macos-universal-tags = true
