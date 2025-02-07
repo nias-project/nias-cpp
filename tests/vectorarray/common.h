@@ -2,31 +2,35 @@
 #define NIAS_CPP_TEST_VECTORARRAY_COMMON_H
 
 #include <algorithm>
+#include <cstddef>
+#include <format>
+#include <memory>
+#include <ostream>
 #include <set>
 #include <string>
 #include <string_view>
 #include <vector>
 
+#include <boost/ut.hpp>
 #include <nias_cpp/checked_integer_cast.h>
 #include <nias_cpp/concepts.h>
 #include <nias_cpp/exceptions.h>
 #include <nias_cpp/indices.h>
+#include <nias_cpp/interfaces/vector.h>
 #include <nias_cpp/interfaces/vectorarray.h>
-#include <nias_cpp/interpreter.h>
 #include <nias_cpp/type_traits.h>
 #include <nias_cpp/vectorarray/list.h>
 #include <nias_cpp/vectorarray/numpy.h>
 #include <pybind11/numpy.h>
 
-#include "../boost_ut_no_module.h"
 #include "../common.h"
 #include "../test_module.h"
-#include "boost/ut.hpp"
 
-namespace
-{
+// NOLINTBEGIN(google-global-names-in-headers)
 using namespace nias;
 using namespace boost::ut;
+
+// NOLINTEND(google-global-names-in-headers)
 
 // Comparison operators for VectorArrays
 template <floating_point_or_complex F>
@@ -38,7 +42,7 @@ struct ExactlyEqualOpVecArray
     {
     }
 
-    [[nodiscard]] operator bool() const
+    [[nodiscard]] explicit operator bool() const
     {
         if (lhs_.size() != rhs_.size() || lhs_.dim() != rhs_.dim())
         {
@@ -81,7 +85,7 @@ struct ApproxEqualOpVecArray
     {
     }
 
-    [[nodiscard]] operator bool() const
+    [[nodiscard]] explicit operator bool() const
     {
         if (lhs_.size() != rhs_.size() || lhs_.dim() != rhs_.dim())
         {
@@ -158,7 +162,7 @@ struct TestVectorArrayFactory<NumpyVectorArray<F>>
         {
             for (ssize_t j = 0; j < dim; ++j)
             {
-                array->set(i, j, start + i * dim + j);
+                array->set(i, j, start + (i * dim) + j);
             }
         }
         return array;
@@ -193,7 +197,7 @@ auto create_test_alphas(ssize_t size)
     return ret;
 }
 
-auto create_test_index_vectors(ssize_t size)
+inline auto create_test_index_vectors(ssize_t size)
 {
     return std::vector{std::vector<ssize_t>{}, std::vector<ssize_t>({0, 2}), std::vector<ssize_t>(size, 0),
                        std::vector<ssize_t>{-1, 0, 1}};
@@ -205,7 +209,7 @@ auto create_test_vectorarrays(ssize_t size, ssize_t dim)
     using VecArrayFactory = TestVectorArrayFactory<VectorArray>;
     using F = typename VectorArray::ScalarType;
     std::vector<std::shared_ptr<VectorArrayInterface<F>>> ret;
-    for (ssize_t sz : std::vector<ssize_t>{0, 1, size, size + 2})
+    for (const ssize_t sz : std::vector<ssize_t>{0, 1, size, size + 2})
     {
         ret.emplace_back(VecArrayFactory::iota(sz, dim, F(-1)));
     }
@@ -213,7 +217,7 @@ auto create_test_vectorarrays(ssize_t size, ssize_t dim)
 }
 
 // some helper functions for testing
-bool contains_invalid_index(const std::vector<ssize_t>& indices, ssize_t size)
+inline bool contains_invalid_index(const std::vector<ssize_t>& indices, ssize_t size)
 {
     return std::ranges::any_of(indices,
                                [size](ssize_t i)
@@ -222,6 +226,7 @@ bool contains_invalid_index(const std::vector<ssize_t>& indices, ssize_t size)
                                });
 }
 
+// NOLINTNEXTLINE(cppcoreguidelines-macro-usage)
 #define VECTORARRAY_TEST_CHECK_NOTHROW(expression) \
     then("No exception is thrown") = [&]()         \
     {                                              \
@@ -654,7 +659,8 @@ void check_axpy(const VectorArrayInterface<typename VectorArray::ScalarType>& v,
                                             for (ssize_t j = 0; j < dim; ++j)
                                             {
                                                 expect(v_axpy->get(i, j) ==
-                                                       v.get(i, j) + alpha[alpha_index] * x->get(x_index, j));
+                                                       v.get(i, j) +
+                                                           (alpha[alpha_index] * x->get(x_index, j)));
                                             }
                                         }
                                     };
@@ -789,7 +795,5 @@ void check_axpy(const VectorArrayInterface<typename VectorArray::ScalarType>& v,
         } | create_test_alphas<F>(size);
     };
 }
-
-}  // namespace
 
 #endif  // NIAS_CPP_TEST_VECTORARRAY_COMMON_H

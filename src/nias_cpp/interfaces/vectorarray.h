@@ -5,6 +5,7 @@
 #include <iostream>
 #include <memory>
 #include <optional>
+#include <string>
 #include <vector>
 
 #include <nias_cpp/concepts.h>
@@ -77,7 +78,7 @@ class ConstVectorArrayView : public VectorArrayInterface<F>
         return vec_array_.get(indices_ ? indices_->get(i, vec_array_.size()) : i, j);
     }
 
-    virtual void set(ssize_t /*i*/, ssize_t /*j*/, F /*value*/) override
+    void set(ssize_t /*i*/, ssize_t /*j*/, F /*value*/) override
     {
         throw NotImplementedError(
             "ConstVectorArrayView: cannot modify vector array entries through a const view.");
@@ -157,7 +158,7 @@ class VectorArrayView : public ConstVectorArrayView<F>
         vec_array_.axpy(alpha, x, indices, x_indices);
     }
 
-    virtual void set(ssize_t i, ssize_t j, F value) override
+    void set(ssize_t i, ssize_t j, F value) override
     {
         vec_array_.set(this->indices_ ? this->indices_->get(i, vec_array_.size()) : i, j, value);
     }
@@ -333,7 +334,7 @@ class VectorArrayInterface
             const auto alpha_index = alpha.size() == 1 ? 0 : i;
             for (ssize_t j = 0; j < dim(); ++j)
             {
-                this->set(this_index, j, this->get(this_index, j) + alpha[alpha_index] * x.get(x_index, j));
+                this->set(this_index, j, this->get(this_index, j) + (alpha[alpha_index] * x.get(x_index, j)));
             }
         }
     }

@@ -1,5 +1,7 @@
 #include "indices.h"
 
+#include <array>
+#include <cstddef>
 #include <functional>
 #include <initializer_list>
 #include <set>

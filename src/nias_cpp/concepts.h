@@ -3,6 +3,7 @@
 
 #include <complex>
 #include <concepts>
+#include <ostream>
 #include <type_traits>
 
 namespace nias

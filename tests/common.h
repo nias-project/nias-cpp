@@ -3,20 +3,13 @@
 
 #include <algorithm>
 #include <concepts>
+#include <limits>
+#include <ostream>
 
-#include <nias_cpp/checked_integer_cast.h>
 #include <nias_cpp/concepts.h>
-#include <nias_cpp/exceptions.h>
-#include <nias_cpp/indices.h>
-#include <nias_cpp/interfaces/vectorarray.h>
-#include <nias_cpp/interpreter.h>
-#include <nias_cpp/type_traits.h>
-#include <nias_cpp/vectorarray/list.h>
-#include <nias_cpp/vectorarray/numpy.h>
 #include <pybind11/numpy.h>
 
-namespace
-{
+// NOLINTNEXTLINE(google-global-names-in-headers)
 using namespace nias;
 
 template <class Lhs, class Rhs>
@@ -29,7 +22,7 @@ struct DefaultExactlyEqualOp
     {
     }
 
-    [[nodiscard]] constexpr operator bool() const
+    [[nodiscard]] constexpr explicit operator bool() const
     {
         return lhs_ == rhs_;
     }
@@ -59,7 +52,7 @@ struct FloatingPointApproxEqualOp
     {
     }
 
-    [[nodiscard]] constexpr operator bool() const
+    [[nodiscard]] constexpr explicit operator bool() const
     {
         constexpr F abs_tol = std::numeric_limits<F>::epsilon() * 10;
         constexpr F rel_tol = abs_tol;
@@ -80,8 +73,5 @@ auto approx_equal(F lhs, F rhs)
 {
     return FloatingPointApproxEqualOp<F>(lhs, rhs);
 }
-
-
-}  // namespace
 
 #endif  // NIAS_CPP_TEST_COMMON_H

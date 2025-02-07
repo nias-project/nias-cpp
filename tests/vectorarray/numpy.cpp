@@ -1,15 +1,12 @@
 #include <concepts>
 #include <tuple>
 
-#include <nias_cpp/concepts.h>
-#include <nias_cpp/indices.h>
-#include <nias_cpp/interfaces/vectorarray.h>
+#include <boost/ut.hpp>
 #include <nias_cpp/interpreter.h>
 #include <nias_cpp/type_traits.h>
 #include <nias_cpp/vectorarray/numpy.h>
 #include <pybind11/numpy.h>
 
-#include "../boost_ut_no_module.h"
 #include "common.h"
 
 int main()

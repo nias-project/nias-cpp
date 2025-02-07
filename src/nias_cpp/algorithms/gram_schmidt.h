@@ -12,7 +12,6 @@
 #include <nias_cpp/type_traits.h>
 #include <nias_cpp/vectorarray/list.h>
 #include <pybind11/cast.h>
-#include <pybind11/eval.h>
 #include <pybind11/pybind11.h>
 #include <pybind11/pytypes.h>
 
