@@ -20,13 +20,49 @@ set(NIAS_CPP_INSTALL_DIR
 set(NIAS_CPP_INCLUDE_INSTALL_DIR "${NIAS_CPP_INSTALL_DIR}/src")
 set(NIAS_CPP_CMAKE_INSTALL_DIR "${NIAS_CPP_INSTALL_DIR}/cmake")
 
-# find pybind11 if it is not already available
-if(NOT COMMAND pybind11_add_module)
-    include(CMakeFindDependencyMacro)
-    set(PYBIND11_FINDPYTHON ON)
-    find_dependency(Python COMPONENTS Interpreter Development REQUIRED)
-    find_dependency(pybind11 CONFIG REQUIRED HINTS ${_NIAS_CPP_DIR}/../pybind11/share/cmake/pybind11)
+# make sure uv is available to run the python script for parsing pyproject.toml
+# first try to find uv in the environment
+find_program(UV_EXECUTABLE uv uv.exe)
+# if we could not find uv, download it
+if(NOT UV_EXECUTABLE)
+    include(FetchContent)
+    set(_uv_version "0.5.1")
+    if(CMAKE_SYSTEM_NAME STREQUAL "Windows")
+        set(_uv_archive_name "uv-x86_64-pc-windows-msvc.zip")
+    elseif(CMAKE_SYSTEM_NAME STREQUAL "Linux")
+        set(_uv_archive_name "uv-x86_64-unknown-linux-gnu.tar.gz")
+    else()
+        message(WARNING "Could not download uv binary, unsupported system: ${CMAKE_SYSTEM_NAME}.")
+        message(WARNING "Please make sure uv is available in your environment.")
+    endif()
+    FetchContent_Declare(
+        uv URL "https://github.com/astral-sh/uv/releases/download/${_uv_version}/${_uv_archive_name}")
+    FetchContent_MakeAvailable(uv)
 endif()
+# now we should have uv
+find_program(UV_EXECUTABLE uv uv.exe HINTS ${uv_BINARY_DIR} REQUIRED)
+
+if(NOT COMMAND pybind11_add_module)
+    # parse pyproject.toml to get pybind11 version
+    execute_process(
+        COMMAND ${UV_EXECUTABLE} run --no-project --with toml cmake/parse_pyproject_toml.py pybind11
+        WORKING_DIRECTORY ${_NIAS_CPP_DIR}
+        OUTPUT_VARIABLE PYBIND11_VERSION)
+
+    # add pybind11
+    include(FetchContent)
+    FetchContent_Declare(
+        pybind11
+        GIT_REPOSITORY https://github.com/pybind/pybind11
+        GIT_TAG "v${PYBIND11_VERSION}"
+        OVERRIDE_FIND_PACKAGE)
+    FetchContent_MakeAvailable(pybind11)
+
+    set(PYBIND11_FINDPYTHON ON)
+endif()
+include(CMakeFindDependencyMacro)
+find_dependency(Python COMPONENTS Interpreter Development REQUIRED)
+find_dependency(pybind11 CONFIG REQUIRED HINTS ${_NIAS_CPP_DIR}/../pybind11/share/cmake/pybind11)
 
 # add nias_cpp library target
 function(nias_cpp_build_library target_name)
@@ -72,20 +108,25 @@ endfunction()
 nias_cpp_build_library(nias_cpp)
 add_library(nias_cpp::nias_cpp ALIAS nias_cpp)
 
-# we set up our own virtual environment to install our python dependencies
-set(NIAS_CPP_VENV_DIR ${CMAKE_CURRENT_BINARY_DIR}/python/$<CONFIG>)
-add_custom_target(create_venv COMMAND ${UV_EXECUTABLE} venv --python ${Python_EXECUTABLE}
-                                      ${NIAS_CPP_VENV_DIR})
-add_custom_target(
-    install_dependencies_into_venv
-    COMMAND ${UV_EXECUTABLE} pip compile --python ${Python_EXECUTABLE} --quiet
-            ${CMAKE_CURRENT_SOURCE_DIR}/pyproject.toml -o ${CMAKE_CURRENT_BINARY_DIR}/requirements.txt
-    COMMAND ${UV_EXECUTABLE} venv --python ${Python_EXECUTABLE} ${NIAS_CPP_VENV_DIR} --quiet
-    COMMAND ${CMAKE_COMMAND} -E env "VIRTUAL_ENV=${NIAS_CPP_VENV_DIR}" ${UV_EXECUTABLE} pip install
-            --requirements ${CMAKE_CURRENT_BINARY_DIR}/requirements.txt --quiet
-    COMMENT "Installing nias_cpp dependencies into virtual environment")
-add_dependencies(install_dependencies_into_venv create_venv)
-add_dependencies(nias_cpp install_dependencies_into_venv)
+if(DEFINED ENV{VIRTUAL_ENV})
+    set(NIAS_CPP_VENV_DIR $ENV{VIRTUAL_ENV})
+    # TODO: check that nias_cpp is installed in the virtual environment
+else()
+    # if no virtualenv is active, we set up our own virtual environment to install our python dependencies
+    set(NIAS_CPP_VENV_DIR ${CMAKE_CURRENT_BINARY_DIR}/nias_cpp_venv/$<CONFIG>)
+    add_custom_target(create_venv COMMAND ${UV_EXECUTABLE} venv --python ${Python_EXECUTABLE}
+                                          ${NIAS_CPP_VENV_DIR})
+    add_custom_target(
+        install_dependencies_into_venv
+        COMMAND ${UV_EXECUTABLE} pip compile --python ${Python_EXECUTABLE} --quiet
+                ${_NIAS_CPP_DIR}/pyproject.toml -o ${CMAKE_CURRENT_BINARY_DIR}/requirements.txt
+        COMMAND ${UV_EXECUTABLE} venv --python ${Python_EXECUTABLE} ${NIAS_CPP_VENV_DIR} --quiet
+        COMMAND ${CMAKE_COMMAND} -E env "VIRTUAL_ENV=${NIAS_CPP_VENV_DIR}" ${UV_EXECUTABLE} pip install
+                --requirements ${CMAKE_CURRENT_BINARY_DIR}/requirements.txt --quiet
+        COMMENT "Installing nias_cpp dependencies into virtual environment")
+    add_dependencies(nias_cpp install_dependencies_into_venv)
+    add_dependencies(install_dependencies_into_venv create_venv)
+endif()
 
 # pass the virtual environment and library directory to the C++ code
 target_compile_definitions(nias_cpp PRIVATE NIAS_CPP_VENV_DIR="${NIAS_CPP_VENV_DIR}")

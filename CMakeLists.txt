@@ -35,46 +35,6 @@ endif()
 
 find_package(Python REQUIRED COMPONENTS Interpreter Development.Module)
 
-# make sure uv is available to run the python script for parsing pyproject.toml
-# first try to find uv in the environment
-find_program(UV_EXECUTABLE uv uv.exe)
-# if we could not find uv, download it
-if(NOT UV_EXECUTABLE)
-    include(FetchContent)
-    set(_uv_version "0.5.1")
-    if(CMAKE_SYSTEM_NAME STREQUAL "Windows")
-        set(_uv_archive_name "uv-x86_64-pc-windows-msvc.zip")
-    elseif(CMAKE_SYSTEM_NAME STREQUAL "Linux")
-        set(_uv_archive_name "uv-x86_64-unknown-linux-gnu.tar.gz")
-    else()
-        message(WARNING "Could not download uv binary, unsupported system: ${CMAKE_SYSTEM_NAME}.")
-        message(WARNING "Please make sure uv is available in your environment.")
-    endif()
-    FetchContent_Declare(
-        uv URL "https://github.com/astral-sh/uv/releases/download/${_uv_version}/${_uv_archive_name}")
-    FetchContent_MakeAvailable(uv)
-endif()
-# now we should have uv
-find_program(UV_EXECUTABLE uv uv.exe HINTS ${uv_BINARY_DIR} REQUIRED)
-
-if(NOT COMMAND pybind11_add_module)
-    # parse pyproject.toml to get pybind11 version
-    execute_process(
-        COMMAND ${UV_EXECUTABLE} run --no-project --with toml cmake/parse_pyproject_toml.py pybind11
-        WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
-        OUTPUT_VARIABLE PYBIND11_VERSION)
-
-    # add pybind11
-    include(FetchContent)
-    FetchContent_Declare(
-        pybind11
-        GIT_REPOSITORY https://github.com/pybind/pybind11
-        GIT_TAG "v${PYBIND11_VERSION}"
-        OVERRIDE_FIND_PACKAGE)
-    FetchContent_MakeAvailable(pybind11)
-endif()
-find_package(pybind11 REQUIRED)
-
 # find our own package
 find_package(nias_cpp PATHS ${CMAKE_CURRENT_SOURCE_DIR}/cmake NO_DEFAULT_PATH)
 
