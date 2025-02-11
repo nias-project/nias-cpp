@@ -793,6 +793,8 @@ void check_axpy(const VectorArrayInterface<typename VectorArray::ScalarType>& v,
                 }
             } | create_test_index_vectors(alpha.size());
         } | create_test_alphas<F>(size);
+
+        // TODO: tests including x_indices
     };
 }
 

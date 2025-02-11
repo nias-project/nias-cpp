@@ -57,73 +57,26 @@ endif()
 # now we should have uv
 find_program(UV_EXECUTABLE uv uv.exe HINTS ${uv_BINARY_DIR} REQUIRED)
 
-# setup virtual environment
-set(NIAS_CPP_VENV_DIR ${CMAKE_BINARY_DIR}/python/$<CONFIG>)
-add_custom_target(create_venv COMMAND ${UV_EXECUTABLE} venv --python ${Python_EXECUTABLE}
-                                      ${NIAS_CPP_VENV_DIR})
+if(NOT COMMAND pybind11_add_module)
+    # parse pyproject.toml to get pybind11 version
+    execute_process(
+        COMMAND ${UV_EXECUTABLE} run --no-project --with toml cmake/parse_pyproject_toml.py pybind11
+        WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
+        OUTPUT_VARIABLE PYBIND11_VERSION)
 
-# parse pyproject.toml to get pybind11 version
-execute_process(
-    COMMAND ${UV_EXECUTABLE} run --no-project --with toml cmake/parse_pyproject_toml.py pybind11
-    WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
-    OUTPUT_VARIABLE PYBIND11_VERSION)
-
-# add pybind11
-include(FetchContent)
-FetchContent_Declare(
-    pybind11
-    GIT_REPOSITORY https://github.com/pybind/pybind11
-    GIT_TAG "v${PYBIND11_VERSION}"
-    OVERRIDE_FIND_PACKAGE)
-FetchContent_MakeAvailable(pybind11)
+    # add pybind11
+    include(FetchContent)
+    FetchContent_Declare(
+        pybind11
+        GIT_REPOSITORY https://github.com/pybind/pybind11
+        GIT_TAG "v${PYBIND11_VERSION}"
+        OVERRIDE_FIND_PACKAGE)
+    FetchContent_MakeAvailable(pybind11)
+endif()
 find_package(pybind11 REQUIRED)
 
 # find our own package
 find_package(nias_cpp PATHS ${CMAKE_CURRENT_SOURCE_DIR}/cmake NO_DEFAULT_PATH)
-
-target_compile_definitions(nias_cpp PRIVATE NIAS_CPP_VENV_DIR="${NIAS_CPP_VENV_DIR}")
-target_compile_definitions(nias_cpp PRIVATE NIAS_CPP_BUILD_DIR="${CMAKE_BINARY_DIR}")
-add_custom_target(
-    install_dependencies_into_venv
-    COMMAND ${UV_EXECUTABLE} pip compile --python ${Python_EXECUTABLE} ${CMAKE_SOURCE_DIR}/pyproject.toml -o
-            ${CMAKE_BINARY_DIR}/requirements.txt
-    COMMAND ${UV_EXECUTABLE} venv --python ${Python_EXECUTABLE} ${NIAS_CPP_VENV_DIR}
-    COMMAND ${CMAKE_COMMAND} -E env "VIRTUAL_ENV=${NIAS_CPP_VENV_DIR}" ${UV_EXECUTABLE} pip install
-            --requirements ${CMAKE_BINARY_DIR}/requirements.txt)
-add_dependencies(install_dependencies_into_venv create_venv)
-add_dependencies(nias_cpp install_dependencies_into_venv)
-
-# installation rules
-include(GNUInstallDirs)
-set(NIAS_CPP_INSTALL_DIR
-    "${CMAKE_INSTALL_PREFIX}/nias_cpp"
-    CACHE PATH "")
-
-set(NIAS_CPP_INCLUDE_INSTALL_DIR "${NIAS_CPP_INSTALL_DIR}/src")
-set(NIAS_CPP_CMAKE_INSTALL_DIR "${NIAS_CPP_INSTALL_DIR}/cmake")
-
-install(
-    DIRECTORY src/
-    DESTINATION "${NIAS_CPP_INCLUDE_INSTALL_DIR}"
-    PATTERN "*.py" EXCLUDE)
-
-install(DIRECTORY cmake/ DESTINATION "${NIAS_CPP_CMAKE_INSTALL_DIR}")
-
-install(TARGETS nias_cpp_bindings nias_cpp LIBRARY DESTINATION ${NIAS_CPP_INSTALL_DIR})
-
-# generate export header
-include(GenerateExportHeader)
-generate_export_header(
-    nias_cpp
-    BASE_NAME
-    nias_cpp
-    EXPORT_MACRO_NAME
-    NIAS_CPP_EXPORT
-    EXPORT_FILE_NAME
-    nias_cpp_export.h
-    STATIC_DEFINE
-    NIAS_CPP_STATIC)
-install(FILES "${PROJECT_BINARY_DIR}/nias_cpp_export.h" DESTINATION "${NIAS_CPP_INCLUDE_INSTALL_DIR}")
 
 # add tests if this is the master project
 if(NIAS_CPP_MASTER_PROJECT)
@@ -131,8 +84,10 @@ if(NIAS_CPP_MASTER_PROJECT)
     # add boost-ext/ut testing framework
     FetchContent_Declare(
         ut
-        GIT_REPOSITORY https://github.com/boost-ext/ut
-        GIT_TAG v2.3.0
+        # GIT_REPOSITORY https://github.com/boost-ext/ut
+        # GIT_TAG v2.3.0
+        GIT_REPOSITORY https://github.com/tobiasleibner/ut
+        GIT_TAG improve_parameterized_bdd_tests
         OVERRIDE_FIND_PACKAGE)
     FetchContent_MakeAvailable(ut)
     find_package(ut REQUIRED)
