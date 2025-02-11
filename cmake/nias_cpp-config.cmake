@@ -9,9 +9,15 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_VISIBILITY_PRESET default)
 set(CMAKE_POSITION_INDEPENDENT_CODE TRUE)
 
+include(GNUInstallDirs)
 set(_NIAS_CPP_DIR
     ${_NIAS_CPP_DIR}
     CACHE INTERNAL "")
+set(NIAS_CPP_INSTALL_DIR
+    "${CMAKE_INSTALL_PREFIX}/nias_cpp"
+    CACHE PATH "")
+set(NIAS_CPP_INCLUDE_INSTALL_DIR "${NIAS_CPP_INSTALL_DIR}/src")
+set(NIAS_CPP_CMAKE_INSTALL_DIR "${NIAS_CPP_INSTALL_DIR}/cmake")
 
 if(NOT COMMAND pybind11_add_module)
     include(CMakeFindDependencyMacro)
@@ -19,6 +25,9 @@ if(NOT COMMAND pybind11_add_module)
     find_dependency(Python COMPONENTS Interpreter Development REQUIRED)
     find_dependency(pybind11 CONFIG REQUIRED HINTS ${_NIAS_CPP_DIR}/../pybind11/share/cmake/pybind11)
 endif()
+
+file(WRITE /home/tobias/nias_cpp_config.log
+     "nias include dirs: ${CMAKE_CURRENT_BINARY_DIR} ${NIAS_CPP_INCLUDE_INSTALL_DIR} ${_NIAS_CPP_DIR}/src")
 
 function(nias_cpp_build_library target_name)
     if(TARGET ${target_name})
@@ -47,7 +56,12 @@ function(nias_cpp_build_library target_name)
 
     foreach(target ${target_name} ${target_name}_bindings)
         target_include_directories(${target} SYSTEM PUBLIC ${_NIAS_CPP_DIR}/src)
-        target_include_directories(${target} PUBLIC ${CMAKE_BINARY_DIR} ${NIAS_CPP_INSTALL_INCLUDE_DIR})
+        target_include_directories(${target} PUBLIC ${CMAKE_CURRENT_BINARY_DIR}
+                                                    ${NIAS_CPP_INCLUDE_INSTALL_DIR})
+        message(
+            WARNING
+                "nias include dirs: ${CMAKE_CURRENT_BINARY_DIR} ${NIAS_CPP_INCLUDE_INSTALL_DIR} ${_NIAS_CPP_DIR}/src"
+        )
         target_link_libraries(${target} PUBLIC pybind11::pybind11 pybind11::embed)
         set_target_properties(${target} PROPERTIES LINKER_LANGUAGE CXX)
     endforeach()
@@ -63,3 +77,44 @@ endfunction()
 
 nias_cpp_build_library(nias_cpp)
 target_link_libraries(nias_cpp_bindings PUBLIC nias_cpp)
+
+# setup virtual environment
+set(NIAS_CPP_VENV_DIR ${CMAKE_CURRENT_BINARY_DIR}/python/$<CONFIG>)
+add_custom_target(create_venv COMMAND ${UV_EXECUTABLE} venv --python ${Python_EXECUTABLE}
+                                      ${NIAS_CPP_VENV_DIR})
+
+target_compile_definitions(nias_cpp PRIVATE NIAS_CPP_VENV_DIR="${NIAS_CPP_VENV_DIR}")
+target_compile_definitions(nias_cpp PRIVATE NIAS_CPP_BUILD_DIR="${CMAKE_CURRENT_BINARY_DIR}")
+add_custom_target(
+    install_dependencies_into_venv
+    COMMAND ${UV_EXECUTABLE} pip compile --python ${Python_EXECUTABLE}
+            ${CMAKE_CURRENT_SOURCE_DIR}/pyproject.toml -o ${CMAKE_CURRENT_BINARY_DIR}/requirements.txt
+    COMMAND ${UV_EXECUTABLE} venv --python ${Python_EXECUTABLE} ${NIAS_CPP_VENV_DIR}
+    COMMAND ${CMAKE_COMMAND} -E env "VIRTUAL_ENV=${NIAS_CPP_VENV_DIR}" ${UV_EXECUTABLE} pip install
+            --requirements ${CMAKE_CURRENT_BINARY_DIR}/requirements.txt)
+add_dependencies(install_dependencies_into_venv create_venv)
+add_dependencies(nias_cpp install_dependencies_into_venv)
+
+# installation rules
+install(
+    DIRECTORY src/
+    DESTINATION "${NIAS_CPP_INCLUDE_INSTALL_DIR}"
+    PATTERN "*.py" EXCLUDE)
+
+install(DIRECTORY cmake/ DESTINATION "${NIAS_CPP_CMAKE_INSTALL_DIR}")
+
+install(TARGETS nias_cpp_bindings nias_cpp LIBRARY DESTINATION ${NIAS_CPP_INSTALL_DIR})
+
+# generate export header
+include(GenerateExportHeader)
+generate_export_header(
+    nias_cpp
+    BASE_NAME
+    nias_cpp
+    EXPORT_MACRO_NAME
+    NIAS_CPP_EXPORT
+    EXPORT_FILE_NAME
+    nias_cpp_export.h
+    STATIC_DEFINE
+    NIAS_CPP_STATIC)
+install(FILES "${PROJECT_BINARY_DIR}/nias_cpp_export.h" DESTINATION "${NIAS_CPP_INCLUDE_INSTALL_DIR}")
