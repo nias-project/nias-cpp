@@ -34,8 +34,9 @@ function(nias_cpp_build_library target_name)
         return()
     endif()
 
-    add_library(
-        ${target_name} SHARED
+    pybind11_add_module(
+        ${target_name}
+        SHARED
         ${ARG_UNPARSED_ARGUMENTS}
         ${_NIAS_CPP_DIR}/src/nias_cpp/algorithms/gram_schmidt.h
         ${_NIAS_CPP_DIR}/src/nias_cpp/checked_integer_cast.h
@@ -49,22 +50,15 @@ function(nias_cpp_build_library target_name)
         ${_NIAS_CPP_DIR}/src/nias_cpp/interfaces/vector.h
         ${_NIAS_CPP_DIR}/src/nias_cpp/interfaces/vectorarray.h
         ${_NIAS_CPP_DIR}/src/nias_cpp/vectorarray/list.h
-        ${_NIAS_CPP_DIR}/src/nias_cpp/vectorarray/numpy.h)
+        ${_NIAS_CPP_DIR}/src/nias_cpp/vectorarray/numpy.h
+        ${_NIAS_CPP_DIR}/src/nias_cpp/bindings.h
+        ${_NIAS_CPP_DIR}/src/nias_cpp/bindings.cpp)
 
-    pybind11_add_module(${target_name}_bindings MODULE ${_NIAS_CPP_DIR}/src/nias_cpp/bindings.h
-                        ${_NIAS_CPP_DIR}/src/nias_cpp/bindings.cpp)
-
-    foreach(target ${target_name} ${target_name}_bindings)
-        target_include_directories(${target} SYSTEM PUBLIC ${_NIAS_CPP_DIR}/src)
-        target_include_directories(${target} PUBLIC ${CMAKE_CURRENT_BINARY_DIR}
-                                                    ${NIAS_CPP_INCLUDE_INSTALL_DIR})
-        message(
-            WARNING
-                "nias include dirs: ${CMAKE_CURRENT_BINARY_DIR} ${NIAS_CPP_INCLUDE_INSTALL_DIR} ${_NIAS_CPP_DIR}/src"
-        )
-        target_link_libraries(${target} PUBLIC pybind11::pybind11 pybind11::embed)
-        set_target_properties(${target} PROPERTIES LINKER_LANGUAGE CXX)
-    endforeach()
+    target_include_directories(${target_name} SYSTEM PUBLIC ${_NIAS_CPP_DIR}/src)
+    target_include_directories(${target_name} PUBLIC ${CMAKE_CURRENT_BINARY_DIR}
+                                                     ${NIAS_CPP_INCLUDE_INSTALL_DIR})
+    target_link_libraries(${target_name} PUBLIC pybind11::pybind11 pybind11::embed)
+    set_target_properties(${target_name} PROPERTIES LINKER_LANGUAGE CXX)
 endfunction()
 
 function(nias_cpp_add_module name)
@@ -76,7 +70,6 @@ function(nias_cpp_add_module name)
 endfunction()
 
 nias_cpp_build_library(nias_cpp)
-target_link_libraries(nias_cpp_bindings PUBLIC nias_cpp)
 
 # setup virtual environment
 set(NIAS_CPP_VENV_DIR ${CMAKE_CURRENT_BINARY_DIR}/python/$<CONFIG>)
@@ -84,16 +77,18 @@ add_custom_target(create_venv COMMAND ${UV_EXECUTABLE} venv --python ${Python_EX
                                       ${NIAS_CPP_VENV_DIR})
 
 target_compile_definitions(nias_cpp PRIVATE NIAS_CPP_VENV_DIR="${NIAS_CPP_VENV_DIR}")
-target_compile_definitions(nias_cpp PRIVATE NIAS_CPP_BUILD_DIR="${CMAKE_CURRENT_BINARY_DIR}")
+target_compile_definitions(nias_cpp PRIVATE NIAS_CPP_BUILD_DIR="$<TARGET_FILE_DIR:nias_cpp>")
 add_custom_target(
     install_dependencies_into_venv
-    COMMAND ${UV_EXECUTABLE} pip compile --python ${Python_EXECUTABLE}
+    COMMAND ${UV_EXECUTABLE} pip compile --python ${Python_EXECUTABLE} --quiet
             ${CMAKE_CURRENT_SOURCE_DIR}/pyproject.toml -o ${CMAKE_CURRENT_BINARY_DIR}/requirements.txt
-    COMMAND ${UV_EXECUTABLE} venv --python ${Python_EXECUTABLE} ${NIAS_CPP_VENV_DIR}
+    COMMAND ${UV_EXECUTABLE} venv --python ${Python_EXECUTABLE} ${NIAS_CPP_VENV_DIR} --quiet
     COMMAND ${CMAKE_COMMAND} -E env "VIRTUAL_ENV=${NIAS_CPP_VENV_DIR}" ${UV_EXECUTABLE} pip install
-            --requirements ${CMAKE_CURRENT_BINARY_DIR}/requirements.txt)
+            --requirements ${CMAKE_CURRENT_BINARY_DIR}/requirements.txt --quiet
+    COMMENT "Installing nias_cpp dependencies into virtual environment")
 add_dependencies(install_dependencies_into_venv create_venv)
 add_dependencies(nias_cpp install_dependencies_into_venv)
+add_library(nias_cpp::nias_cpp ALIAS nias_cpp)
 
 # installation rules
 install(
@@ -103,7 +98,7 @@ install(
 
 install(DIRECTORY cmake/ DESTINATION "${NIAS_CPP_CMAKE_INSTALL_DIR}")
 
-install(TARGETS nias_cpp_bindings nias_cpp LIBRARY DESTINATION ${NIAS_CPP_INSTALL_DIR})
+install(TARGETS nias_cpp LIBRARY DESTINATION ${NIAS_CPP_INSTALL_DIR})
 
 # generate export header
 include(GenerateExportHeader)

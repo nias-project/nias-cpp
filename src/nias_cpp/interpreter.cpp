@@ -1,5 +1,6 @@
 #include "interpreter.h"
 
+#include <iostream>
 #include <mutex>
 
 #include <pybind11/embed.h>
@@ -17,6 +18,8 @@ void ensure_interpreter_and_venv_are_active()
     // is the same as the one in the virtualenv. In the future, we might want to
     // - use the Python C API to choose the virtualenv Python interpreter, see https://docs.python.org/3/c-api/init_config.html
     // - make sure (in CMake) that pybind11 is linked to the Python version from the virtualenv
+    std::cout << "nias_cpp_venv_dir = " NIAS_CPP_VENV_DIR "\n";
+    std::cout << "nias_cpp_build_dir = " NIAS_CPP_BUILD_DIR "\n";
     static std::once_flag flag;
     std::call_once(flag,
                    [&]()
