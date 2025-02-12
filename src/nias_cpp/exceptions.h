@@ -5,12 +5,14 @@
 #include <string>
 #include <string_view>
 
+#include "nias_cpp_export.h"
+
 namespace nias
 {
 
 
 /// Base class for all exceptions in the nias_cpp library.
-class ErrorInNiasCpp : public std::exception
+class NIAS_CPP_EXPORT ErrorInNiasCpp : public std::exception
 {
    public:
     explicit ErrorInNiasCpp(std::string_view message);
@@ -21,31 +23,31 @@ class ErrorInNiasCpp : public std::exception
     const std::string message_;
 };
 
-class InvalidIndexError : public ErrorInNiasCpp
+class NIAS_CPP_EXPORT InvalidIndexError : public ErrorInNiasCpp
 {
    public:
     explicit InvalidIndexError(std::string_view message);
 };
 
-class InvalidStateError : public ErrorInNiasCpp
+class NIAS_CPP_EXPORT InvalidStateError : public ErrorInNiasCpp
 {
    public:
     explicit InvalidStateError(std::string_view message);
 };
 
-class InvalidArgumentError : public ErrorInNiasCpp
+class NIAS_CPP_EXPORT InvalidArgumentError : public ErrorInNiasCpp
 {
    public:
     explicit InvalidArgumentError(std::string_view message);
 };
 
-class OverflowError : public ErrorInNiasCpp
+class NIAS_CPP_EXPORT OverflowError : public ErrorInNiasCpp
 {
    public:
     explicit OverflowError(std::string_view message);
 };
 
-class NotImplementedError : public ErrorInNiasCpp
+class NIAS_CPP_EXPORT NotImplementedError : public ErrorInNiasCpp
 {
    public:
     explicit NotImplementedError(std::string_view message);
