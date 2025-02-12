@@ -42,6 +42,7 @@ endif()
 # now we should have uv
 find_program(UV_EXECUTABLE uv uv.exe HINTS ${uv_BINARY_DIR} REQUIRED)
 
+include(CMakeFindDependencyMacro)
 if(NOT COMMAND pybind11_add_module)
     # parse pyproject.toml to get pybind11 version
     execute_process(
@@ -51,18 +52,19 @@ if(NOT COMMAND pybind11_add_module)
 
     # add pybind11
     include(FetchContent)
+    find_dependency(Python COMPONENTS Interpreter Development REQUIRED)
+    # we have to set these variables to ensure pybind11 uses the same python that we found
+    # if we do not set these variables, pybind11 sometimes uses a different python for some reasonn
+    set(PYBIND11_PYTHON_VERSION "${Python_VERSION}")
+    set(PYTHON_EXECUTABLE "${Python_EXECUTABLE}")
     FetchContent_Declare(
         pybind11
         GIT_REPOSITORY https://github.com/pybind/pybind11
         GIT_TAG "v${PYBIND11_VERSION}"
         OVERRIDE_FIND_PACKAGE)
     FetchContent_MakeAvailable(pybind11)
-
-    set(PYBIND11_FINDPYTHON ON)
+    find_dependency(pybind11 CONFIG REQUIRED)
 endif()
-include(CMakeFindDependencyMacro)
-find_dependency(Python COMPONENTS Interpreter Development REQUIRED)
-find_dependency(pybind11 CONFIG REQUIRED HINTS ${_NIAS_CPP_DIR}/../pybind11/share/cmake/pybind11)
 
 # add nias_cpp library target
 function(nias_cpp_build_library target_name)

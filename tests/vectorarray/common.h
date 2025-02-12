@@ -11,7 +11,6 @@
 #include <string_view>
 #include <vector>
 
-#include <boost/ut.hpp>
 #include <nias_cpp/checked_integer_cast.h>
 #include <nias_cpp/concepts.h>
 #include <nias_cpp/exceptions.h>
@@ -23,6 +22,7 @@
 #include <nias_cpp/vectorarray/numpy.h>
 #include <pybind11/numpy.h>
 
+#include "../boost_ext_ut_no_module.h"
 #include "../common.h"
 #include "../test_module.h"
 
@@ -593,7 +593,7 @@ void check_scal(const VectorArrayInterface<F>& v, ssize_t size, ssize_t dim)
                         };
                     }
                 }
-            } | create_test_index_vectors(alpha.size());
+            } | create_test_index_vectors(std::ssize(alpha));
         } | create_test_alphas<F>(size);
     };
 }
@@ -679,7 +679,7 @@ void check_axpy(const VectorArrayInterface<typename VectorArray::ScalarType>& v,
                 {
                     given("Another vectorarray x of size indices.size()") = [&]()
                     {
-                        const auto x = VecArrayFactory::iota(index_vec.size(), dim, F(-1));
+                        const auto x = VecArrayFactory::iota(std::ssize(index_vec), dim, F(-1));
                         VECTORARRAY_TEST_CHECK_THROWS(axpy(alpha, *x, indices), InvalidIndexError);
                         VECTORARRAY_TEST_CHECK_THROWS(axpy(F(-1), *x, indices), InvalidIndexError);
                     };
@@ -732,7 +732,7 @@ void check_axpy(const VectorArrayInterface<typename VectorArray::ScalarType>& v,
                                             {
                                                 const auto i_in_indices =
                                                     std::ranges::find_if(index_vec,
-                                                                         [i, size](int index)
+                                                                         [i, size](ssize_t index)
                                                                          {
                                                                              return index == i ||
                                                                                     index == i - size;
@@ -787,11 +787,11 @@ void check_axpy(const VectorArrayInterface<typename VectorArray::ScalarType>& v,
                                         };
                                     };
                                 }
-                            } | create_test_vectorarrays<VectorArray>(index_vec.size(), dim);
+                            } | create_test_vectorarrays<VectorArray>(std::ssize(index_vec), dim);
                         };
                     }
                 }
-            } | create_test_index_vectors(alpha.size());
+            } | create_test_index_vectors(std::ssize(alpha));
         } | create_test_alphas<F>(size);
 
         // TODO: tests including x_indices

@@ -281,22 +281,22 @@ auto bind_nias_listvectorarray(pybind11::module& m, const std::string& field_typ
                  py::arg("other"), py::arg("remove_from_other") = false,
                  py::arg("other_indices") = py::none())
             .def("delete", &ListVecArray::delete_vectors, py::arg("indices"))
-            .def("scal", py::overload_cast<F, const std::optional<Indices>&>(&ListVecArray::scal),
-                 py::arg("alpha"), py::arg("indices") = py::none())
-            .def("scal",
-                 py::overload_cast<const std::vector<F>&, const std::optional<Indices>&>(&ListVecArray::scal),
-                 py::arg("alpha"), py::arg("indices") = py::none())
-            .def("axpy",
-                 py::overload_cast<F, const VecArrayInterface&, const std::optional<Indices>&,
-                                   const std::optional<Indices>&>(&ListVecArray::axpy),
-                 py::arg("alpha"), py::arg("x"), py::arg("indices") = py::none(),
-                 py::arg("x_indices") = py::none())
-            .def("axpy",
-                 py::overload_cast<const std::vector<F>&, const VecArrayInterface&,
-                                   const std::optional<Indices>&, const std::optional<Indices>&>(
-                     &ListVecArray::axpy),
-                 py::arg("alpha"), py::arg("x"), py::arg("indices") = py::none(),
-                 py::arg("x_indices") = py::none())
+            // .def("scal", py::overload_cast<F, const std::optional<Indices>&>(&ListVecArray::scal),
+            //      py::arg("alpha"), py::arg("indices") = py::none())
+            // .def("scal",
+            //      py::overload_cast<const std::vector<F>&, const std::optional<Indices>&>(&ListVecArray::scal),
+            //      py::arg("alpha"), py::arg("indices") = py::none())
+            // .def("axpy",
+            //      py::overload_cast<F, const VecArrayInterface&, const std::optional<Indices>&,
+            //                        const std::optional<Indices>&>(&ListVecArray::axpy),
+            //      py::arg("alpha"), py::arg("x"), py::arg("indices") = py::none(),
+            //      py::arg("x_indices") = py::none())
+            // .def("axpy",
+            //      py::overload_cast<const std::vector<F>&, const VecArrayInterface&,
+            //                        const std::optional<Indices>&, const std::optional<Indices>&>(
+            //          &ListVecArray::axpy),
+            //      py::arg("alpha"), py::arg("x"), py::arg("indices") = py::none(),
+            //      py::arg("x_indices") = py::none())
             .def("is_compatible_array", &ListVecArray::is_compatible_array)
             .def("print", &ListVecArray::print);
     return ret;

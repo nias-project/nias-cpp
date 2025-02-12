@@ -1,12 +1,12 @@
 #include <concepts>
 #include <tuple>
 
-#include <boost/ut.hpp>
 #include <nias_cpp/interpreter.h>
 #include <nias_cpp/type_traits.h>
 #include <nias_cpp/vectorarray/list.h>
 #include <pybind11/numpy.h>
 
+#include "../boost_ext_ut_no_module.h"
 #include "common.h"
 
 int main()

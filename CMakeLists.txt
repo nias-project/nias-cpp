@@ -44,10 +44,8 @@ if(NIAS_CPP_MASTER_PROJECT)
     # add boost-ext/ut testing framework
     FetchContent_Declare(
         ut
-        # GIT_REPOSITORY https://github.com/boost-ext/ut
-        # GIT_TAG v2.3.0
-        GIT_REPOSITORY https://github.com/tobiasleibner/ut
-        GIT_TAG improve_parameterized_bdd_tests
+        GIT_REPOSITORY https://github.com/boost-ext/ut
+        GIT_TAG 69d500f3dc51eb020b7a91d8349cf9749a54b0b9
         OVERRIDE_FIND_PACKAGE)
     FetchContent_MakeAvailable(ut)
     find_package(ut REQUIRED)
