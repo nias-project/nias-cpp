@@ -84,7 +84,6 @@ auto bind_nias_vectorinterface(pybind11::module& m, const std::string& name = "V
 
         F& get(ssize_t i) override
         {
-            throw NotImplementedError("Not implemented yet");
             PYBIND11_OVERRIDE_PURE_NAME(F&,            /* Return type */
                                         VecInterface,  /* Parent class */
                                         "__setitem__", /* Name of function in Python */
@@ -95,7 +94,6 @@ auto bind_nias_vectorinterface(pybind11::module& m, const std::string& name = "V
 
         const F& get(ssize_t i) const override
         {
-            throw NotImplementedError("Not implemented yet");
             PYBIND11_OVERRIDE_PURE_NAME(const F&,      /* Return type */
                                         VecInterface,  /* Parent class */
                                         "__getitem__", /* Name of function in Python */
