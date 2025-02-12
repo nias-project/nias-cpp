@@ -21,23 +21,33 @@ void ensure_interpreter_and_venv_are_active()
     std::call_once(flag,
                    [&]()
                    {
+                       // insert build directory into python module search path
+                       pybind11::exec(
+                           "import sys\n"
+                           "import pathlib\n"
+                           "sys.path.insert(0, '" NIAS_CPP_BUILD_DIR "')");
+                       // insert virtualenv module path into python module search path
                        pybind11::exec("nias_cpp_venv_dir = '" NIAS_CPP_VENV_DIR "'");
                        pybind11::exec(R"(
-                           import sys
-                           import pathlib
-                           venv_module_path = list(pathlib.Path(nias_cpp_venv_dir).rglob('site-packages'))
+                           venv_path = pathlib.Path(nias_cpp_venv_dir)
+                           venv_module_path = list(venv_path.rglob('site-packages'))
                            if len(venv_module_path) != 1:
                                raise RuntimeError('Could not find virtualenv module path')
                            venv_module_path = venv_module_path[0]
-                           python_version = sys.version.split()[0]
-                           python_version_wo_patch = '.'.join(python_version.split('.')[:-1])
-                           if not f'python{python_version_wo_patch}' in str(venv_module_path):
-                               raise RuntimeError('Python versions (interpreter vs virtualenv) do not match!')
                            sys.path.insert(0, str(venv_module_path))
                            )");
-                       pybind11::exec(
-                           "import sys\n"
-                           "sys.path.insert(0, '" NIAS_CPP_BUILD_DIR "')");
+                       // check that Python versions match
+                       pybind11::exec(R"(
+                           with open(venv_path / 'pyvenv.cfg', 'r') as f:
+                               for line in f:
+                                   if line.startswith('version_info'):
+                                       venv_version = line.split('=')[1].strip()
+                                       break
+                           interpreter_version = sys.version.split()[0]
+                           if venv_version != interpreter_version:
+                               raise RuntimeError(f'Python versions (interpreter {interpreter_version}'
+                                                  f' vs virtualenv {venv_version}) do not match!')
+                           )");
                    });
 }
 
