@@ -40,12 +40,12 @@ foreach(test_executable IN LISTS TEST_EXECUTABLES)
     # to avoid shared librarys not being found when executing a test or example manually (not
     # using ctest), e.g. from within VSCode or from the terminal, we copy the shared libraries
     # over to the test directory
-    if(NOT TARGET ${PROJECT_NAME}_copy_libraries_to_test_folder)
+    if(NOT TARGET nias_cpp_copy_libraries_to_test_folder)
         add_custom_target(
-            ${PROJECT_NAME}_copy_libraries_to_test_folder
+            nias_cpp_copy_libraries_to_test_folder
             COMMAND ${CMAKE_COMMAND} -E make_directory $<TARGET_FILE_DIR:${_test_target}>
             COMMAND ${CMAKE_COMMAND} -E copy_if_different ${_library_files} $<TARGET_FILE_DIR:${_test_target}>
             COMMENT "Copying shared libraries to test directory")
     endif()
-    add_dependencies(${_test_target} ${PROJECT_NAME}_copy_libraries_to_test_folder)
+    add_dependencies(${_test_target} nias_cpp_copy_libraries_to_test_folder)
 endforeach()

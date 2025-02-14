@@ -32,7 +32,6 @@ namespace nias
 template <floating_point_or_complex F>
 std::shared_ptr<ListVectorArray<F>> gram_schmidt(std::shared_ptr<ListVectorArray<F>> vec_array)
 {
-    std::cout << "\n\nPerforming Gram-Schmidt orthogonalization... ";
     ensure_interpreter_and_venv_are_active();
 
     // import nias_cpp module
@@ -55,7 +54,6 @@ std::shared_ptr<ListVectorArray<F>> gram_schmidt(std::shared_ptr<ListVectorArray
     py::object result = NiasGramSchmidt(nias_vec_array, NiasCppInnerProduct(), "copy"_a = true);
 
     auto ret = result.attr("impl").attr("impl").cast<std::shared_ptr<ListVectorArray<F>>>();
-    std::cout << "done\n\n" << '\n';
     return ret;
 }
 
@@ -69,7 +67,6 @@ std::shared_ptr<ListVectorArray<F>> gram_schmidt(std::shared_ptr<ListVectorArray
 template <floating_point_or_complex F>
 void gram_schmidt_in_place(std::shared_ptr<ListVectorArray<F>> vec_array)
 {
-    std::cout << "\n\nPerforming in-place Gram-Schmidt orthogonalization... ";
     ensure_interpreter_and_venv_are_active();
 
     // import nias_cpp module
@@ -90,7 +87,6 @@ void gram_schmidt_in_place(std::shared_ptr<ListVectorArray<F>> vec_array)
 
     // execute the Python gram_schmidt function
     NiasGramSchmidt(nias_vec_array, NiasCppInnerProduct(), "copy"_a = false);
-    std::cout << "done\n\n" << '\n';
 }
 
 /**
@@ -139,7 +135,6 @@ void gram_schmidt_cpp(VectorArrayInterface<F>& vec_array)
             vec_array.axpy(-projection, vec_array, {i}, {j});
         }
         const auto norm2 = dot_product(vec_array, vec_array, {i}, {i})[0];
-        std::cout << i << ", " << norm2 << std::endl;
         if (norm2 < atol)
         {
             remove[i] = true;

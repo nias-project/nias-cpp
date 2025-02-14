@@ -46,7 +46,6 @@ void print(const std::vector<std::shared_ptr<V>>& vecs, std::string_view name)
         }
         std::cout << '\n';
     }
-    std::cout << "=======================" << '\n';
 }
 
 template <nias::floating_point_or_complex F>
@@ -55,6 +54,7 @@ void print(const nias::VectorArrayInterface<F>& vec_array, std::string_view name
     std::cout << "======== " << name << " ========" << '\n';
     for (ssize_t i = 0; i < vec_array.size(); ++i)
     {
+        std::cout << "vec" << i << ": ";
         for (ssize_t j = 0; j < vec_array.dim(); ++j)
         {
             std::cout << vec_array.get(i, j) << " ";
@@ -118,13 +118,19 @@ int main()
     // Copying the library from the build to the tests folder (build/tests) fixes the problem.
     using namespace boost::ut;
     using namespace nias;
-    "gram_schmidt_cpp"_test = []
+    "gram_schmidt_cpp"_test = []<std::floating_point F>()
     {
-        test_cpp_gram_schmidt<double>();
-    };
+        std::cout << "Running gram_schmidt (C++ implementation) for type: " << reflection::type_name<F>()
+                  << "\n\n";
+        test_cpp_gram_schmidt<F>();
+        std::cout << "\n";
+    } | std::tuple<float, double>{};
     "gram_schmidt"_test = []<floating_point_or_complex F>
     {
+        std::cout << "Running Gram-Schmidt (Python implementation) for type: " << reflection::type_name<F>()
+                  << "\n\n";
         test_gram_schmidt<F>();
+        std::cout << "\n";
     } | std::tuple<float, double, std::complex<float>, std::complex<double>>{};
     return 0;
 }
