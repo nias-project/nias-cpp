@@ -102,7 +102,7 @@ void test_cpp_gram_schmidt()
     const ssize_t dim = 4;
     auto array = pybind11::array_t<F>({size, dim});
     // NOLINTNEXTLINE(cppcoreguidelines-pro-bounds-pointer-arithmetic)
-    std::iota(array.mutable_data(), array.mutable_data() + (size * dim), 1);
+    std::iota(array.mutable_data(), array.mutable_data() + (size * dim), F(1));
     NumpyVectorArray<F> vec_array(array);
     print(vec_array, "Input");
     gram_schmidt_cpp(vec_array);
