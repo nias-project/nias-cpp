@@ -92,9 +92,12 @@ function(nias_cpp_build_library target_name)
         ${_NIAS_CPP_DIR}/src/nias_cpp/bindings.h
         ${_NIAS_CPP_DIR}/src/nias_cpp/bindings.cpp)
 
-    target_include_directories(${target_name} SYSTEM PUBLIC ${_NIAS_CPP_DIR}/src)
-    target_include_directories(${target_name} PUBLIC ${CMAKE_CURRENT_BINARY_DIR}
-                                                     ${NIAS_CPP_INCLUDE_INSTALL_DIR})
+    target_include_directories(
+        ${target_name} SYSTEM PUBLIC $<BUILD_INTERFACE:${_NIAS_CPP_DIR}/src>
+                                     $<INSTALL_INTERFACE:${NIAS_CPP_INCLUDE_INSTALL_DIR}>)
+    target_include_directories(${target_name} PUBLIC $<BUILD_INTERFACE:${CMAKE_CURRENT_BINARY_DIR}>
+                                                     $<INSTALL_INTERFACE:${NIAS_CPP_INCLUDE_INSTALL_DIR}>)
+
     target_link_libraries(${target_name} PUBLIC pybind11::pybind11 pybind11::embed)
     set_target_properties(${target_name} PROPERTIES LINKER_LANGUAGE CXX)
 endfunction()
@@ -142,7 +145,15 @@ install(
 
 install(DIRECTORY cmake/ DESTINATION "${NIAS_CPP_CMAKE_INSTALL_DIR}")
 
-install(TARGETS nias_cpp LIBRARY DESTINATION ${NIAS_CPP_INSTALL_DIR})
+install(
+    TARGETS nias_cpp
+    EXPORT nias_cpp
+    LIBRARY DESTINATION ${NIAS_CPP_INSTALL_DIR})
+
+install(
+    EXPORT nias_cpp
+    NAMESPACE nias_cpp::
+    DESTINATION ${NIAS_CPP_CMAKE_INSTALL_DIR})
 
 # generate export header
 include(GenerateExportHeader)
