@@ -2,16 +2,20 @@
 #define NIAS_CPP_VECTORARRAY_LIST_H
 
 #include <algorithm>
-#include <cstddef>
-// #include <iostream>
+#include <functional>
 #include <memory>
+#include <optional>
 #include <set>
 #include <string>
+#include <typeinfo>
 #include <vector>
 
 #include <nias_cpp/concepts.h>
+#include <nias_cpp/exceptions.h>
+#include <nias_cpp/indices.h>
 #include <nias_cpp/interfaces/vector.h>
 #include <nias_cpp/interfaces/vectorarray.h>
+#include <nias_cpp/type_traits.h>
 
 namespace nias
 {
@@ -25,7 +29,13 @@ class ListVectorArray : public VectorArrayInterface<F>
     using InterfaceType = VectorArrayInterface<F>;
 
    public:
-    ListVectorArray(const std::vector<std::shared_ptr<VectorInterfaceType>>& vectors, size_t dim)
+    // Create an empty ListVectorArray with the given dimension
+    explicit ListVectorArray(ssize_t dim)
+        : dim_(dim)
+    {
+    }
+
+    ListVectorArray(const std::vector<std::shared_ptr<VectorInterfaceType>>& vectors, ssize_t dim)
         : vectors_()
         , dim_(dim)
     {
@@ -38,7 +48,7 @@ class ListVectorArray : public VectorArrayInterface<F>
         check_vec_dimensions();
     }
 
-    ListVectorArray(std::vector<std::shared_ptr<VectorInterfaceType>>&& vectors, size_t dim)
+    ListVectorArray(std::vector<std::shared_ptr<VectorInterfaceType>>&& vectors, ssize_t dim)
         : vectors_(std::move(vectors))
         , dim_(dim)
     {
@@ -46,22 +56,23 @@ class ListVectorArray : public VectorArrayInterface<F>
         check_vec_dimensions();
     }
 
-    ~ListVectorArray()
-    {
-        // std::cout << "ListVectorArray destructor for " << this << std::endl;
-    }
+    // ~ListVectorArray()
+    //      std::cout << "ListVectorArray destructor for " << this << std::endl;
+    // }
+
+    ~ListVectorArray() override = default;
 
     ListVectorArray(const ListVectorArray& other) = delete;
     ListVectorArray(ListVectorArray&& other) = delete;
     ListVectorArray& operator=(const ListVectorArray& other) = delete;
     ListVectorArray& operator=(ListVectorArray&& other) = delete;
 
-    size_t size() const override
+    [[nodiscard]] ssize_t size() const override
     {
         return vectors_.size();
     }
 
-    size_t dim() const override
+    [[nodiscard]] ssize_t dim() const override
     {
         return dim_;
     }
@@ -71,13 +82,21 @@ class ListVectorArray : public VectorArrayInterface<F>
         return dim() == other.dim();
     }
 
-    F get(size_t i, size_t j) const
+    F get(ssize_t i, ssize_t j) const override
     {
+        this->check_indices(i, j);
         return vectors_[i]->get(j);
     }
 
-    const VectorInterfaceType& get(size_t i) const
+    void set(ssize_t i, ssize_t j, F value) override
     {
+        this->check_indices(i, j);
+        vectors_[i]->get(j) = value;
+    }
+
+    const VectorInterfaceType& get(ssize_t i) const
+    {
+        this->check_first_index(i);
         return *vectors_[i];
     }
 
@@ -86,13 +105,13 @@ class ListVectorArray : public VectorArrayInterface<F>
         return vectors_;
     }
 
-    std::shared_ptr<InterfaceType> copy(const std::vector<size_t>& indices = {}) const override
+    std::shared_ptr<InterfaceType> copy(const std::optional<Indices>& indices = std::nullopt) const override
     {
         // std::cout << "Copy called in VecArray!" << std::endl;
         std::vector<std::shared_ptr<VectorInterfaceType>> copied_vectors;
-        if (indices.empty())
+        if (!indices)
         {
-            copied_vectors.reserve(vectors_.size());
+            copied_vectors.reserve(this->size());
             std::ranges::transform(vectors_, std::back_inserter(copied_vectors),
                                    [](const auto& vec)
                                    {
@@ -101,107 +120,62 @@ class ListVectorArray : public VectorArrayInterface<F>
         }
         else
         {
-            copied_vectors.reserve(indices.size());
-            std::ranges::transform(indices, std::back_inserter(copied_vectors),
-                                   [this](size_t i)
-                                   {
-                                       return vectors_[i]->copy();
-                                   });
+            indices->check_valid(this->size());
+            copied_vectors.reserve(indices->size(this->size()));
+            indices->for_each(
+                [this, &copied_vectors](ssize_t i)
+                {
+                    copied_vectors.push_back(vectors_[i]->copy());
+                },
+                this->size());
         }
         return std::make_shared<ThisType>(std::move(copied_vectors), dim_);
     }
 
-    // void append(BaseType& other, bool remove_from_other = false,
     void append(InterfaceType& other, bool remove_from_other = false,
-                const std::vector<size_t>& other_indices = {}) override
+                const std::optional<Indices>& other_indices = std::nullopt) override
     {
         check(is_list_vector_array(other), "append is not (yet) implemented if x is not a ListVectorArray");
-        const auto num_vecs_to_add = other_indices.empty() ? other.size() : other_indices.size();
-        vectors_.reserve(vectors_.size() + num_vecs_to_add);
         remove_from_other ? append_with_removal(dynamic_cast<ThisType&>(other), other_indices)
                           : append_without_removal(dynamic_cast<ThisType&>(other), other_indices);
     }
 
-    void delete_vectors(const std::vector<size_t>& indices) override
+    // TODO: Think about append signatures
+    void append(const std::shared_ptr<VectorInterfaceType>& new_vector)
     {
+        vectors_.push_back(new_vector->copy());
+    }
+
+    void append(const std::vector<std::shared_ptr<VectorInterfaceType>>& new_vectors)
+    {
+        vectors_.reserve(vectors_.size() + new_vectors.size());
+        for (const auto& vec : new_vectors)
+        {
+            vectors_.push_back(vec->copy());
+        }
+    }
+
+    void delete_vectors(const std::optional<Indices>& indices) override
+    {
+        if (!indices)
+        {
+            vectors_.clear();
+            return;
+        }
+        indices->check_valid(this->size());
         // We first sort and deduplicate indices by converting to a std::set
         // We sort in reverse order (by using std::greater as second template argument) to avoid
         // invalidating indices when removing elements from the vector
-        std::set<size_t, std::greater<size_t>> sorted_indices(indices.begin(), indices.end());
+        const auto indices_vec = indices->as_vec(this->size());
+        std::set<ssize_t, std::greater<>> sorted_indices(indices_vec.begin(), indices_vec.end());
         for (auto&& i : sorted_indices)
         {
             vectors_.erase(vectors_.begin() + i);
         }
     }
 
-    void scal(F alpha, const std::vector<size_t>& indices = {}) override
-    {
-        if (indices.empty())
-        {
-            for (auto& vector : vectors_)
-            {
-                vector->scal(alpha);
-            }
-        }
-        else
-        {
-            for (auto i : indices)
-            {
-                vectors_[i]->scal(alpha);
-            }
-        }
-    }
-
-    void scal(const std::vector<F>& alpha, const std::vector<size_t>& indices = {}) override
-    {
-        const auto this_size = indices.empty() ? size() : indices.size();
-        check(alpha.size() == this_size || alpha.size() == 1,
-              "alpha must be scalar or have the same length as the array.");
-        for (size_t i = 0; i < this_size; ++i)
-        {
-            const auto index = indices.empty() ? i : indices[i];
-            const auto alpha_index = alpha.size() == 1 ? 0 : i;
-            vectors_[index]->scal(alpha[alpha_index]);
-        }
-    }
-
-    // void axpy(const std::vector<F>& alpha, const BaseType& x, const std::vector<size_t>& indices = {},
-    void axpy(const std::vector<F>& alpha, const InterfaceType& x, const std::vector<size_t>& indices = {},
-              const std::vector<size_t>& x_indices = {}) override
-    {
-        check(this->is_compatible_array(x), "incompatible dimensions.");
-        const auto this_size = indices.empty() ? size() : indices.size();
-        const auto x_size = x_indices.empty() ? x.size() : x_indices.size();
-        check(x_size == this_size || x_size == 1, "x must have length 1 or the same length as this");
-        check(alpha.size() == this_size || alpha.size() == 1,
-              "alpha must be scalar or have the same length as x");
-        check(is_list_vector_array(x), "axpy is not implemented if x is not a ListVectorArray");
-
-        for (size_t i = 0; i < this_size; ++i)
-        {
-            const auto this_index = indices.empty() ? i : indices[i];
-            // x can either have the same length as this or length 1
-            size_t x_index;
-            if (x_size == this_size)
-            {
-                x_index = x_indices.empty() ? i : x_indices[i];
-            }
-            else
-            {
-                // x has length 1
-                x_index = x_indices.empty() ? 0 : x_indices[0];
-            }
-            const auto alpha_index = alpha.size() == 1 ? 0 : i;
-            vectors_[this_index]->axpy(alpha[alpha_index],
-                                       *dynamic_cast<const ThisType&>(x).vectors_[x_index]);
-        }
-    }
-
-    void axpy(F alpha, const InterfaceType& x, const std::vector<size_t>& indices = {},
-              const std::vector<size_t>& x_indices = {})
-    {
-        axpy(std::vector<F> {alpha}, x, indices, x_indices);
-    }
+    using InterfaceType::axpy;
+    using InterfaceType::scal;
 
    private:
     bool is_list_vector_array(const InterfaceType& other) const
@@ -221,7 +195,7 @@ class ListVectorArray : public VectorArrayInterface<F>
     {
         if (!condition)
         {
-            throw std::invalid_argument("ListVectorArray: " + message);
+            throw InvalidArgumentError("ListVectorArray: " + message);
         }
     }
 
@@ -235,9 +209,10 @@ class ListVectorArray : public VectorArrayInterface<F>
               "All vectors must have the same length.");
     }
 
-    void append_without_removal(const ThisType& other, std::vector<size_t> other_indices = {})
+    void append_without_removal(const ThisType& other,
+                                const std::optional<Indices>& other_indices = std::nullopt)
     {
-        if (other_indices.empty())
+        if (!other_indices)
         {
             std::ranges::transform(other.vectors_, std::back_inserter(vectors_),
                                    [](const auto& vec)
@@ -247,17 +222,20 @@ class ListVectorArray : public VectorArrayInterface<F>
         }
         else
         {
-            std::ranges::transform(other_indices, std::back_inserter(vectors_),
-                                   [&other](size_t i)
-                                   {
-                                       return other.vectors_[i]->copy();
-                                   });
+            other_indices->check_valid(other.size());
+            vectors_.reserve(vectors_.size() + other_indices->size(other.size()));
+            other_indices->for_each(
+                [this, &other](ssize_t i)
+                {
+                    vectors_.push_back(other.vectors_[i]->copy());
+                },
+                other.size());
         }
     }
 
-    void append_with_removal(ThisType& other, const std::vector<size_t>& other_indices)
+    void append_with_removal(ThisType& other, const std::optional<Indices>& other_indices)
     {
-        if (other_indices.empty())
+        if (!other_indices)
         {
             // move all vectors from other to this and then clear other
             vectors_.insert(vectors_.end(), std::make_move_iterator(other.vectors_.begin()),
@@ -266,18 +244,22 @@ class ListVectorArray : public VectorArrayInterface<F>
         }
         else
         {
-            // move selected entries of other to the end of this
-            std::ranges::transform(other_indices, std::back_inserter(vectors_),
-                                   [&other](size_t i)
-                                   {
-                                       return std::move(other.vectors_[i]);
-                                   });
+            other_indices->check_valid(other.size());
+            vectors_.reserve(vectors_.size() + other_indices->size(other.size()));
+            // copy selected entries of other to the end of this
+            other_indices->for_each(
+                [this, &other](ssize_t i)
+                {
+                    // we cannot move here because there might be duplicated indices
+                    vectors_.push_back(other.vectors_[i]->copy());
+                },
+                other.size());
             other.delete_vectors(other_indices);
         }
     }
 
     std::vector<std::shared_ptr<VectorInterfaceType>> vectors_;
-    size_t dim_;
+    ssize_t dim_;
 };
 
 

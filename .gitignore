@@ -80,3 +80,6 @@ docs/source/_static/standalone.js*
 
 # notebooks
 .ipynb_checkpoints/
+
+# uv
+uv.lock

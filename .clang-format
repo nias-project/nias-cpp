@@ -59,10 +59,6 @@ ReflowComments: false
 # coming in amongst other changes in PRs
 SeparateDefinitionBlocks: Always
 
-# We want braced initializer lists to mimic assignment
-SpaceBeforeCpp11BracedList: true
-Cpp11BracedListStyle: true
-
 # We want closing namespace comments
 FixNamespaceComments: true
 

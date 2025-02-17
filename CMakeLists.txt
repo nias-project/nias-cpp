@@ -3,8 +3,8 @@
 # License: BSD 2-Clause License (https://opensource.org/licenses/BSD-2-Clause)
 
 # Require CMake 3.15+ (matching scikit-build-core) Use new versions of all
-# policies up to CMake 3.30
-cmake_minimum_required(VERSION 3.15...3.30)
+# policies up to CMake 3.31
+cmake_minimum_required(VERSION 3.15...3.31)
 project(
     ${SKBUILD_PROJECT_NAME}
     VERSION ${SKBUILD_PROJECT_VERSION}
@@ -28,22 +28,6 @@ if(NOT CMAKE_BUILD_TYPE AND NOT CMAKE_CONFIGURATION_TYPES)
         CACHE STRING "Choose the type of build." FORCE)
 endif()
 
-# installation rules
-include(GNUInstallDirs)
-set(NIAS_CPP_INSTALL_DIR
-    "${CMAKE_INSTALL_PREFIX}/nias_cpp"
-    CACHE PATH "")
-
-set(NIAS_CPP_INCLUDE_INSTALL_DIR "${NIAS_CPP_INSTALL_DIR}/src")
-set(NIAS_CPP_CMAKE_INSTALL_DIR "${NIAS_CPP_INSTALL_DIR}/cmake")
-
-install(
-    DIRECTORY src/
-    DESTINATION "${NIAS_CPP_INCLUDE_INSTALL_DIR}"
-    PATTERN "*.py" EXCLUDE)
-
-install(DIRECTORY cmake/ DESTINATION "${NIAS_CPP_CMAKE_INSTALL_DIR}")
-
 # enable warnings for gcc and clang
 if(CMAKE_CXX_COMPILER_ID MATCHES "GNU" OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
     set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -Wall -Wextra -Wpedantic")
@@ -51,13 +35,19 @@ endif()
 
 find_package(Python REQUIRED COMPONENTS Interpreter Development.Module)
 
-# add pybind11
-add_subdirectory(extern/pybind11)
-
 # find our own package
 find_package(nias_cpp PATHS ${CMAKE_CURRENT_SOURCE_DIR}/cmake NO_DEFAULT_PATH)
 
 # add tests if this is the master project
 if(NIAS_CPP_MASTER_PROJECT)
+    include(FetchContent)
+    # add boost-ext/ut testing framework
+    FetchContent_Declare(
+        ut
+        GIT_REPOSITORY https://github.com/boost-ext/ut
+        GIT_TAG 69d500f3dc51eb020b7a91d8349cf9749a54b0b9
+        OVERRIDE_FIND_PACKAGE)
+    FetchContent_MakeAvailable(ut)
+    find_package(ut REQUIRED)
     add_subdirectory(tests)
 endif()
