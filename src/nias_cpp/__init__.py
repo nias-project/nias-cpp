@@ -4,6 +4,9 @@
 
 from pathlib import Path
 
+# import python bindings for C++ code
+from .nias_cpp import *  # noqa F403
+
 __version__ = "0.1.0"
 
 

@@ -2,10 +2,12 @@
 #define NIAS_CPP_GRAM_SCHMIDT_H
 
 #include <iostream>
+#include <limits>
 #include <memory>
 #include <stdexcept>
 #include <vector>
 
+#include <nias_cpp/checked_integer_cast.h>
 #include <nias_cpp/concepts.h>
 #include <nias_cpp/interfaces/vectorarray.h>
 #include <nias_cpp/interpreter.h>
@@ -96,19 +98,20 @@ template <floating_point_or_complex F>
 std::vector<F> dot_product(const VectorArrayInterface<F>& lhs, const VectorArrayInterface<F>& rhs,
                            std::vector<ssize_t> lhs_indices, std::vector<ssize_t> rhs_indices)
 {
-    const auto lhs_size = lhs_indices.empty() ? lhs.size() : lhs_indices.size();
-    const auto rhs_size = rhs_indices.empty() ? rhs.size() : rhs_indices.size();
+    const auto lhs_size = lhs_indices.empty() ? lhs.size() : std::ssize(lhs_indices);
+    const auto rhs_size = rhs_indices.empty() ? rhs.size() : std::ssize(rhs_indices);
     if (lhs_size != rhs_size || lhs.dim() != rhs.dim())
     {
         throw std::invalid_argument("lhs and rhs must have the same size and dimension");
     }
-    std::vector<F> ret(lhs_size, F(0.));
+    std::vector<F> ret(checked_integer_cast<size_t>(lhs_size), F(0.));
     for (ssize_t i = 0; i < lhs_size; ++i)
     {
         for (ssize_t j = 0; j < lhs.dim(); ++j)
         {
-            ret[i] += lhs.get(lhs_indices.empty() ? i : lhs_indices[i], j) *
-                      rhs.get(rhs_indices.empty() ? i : rhs_indices[i], j);
+            ret[checked_integer_cast<size_t>(i)] +=
+                lhs.get(lhs_indices.empty() ? i : lhs_indices[checked_integer_cast<size_t>(i)], j) *
+                rhs.get(rhs_indices.empty() ? i : rhs_indices[checked_integer_cast<size_t>(i)], j);
         }
     }
     return ret;
@@ -120,13 +123,13 @@ std::vector<F> dot_product(const VectorArrayInterface<F>& lhs, const VectorArray
 template <floating_point_or_complex F>
 void gram_schmidt_cpp(VectorArrayInterface<F>& vec_array)
 {
-    constexpr F atol = 1e-15;
-    std::vector<bool> remove(vec_array.size(), false);
+    constexpr F atol = std::numeric_limits<F>::epsilon() * F(10);
+    std::vector<bool> remove(checked_integer_cast<size_t>(vec_array.size()), false);
     for (ssize_t i = 0; i < vec_array.size(); ++i)
     {
         for (ssize_t j = 0; j < i; j++)
         {
-            if (remove[j])
+            if (remove[checked_integer_cast<size_t>(j)])
             {
                 continue;
             }
@@ -137,7 +140,7 @@ void gram_schmidt_cpp(VectorArrayInterface<F>& vec_array)
         const auto norm2 = dot_product(vec_array, vec_array, {i}, {i})[0];
         if (norm2 < atol)
         {
-            remove[i] = true;
+            remove[checked_integer_cast<size_t>(i)] = true;
         }
         else
         {
@@ -147,7 +150,7 @@ void gram_schmidt_cpp(VectorArrayInterface<F>& vec_array)
     std::vector<ssize_t> indices_to_remove;
     for (ssize_t i = 0; i < vec_array.size(); ++i)
     {
-        if (remove[i])
+        if (remove[checked_integer_cast<size_t>(i)])
         {
             indices_to_remove.push_back(i);
         }

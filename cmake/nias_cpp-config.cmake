@@ -14,11 +14,6 @@ get_filename_component(_NIAS_CPP_DIR "${_NIAS_CPP_DIR}" PATH)
 set(_NIAS_CPP_DIR
     ${_NIAS_CPP_DIR}
     CACHE INTERNAL "")
-set(NIAS_CPP_INSTALL_DIR
-    "${CMAKE_INSTALL_PREFIX}/nias_cpp"
-    CACHE PATH "")
-set(NIAS_CPP_INCLUDE_INSTALL_DIR "${NIAS_CPP_INSTALL_DIR}/src")
-set(NIAS_CPP_CMAKE_INSTALL_DIR "${NIAS_CPP_INSTALL_DIR}/cmake")
 
 # make sure uv is available to run the python script for parsing pyproject.toml
 # first try to find uv in the environment
@@ -66,6 +61,9 @@ if(NOT COMMAND pybind11_add_module)
     find_dependency(pybind11 CONFIG REQUIRED)
 endif()
 
+set(NIAS_CPP_REL_INCLUDE_INSTALL_DIR "src")
+set(NIAS_CPP_REL_CMAKE_INSTALL_DIR "cmake")
+
 # add nias_cpp library target
 function(nias_cpp_build_library target_name)
     if(TARGET ${target_name})
@@ -92,9 +90,12 @@ function(nias_cpp_build_library target_name)
         ${_NIAS_CPP_DIR}/src/nias_cpp/bindings.h
         ${_NIAS_CPP_DIR}/src/nias_cpp/bindings.cpp)
 
-    target_include_directories(${target_name} SYSTEM PUBLIC ${_NIAS_CPP_DIR}/src)
-    target_include_directories(${target_name} PUBLIC ${CMAKE_CURRENT_BINARY_DIR}
-                                                     ${NIAS_CPP_INCLUDE_INSTALL_DIR})
+    target_include_directories(
+        ${target_name} SYSTEM PUBLIC $<BUILD_INTERFACE:${_NIAS_CPP_DIR}/src>
+                                     $<INSTALL_INTERFACE:${NIAS_CPP_REL_INCLUDE_INSTALL_DIR}>)
+    target_include_directories(${target_name} PUBLIC $<BUILD_INTERFACE:${CMAKE_CURRENT_BINARY_DIR}>
+                                                     $<INSTALL_INTERFACE:${NIAS_CPP_REL_INCLUDE_INSTALL_DIR}>)
+
     target_link_libraries(${target_name} PUBLIC pybind11::pybind11 pybind11::embed)
     set_target_properties(${target_name} PROPERTIES LINKER_LANGUAGE CXX)
 endfunction()
@@ -137,12 +138,20 @@ target_compile_definitions(nias_cpp PRIVATE NIAS_CPP_BUILD_DIR="$<TARGET_FILE_DI
 # installation rules
 install(
     DIRECTORY src/
-    DESTINATION "${NIAS_CPP_INCLUDE_INSTALL_DIR}"
+    DESTINATION "${NIAS_CPP_REL_INCLUDE_INSTALL_DIR}"
     PATTERN "*.py" EXCLUDE)
 
-install(DIRECTORY cmake/ DESTINATION "${NIAS_CPP_CMAKE_INSTALL_DIR}")
+install(DIRECTORY cmake/ DESTINATION "${NIAS_CPP_REL_CMAKE_INSTALL_DIR}")
 
-install(TARGETS nias_cpp LIBRARY DESTINATION ${NIAS_CPP_INSTALL_DIR})
+install(
+    TARGETS nias_cpp
+    EXPORT nias_cpp
+    LIBRARY DESTINATION nias_cpp)
+
+install(
+    EXPORT nias_cpp
+    NAMESPACE nias_cpp::
+    DESTINATION ${NIAS_CPP_REL_CMAKE_INSTALL_DIR})
 
 # generate export header
 include(GenerateExportHeader)
@@ -156,4 +165,4 @@ generate_export_header(
     nias_cpp_export.h
     STATIC_DEFINE
     NIAS_CPP_STATIC)
-install(FILES "${PROJECT_BINARY_DIR}/nias_cpp_export.h" DESTINATION "${NIAS_CPP_INCLUDE_INSTALL_DIR}")
+install(FILES "${PROJECT_BINARY_DIR}/nias_cpp_export.h" DESTINATION "${NIAS_CPP_REL_INCLUDE_INSTALL_DIR}")
