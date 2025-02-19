@@ -1,7 +1,6 @@
 #ifndef NIAS_CPP_GRAM_SCHMIDT_H
 #define NIAS_CPP_GRAM_SCHMIDT_H
 
-#include <iostream>
 #include <limits>
 #include <memory>
 #include <stdexcept>
@@ -9,8 +8,10 @@
 
 #include <nias_cpp/checked_integer_cast.h>
 #include <nias_cpp/concepts.h>
+#include <nias_cpp/interfaces/inner_products.h>
 #include <nias_cpp/interfaces/vectorarray.h>
 #include <nias_cpp/interpreter.h>
+#include <nias_cpp/operators/inner_products.h>
 #include <nias_cpp/type_traits.h>
 #include <nias_cpp/vectorarray/list.h>
 #include <pybind11/cast.h>
@@ -32,7 +33,9 @@ namespace nias
  * \returns A new ListVectorArray containing the orthogonalized vectors.
  */
 template <floating_point_or_complex F>
-std::shared_ptr<ListVectorArray<F>> gram_schmidt(std::shared_ptr<ListVectorArray<F>> vec_array)
+std::shared_ptr<ListVectorArray<F>> gram_schmidt(
+    std::shared_ptr<ListVectorArray<F>> vec_array,
+    std::shared_ptr<InnerProductInterface<F>> inner_product = std::make_shared<EuclideanInnerProduct<F>>())
 {
     ensure_interpreter_and_venv_are_active();
 
@@ -53,7 +56,7 @@ std::shared_ptr<ListVectorArray<F>> gram_schmidt(std::shared_ptr<ListVectorArray
     auto nias_vec_array = NiasVecArray("impl"_a = NiasVecArrayImpl(vec_array));
 
     // execute the Python gram_schmidt function
-    py::object result = NiasGramSchmidt(nias_vec_array, NiasCppInnerProduct(), "copy"_a = true);
+    py::object result = NiasGramSchmidt(nias_vec_array, NiasCppInnerProduct(inner_product), "copy"_a = true);
 
     auto ret = result.attr("impl").attr("impl").cast<std::shared_ptr<ListVectorArray<F>>>();
     return ret;
@@ -67,7 +70,9 @@ std::shared_ptr<ListVectorArray<F>> gram_schmidt(std::shared_ptr<ListVectorArray
  * modifies the input ListVectorArray in-place.
  */
 template <floating_point_or_complex F>
-void gram_schmidt_in_place(std::shared_ptr<ListVectorArray<F>> vec_array)
+void gram_schmidt_in_place(
+    std::shared_ptr<ListVectorArray<F>> vec_array,
+    std::shared_ptr<InnerProductInterface<F>> inner_product = std::make_shared<EuclideanInnerProduct<F>>())
 {
     ensure_interpreter_and_venv_are_active();
 
@@ -88,7 +93,7 @@ void gram_schmidt_in_place(std::shared_ptr<ListVectorArray<F>> vec_array)
     auto nias_vec_array = NiasVecArray("impl"_a = NiasVecArrayImpl(vec_array));
 
     // execute the Python gram_schmidt function
-    NiasGramSchmidt(nias_vec_array, NiasCppInnerProduct(), "copy"_a = false);
+    NiasGramSchmidt(nias_vec_array, NiasCppInnerProduct(inner_product), "copy"_a = false);
 }
 
 /**
