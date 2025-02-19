@@ -34,15 +34,28 @@ class VectorInterface
     // copy the Vector to a new Vector
     virtual std::shared_ptr<VectorInterface> copy() const = 0;
 
-    // dot product
-    virtual F dot(const VectorInterface& x) const = 0;
-
     // scale with a scalar
     virtual void scal(F alpha) = 0;
 
     // axpy
     virtual void axpy(F alpha, const VectorInterface& x) = 0;
 };
+
+template <floating_point_or_complex F>
+std::ostream& operator<<(std::ostream& os, const VectorInterface<F>& vec)
+{
+    os << "[";
+    for (ssize_t i = 0; i < vec.dim(); ++i)
+    {
+        os << vec.get(i);
+        if (i < vec.dim() - 1)
+        {
+            os << ", ";
+        }
+    }
+    os << "]";
+    return os;
+}
 
 
 }  // namespace nias
