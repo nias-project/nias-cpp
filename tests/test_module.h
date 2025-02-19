@@ -113,26 +113,6 @@ class DynamicVector : public nias::VectorInterface<F>
         return std::make_shared<DynamicVector>(*this);
     }
 
-    [[nodiscard]] F dot(const nias::VectorInterface<F>& other) const override
-    {
-        // We cannot use
-        // return std::inner_product(begin(), end(), other.begin(), 0.0);
-        // because VectorInterface does not define iterators
-        F ret = 0;
-        for (ssize_t i = 0; i < dim(); ++i)
-        {
-            if constexpr (std::is_floating_point_v<F>)
-            {
-                ret += data_[i] * other.get(i);
-            }
-            else
-            {
-                ret += std::conj(data_[i]) * other.get(i);
-            }
-        }
-        return ret;
-    }
-
     void scal(F alpha) override
     {
         for (auto& x : *this)

@@ -46,7 +46,7 @@ auto bind_nias_vectorinterface(pybind11::module& m, const std::string& name = "V
             PYBIND11_OVERRIDE_PURE_NAME(ssize_t,      /* Return type */
                                         VecInterface, /* Parent class */
                                         "__len__",    /* Name of function in Python */
-                                        dot           /* Name of function in C++ */
+                                        dim           /* Name of function in C++ */
             );
         }
 
@@ -55,15 +55,6 @@ auto bind_nias_vectorinterface(pybind11::module& m, const std::string& name = "V
             PYBIND11_OVERRIDE_PURE(std::shared_ptr<VecInterface>, /* Return type */
                                    VecInterface,                  /* Parent class */
                                    copy /* Name of function in C++ (must match Python name) */
-            );
-        }
-
-        F dot(const VecInterface& x) const override
-        {
-            PYBIND11_OVERRIDE_PURE(F,            /* Return type */
-                                   VecInterface, /* Parent class */
-                                   dot,          /* Name of function in C++ (must match Python name) */
-                                   x             /* Argument(s) */
             );
         }
 
@@ -114,7 +105,6 @@ auto bind_nias_vectorinterface(pybind11::module& m, const std::string& name = "V
                             return v.dim();
                         })
                    .def("copy", &VecInterface::copy)
-                   .def("dot", &VecInterface::dot)
                    .def("scal", &VecInterface::scal)
                    .def("axpy", &VecInterface::axpy)
                    .def("get", py::overload_cast<ssize_t>(&VecInterface::get, py::const_));

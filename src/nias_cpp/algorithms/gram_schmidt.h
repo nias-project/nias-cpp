@@ -1,9 +1,8 @@
-#ifndef NIAS_CPP_GRAM_SCHMIDT_H
-#define NIAS_CPP_GRAM_SCHMIDT_H
+#ifndef NIAS_CPP_ALGORITHMS_GRAM_SCHMIDT_H
+#define NIAS_CPP_ALGORITHMS_GRAM_SCHMIDT_H
 
 #include <limits>
 #include <memory>
-#include <stdexcept>
 #include <vector>
 
 #include <nias_cpp/checked_integer_cast.h>
@@ -97,36 +96,12 @@ void gram_schmidt_in_place(
 }
 
 /**
- * \brief Component-wise Euclidean dot product of two vector arrays
-*/
-template <floating_point_or_complex F>
-std::vector<F> dot_product(const VectorArrayInterface<F>& lhs, const VectorArrayInterface<F>& rhs,
-                           std::vector<ssize_t> lhs_indices, std::vector<ssize_t> rhs_indices)
-{
-    const auto lhs_size = lhs_indices.empty() ? lhs.size() : std::ssize(lhs_indices);
-    const auto rhs_size = rhs_indices.empty() ? rhs.size() : std::ssize(rhs_indices);
-    if (lhs_size != rhs_size || lhs.dim() != rhs.dim())
-    {
-        throw std::invalid_argument("lhs and rhs must have the same size and dimension");
-    }
-    std::vector<F> ret(checked_integer_cast<size_t>(lhs_size), F(0.));
-    for (ssize_t i = 0; i < lhs_size; ++i)
-    {
-        for (ssize_t j = 0; j < lhs.dim(); ++j)
-        {
-            ret[checked_integer_cast<size_t>(i)] +=
-                lhs.get(lhs_indices.empty() ? i : lhs_indices[checked_integer_cast<size_t>(i)], j) *
-                rhs.get(rhs_indices.empty() ? i : rhs_indices[checked_integer_cast<size_t>(i)], j);
-        }
-    }
-    return ret;
-}
-
-/**
  * \brief Simple C++ implementation of the Gram-Schmidt orthogonalization algorithm
  */
 template <floating_point_or_complex F>
-void gram_schmidt_cpp(VectorArrayInterface<F>& vec_array)
+void gram_schmidt_cpp(
+    VectorArrayInterface<F>& vec_array,
+    std::shared_ptr<InnerProductInterface<F>> inner_product = std::make_shared<EuclideanInnerProduct<F>>())
 {
     constexpr F atol = std::numeric_limits<F>::epsilon() * F(10);
     std::vector<bool> remove(checked_integer_cast<size_t>(vec_array.size()), false);
@@ -138,11 +113,11 @@ void gram_schmidt_cpp(VectorArrayInterface<F>& vec_array)
             {
                 continue;
             }
-            F projection = dot_product(vec_array, vec_array, {i}, {j})[0] /
-                           dot_product(vec_array, vec_array, {j}, {j})[0];
+            F projection = inner_product->apply(vec_array, vec_array, true, {i}, {j}).at(0) /
+                           inner_product->apply(vec_array, vec_array, true, {j}, {j}).at(0);
             vec_array.axpy(-projection, vec_array, {i}, {j});
         }
-        const auto norm2 = dot_product(vec_array, vec_array, {i}, {i})[0];
+        const auto norm2 = inner_product->apply(vec_array, vec_array, true, {i}, {i}).at(0);
         if (norm2 < atol)
         {
             remove[checked_integer_cast<size_t>(i)] = true;
@@ -166,4 +141,4 @@ void gram_schmidt_cpp(VectorArrayInterface<F>& vec_array)
 
 }  // namespace nias
 
-#endif  //NIAS_CPP_GRAM_SCHMIDT_H
+#endif  // NIAS_CPP_ALGORITHMS_GRAM_SCHMIDT_H

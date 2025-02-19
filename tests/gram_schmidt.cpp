@@ -37,7 +37,7 @@ void print(const std::vector<std::shared_ptr<nias::VectorInterface<F>>>& vecs, s
     {
         for (auto&& vec2 : vecs)
         {
-            std::cout << vec1->dot(*vec2) << " ";
+            std::cout << nias::dot_product(*vec1, *vec2) << " ";
         }
         std::cout << '\n';
     }
