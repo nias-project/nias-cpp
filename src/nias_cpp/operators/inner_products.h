@@ -3,6 +3,7 @@
 
 #include <optional>
 
+#include <nias_cpp/algorithms/dot_product.h>
 #include <nias_cpp/interfaces/inner_products.h>
 #include <nias_cpp/interfaces/vector.h>
 #include <nias_cpp/interfaces/vectorarray.h>
@@ -80,23 +81,7 @@ class EuclideanInnerProduct : public FunctionBasedInnerProduct<F>
               [](const VectorArrayInterface<F>& left, const VectorArrayInterface<F>& right, const ssize_t i,
                  const ssize_t j)
               {
-                  if (left.dim() != right.dim())
-                  {
-                      throw InvalidArgumentError("Vector arrays must have the same dimension.");
-                  }
-                  auto ret = F(0);
-                  for (ssize_t k = 0; k < left.dim(); ++k)
-                  {
-                      if constexpr (complex<F>)
-                      {
-                          ret += std::conj(left.get(i, k)) * right.get(j, k);
-                      }
-                      else
-                      {
-                          ret += left.get(i, k) * right.get(j, k);
-                      }
-                  }
-                  return ret;
+                  return dot_product(left, right, {i}, {j}).at(0);
               })
     {
     }

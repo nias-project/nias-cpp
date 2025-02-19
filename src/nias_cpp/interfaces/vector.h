@@ -34,9 +34,6 @@ class VectorInterface
     // copy the Vector to a new Vector
     virtual std::shared_ptr<VectorInterface> copy() const = 0;
 
-    // dot product
-    virtual F dot(const VectorInterface& x) const = 0;
-
     // scale with a scalar
     virtual void scal(F alpha) = 0;
 
