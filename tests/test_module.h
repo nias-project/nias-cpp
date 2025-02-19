@@ -127,7 +127,7 @@ class DynamicVector : public nias::VectorInterface<F>
             }
             else
             {
-                ret += data_[i] * std::conj(other.get(i));
+                ret += std::conj(data_[i]) * other.get(i);
             }
         }
         return ret;

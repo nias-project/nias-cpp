@@ -383,7 +383,7 @@ class VectorArrayInterface
     /**
      * \brief Returns a view on the vectors corresponding to the given indices
      */
-    virtual VectorArrayView<F> operator[](const Indices& indices)
+    virtual VectorArrayView<F> operator[](const std::optional<Indices>& indices)
     {
         return VectorArrayView<F>(*this, indices);
     }
@@ -391,7 +391,7 @@ class VectorArrayInterface
     /**
      * \brief Returns a const view on the vectors corresponding to the given indices
      */
-    virtual ConstVectorArrayView<F> operator[](const Indices& indices) const
+    virtual ConstVectorArrayView<F> operator[](const std::optional<Indices>& indices) const
     {
         return ConstVectorArrayView<F>(*this, indices);
     }
@@ -443,6 +443,21 @@ class VectorArrayInterface
         }
     }
 };
+
+template <floating_point_or_complex F>
+std::ostream& operator<<(std::ostream& os, const VectorArrayInterface<F>& vec_array)
+{
+    os << "VectorArray with " << vec_array.size() << " vectors of dimension " << vec_array.dim() << std::endl;
+    for (ssize_t i = 0; i < vec_array.size(); ++i)
+    {
+        for (ssize_t j = 0; j < vec_array.dim(); ++j)
+        {
+            os << vec_array.get(i, j) << " ";
+        }
+        os << '\n';
+    }
+    return os;
+}
 
 
 }  // namespace nias

@@ -44,6 +44,22 @@ class VectorInterface
     virtual void axpy(F alpha, const VectorInterface& x) = 0;
 };
 
+template <floating_point_or_complex F>
+std::ostream& operator<<(std::ostream& os, const VectorInterface<F>& vec)
+{
+    os << "[";
+    for (ssize_t i = 0; i < vec.dim(); ++i)
+    {
+        os << vec.get(i);
+        if (i < vec.dim() - 1)
+        {
+            os << ", ";
+        }
+    }
+    os << "]";
+    return os;
+}
+
 
 }  // namespace nias
 

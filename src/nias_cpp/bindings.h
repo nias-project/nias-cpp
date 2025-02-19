@@ -11,8 +11,10 @@
 #include <nias_cpp/algorithms/gram_schmidt.h>
 #include <nias_cpp/exceptions.h>
 #include <nias_cpp/indices.h>
+#include <nias_cpp/interfaces/inner_products.h>
 #include <nias_cpp/interfaces/vector.h>
 #include <nias_cpp/interfaces/vectorarray.h>
+#include <nias_cpp/operators/inner_products.h>
 #include <nias_cpp/type_traits.h>
 #include <nias_cpp/vectorarray/list.h>
 #include <nias_cpp/vectorarray/numpy.h>
@@ -114,7 +116,8 @@ auto bind_nias_vectorinterface(pybind11::module& m, const std::string& name = "V
                    .def("copy", &VecInterface::copy)
                    .def("dot", &VecInterface::dot)
                    .def("scal", &VecInterface::scal)
-                   .def("axpy", &VecInterface::axpy);
+                   .def("axpy", &VecInterface::axpy)
+                   .def("get", py::overload_cast<ssize_t>(&VecInterface::get, py::const_));
     return ret;
 }
 
@@ -313,6 +316,51 @@ auto bind_cpp_gram_schmidt(pybind11::module& m, const std::string& field_type_na
               gram_schmidt_cpp(vec_array);
               return vec_array.array();
           });
+}
+
+template <class F>
+    requires std::floating_point<F> || std::is_same_v<F, std::complex<typename F::value_type>>
+auto bind_function_based_inner_product(pybind11::module& m, const std::string& field_type_name)
+{
+    namespace py = pybind11;
+
+    class PyInnerProductInterface : public InnerProductInterface<F>
+    {
+       public:
+        using InterfaceType = InnerProductInterface<F>;
+
+        /* Inherit the constructors */
+        using InterfaceType::InterfaceType;
+
+        pybind11::array_t<F> apply(const VectorArrayInterface<F>& left, const VectorArrayInterface<F>& right,
+                                   bool pairwise = false,
+                                   const std::optional<Indices>& left_indices = std::nullopt,
+                                   const std::optional<Indices>& right_indices = std::nullopt) const override
+        {
+            PYBIND11_OVERRIDE_PURE(pybind11::array_t<F>, /* Return type */
+                                   InterfaceType,        /* Parent class */
+                                   apply,                /* Name of function in C++ */
+                                   left, right, pairwise, left_indices, right_indices /* Argument(s) */
+            );
+        }
+    };
+
+    using InnerProdInterface = InnerProductInterface<F>;
+    py::class_<InnerProdInterface, PyInnerProductInterface, std::shared_ptr<InnerProdInterface>>(
+        m, (field_type_name + "InnerProductInterface").c_str())
+        .def("apply", &InnerProdInterface::apply);
+
+    using FunctionBasedInnerProd = FunctionBasedInnerProduct<F>;
+    py::class_<FunctionBasedInnerProd, InnerProdInterface, std::shared_ptr<FunctionBasedInnerProd>>(
+        m, (field_type_name + "FunctionBasedInnerProduct").c_str())
+        .def("apply", &FunctionBasedInnerProd::apply);
+
+    using EuclideanInnerProd = EuclideanInnerProduct<F>;
+    auto ret = py::class_<EuclideanInnerProd, FunctionBasedInnerProd, std::shared_ptr<EuclideanInnerProd>>(
+                   m, (field_type_name + "EuclideanInnerProduct").c_str())
+                   .def("apply", &EuclideanInnerProd::apply);
+
+    return ret;
 }
 
 
