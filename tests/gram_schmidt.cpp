@@ -21,19 +21,14 @@
 
 namespace
 {
-template <class V>
-void print(const std::vector<std::shared_ptr<V>>& vecs, std::string_view name)
+template <class F>
+void print(const std::vector<std::shared_ptr<nias::VectorInterface<F>>>& vecs, std::string_view name)
 {
     std::cout << "======== " << name << " ========" << '\n';
     int i = 0;
     for (auto& vec : vecs)
     {
-        std::cout << "vec" << i++ << ": ";
-        for (ssize_t i = 0; i < vec->dim(); ++i)
-        {
-            std::cout << vec->get(i) << " ";
-        }
-        std::cout << '\n';
+        std::cout << "vec" << i++ << ": " << *vec << '\n';
     }
 
     // print result
@@ -52,15 +47,7 @@ template <nias::floating_point_or_complex F>
 void print(const nias::VectorArrayInterface<F>& vec_array, std::string_view name)
 {
     std::cout << "======== " << name << " ========" << '\n';
-    for (ssize_t i = 0; i < vec_array.size(); ++i)
-    {
-        std::cout << "vec" << i << ": ";
-        for (ssize_t j = 0; j < vec_array.dim(); ++j)
-        {
-            std::cout << vec_array.get(i, j) << " ";
-        }
-        std::cout << '\n';
-    }
+    std::cout << vec_array << '\n';
     std::cout << "Inner products: " << '\n';
     for (ssize_t i = 0; i < vec_array.size(); ++i)
     {
@@ -83,6 +70,7 @@ void test_gram_schmidt()
         std::shared_ptr<VectorInterface<F>>(new DynamicVector{F(4.), F(5.), F(6.)}),
         std::shared_ptr<VectorInterface<F>>(new DynamicVector{F(7.), F(8.), F(9.)})};
     print(vectors, "Input");
+    std::cout << "\n";
 
     // Perform Gram-Schmidt orthogonalization and print result
     auto vec_array = std::make_shared<ListVectorArray<F>>(vectors, 3);
@@ -90,6 +78,7 @@ void test_gram_schmidt()
     print(orthonormalized_vectorarray->vectors(), "Output");
     // in-place
     nias::gram_schmidt_in_place(vec_array);
+    std::cout << "\n";
     print(vec_array->vectors(), "Output in-place");
 }
 
@@ -105,6 +94,7 @@ void test_cpp_gram_schmidt()
     std::iota(array.mutable_data(), array.mutable_data() + (size * dim), F(1));
     NumpyVectorArray<F> vec_array(array);
     print(vec_array, "Input");
+    std::cout << "\n";
     gram_schmidt_cpp(vec_array);
     print(vec_array, "Output");
 }
@@ -118,17 +108,23 @@ int main()
     // Copying the library from the build to the tests folder (build/tests) fixes the problem.
     using namespace boost::ut;
     using namespace nias;
+
     "gram_schmidt_cpp"_test = []<std::floating_point F>()
     {
-        std::cout << "Running gram_schmidt (C++ implementation) for type: " << reflection::type_name<F>()
-                  << "\n\n";
+        std::cout << "=============================================================================\n";
+        std::cout << "Running Gram-Schmidt (C++ implementation) for type: " << reflection::type_name<F>()
+                  << "\n";
+        std::cout << "=============================================================================\n\n";
         test_cpp_gram_schmidt<F>();
         std::cout << "\n";
     } | std::tuple<float, double>{};
+
     "gram_schmidt"_test = []<floating_point_or_complex F>
     {
-        std::cout << "Running Gram-Schmidt (Python implementation) for type: " << reflection::type_name<F>()
-                  << "\n\n";
+        std::cout << "=============================================================================\n";
+        std::cout << "Running Gram-Schmidt (Python implementations) for type: " << reflection::type_name<F>()
+                  << "\n";
+        std::cout << "=============================================================================\n\n";
         test_gram_schmidt<F>();
         std::cout << "\n";
     } | std::tuple<float, double, std::complex<float>, std::complex<double>>{};
