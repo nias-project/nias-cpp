@@ -32,12 +32,11 @@ class FunctionBasedInnerProduct : public InnerProductInterface<F>
     {
     }
 
-    pybind11::array_t<ScalarType> apply(
-        const VectorArrayInterface<ScalarType>& left, const VectorArrayInterface<ScalarType>& right,
-        bool pairwise = false, const std::optional<Indices>& left_indices = std::nullopt,
-        const std::optional<Indices>& right_indices = std::nullopt) const override
+    std::vector<F> apply(const VectorArrayInterface<ScalarType>& left,
+                         const VectorArrayInterface<ScalarType>& right, bool pairwise = false,
+                         const std::optional<Indices>& left_indices = std::nullopt,
+                         const std::optional<Indices>& right_indices = std::nullopt) const override
     {
-        using py_array = pybind11::array_t<ScalarType>;
         if (left_indices || right_indices)
         {
             return apply(left[left_indices], right[right_indices], pairwise, std::nullopt, std::nullopt);
@@ -48,19 +47,19 @@ class FunctionBasedInnerProduct : public InnerProductInterface<F>
             {
                 throw InvalidArgumentError("Vector arrays must have the same size for pairwise application.");
             }
-            py_array ret({left.size()});
+            std::vector<F> ret(left.size());
             for (ssize_t i = 0; i < left.size(); ++i)
             {
-                ret.mutable_at(i) = inner_product_function_(left, right, i, i);
+                ret[i] = inner_product_function_(left, right, i, i);
             }
             return ret;
         }
-        py_array ret({left.size(), right.size()});
+        std::vector<F> ret(left.size() * right.size());
         for (ssize_t i = 0; i < left.size(); ++i)
         {
             for (ssize_t j = 0; j < right.size(); ++j)
             {
-                ret.mutable_at(i, j) = inner_product_function_(left, right, i, j);
+                ret[i * right.size() + j] = inner_product_function_(left, right, i, j);
             }
         }
         return ret;

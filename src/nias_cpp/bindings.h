@@ -321,14 +321,15 @@ auto bind_function_based_inner_product(pybind11::module& m, const std::string& f
         /* Inherit the constructors */
         using InterfaceType::InterfaceType;
 
-        pybind11::array_t<F> apply(const VectorArrayInterface<F>& left, const VectorArrayInterface<F>& right,
-                                   bool pairwise = false,
-                                   const std::optional<Indices>& left_indices = std::nullopt,
-                                   const std::optional<Indices>& right_indices = std::nullopt) const override
+        py::array_t<F> py_apply(const VectorArrayInterface<F>& left, const VectorArrayInterface<F>& right,
+                                bool pairwise = false,
+                                const std::optional<Indices>& left_indices = std::nullopt,
+                                const std::optional<Indices>& right_indices = std::nullopt) const override
         {
-            PYBIND11_OVERRIDE_PURE(pybind11::array_t<F>, /* Return type */
-                                   InterfaceType,        /* Parent class */
-                                   apply,                /* Name of function in C++ */
+            PYBIND11_OVERRIDE_NAME(py::array_t<F>, /* Return type */
+                                   InterfaceType,  /* Parent class */
+                                   "apply",        /* Name of function in Python */
+                                   py_apply,       /* Name of function in C++ */
                                    left, right, pairwise, left_indices, right_indices /* Argument(s) */
             );
         }
@@ -337,17 +338,17 @@ auto bind_function_based_inner_product(pybind11::module& m, const std::string& f
     using InnerProdInterface = InnerProductInterface<F>;
     py::class_<InnerProdInterface, PyInnerProductInterface, std::shared_ptr<InnerProdInterface>>(
         m, (field_type_name + "InnerProductInterface").c_str())
-        .def("apply", &InnerProdInterface::apply);
+        .def("apply", &InnerProdInterface::py_apply);
 
     using FunctionBasedInnerProd = FunctionBasedInnerProduct<F>;
     py::class_<FunctionBasedInnerProd, InnerProdInterface, std::shared_ptr<FunctionBasedInnerProd>>(
         m, (field_type_name + "FunctionBasedInnerProduct").c_str())
-        .def("apply", &FunctionBasedInnerProd::apply);
+        .def("apply", &FunctionBasedInnerProd::py_apply);
 
     using EuclideanInnerProd = EuclideanInnerProduct<F>;
     auto ret = py::class_<EuclideanInnerProd, FunctionBasedInnerProd, std::shared_ptr<EuclideanInnerProd>>(
                    m, (field_type_name + "EuclideanInnerProduct").c_str())
-                   .def("apply", &EuclideanInnerProd::apply);
+                   .def("apply", &EuclideanInnerProd::py_apply);
 
     return ret;
 }
