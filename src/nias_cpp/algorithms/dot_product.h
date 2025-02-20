@@ -1,13 +1,14 @@
 #ifndef NIAS_CPP_ALGORITHMS_DOT_PRODUCT_H
 #define NIAS_CPP_ALGORITHMS_DOT_PRODUCT_H
 
+#include <cstddef>
 #include <optional>
 #include <stdexcept>
 #include <vector>
 
 #include <nias_cpp/checked_integer_cast.h>
 #include <nias_cpp/concepts.h>
-#include <nias_cpp/interfaces/inner_products.h>
+#include <nias_cpp/indices.h>
 #include <nias_cpp/interfaces/vector.h>
 #include <nias_cpp/interfaces/vectorarray.h>
 #include <nias_cpp/type_traits.h>

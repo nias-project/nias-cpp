@@ -9,7 +9,6 @@
 #include <vector>
 
 #include <nias_cpp/algorithms/gram_schmidt.h>
-#include <nias_cpp/exceptions.h>
 #include <nias_cpp/indices.h>
 #include <nias_cpp/interfaces/inner_products.h>
 #include <nias_cpp/interfaces/vector.h>

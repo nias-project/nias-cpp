@@ -1,13 +1,16 @@
 #ifndef NIAS_CPP_OPERATORS_INNER_PRODUCTS_H
 #define NIAS_CPP_OPERATORS_INNER_PRODUCTS_H
 
+#include <functional>
 #include <optional>
 
 #include <nias_cpp/algorithms/dot_product.h>
+#include <nias_cpp/concepts.h>
+#include <nias_cpp/exceptions.h>
+#include <nias_cpp/indices.h>
 #include <nias_cpp/interfaces/inner_products.h>
-#include <nias_cpp/interfaces/vector.h>
 #include <nias_cpp/interfaces/vectorarray.h>
-#include <nias_cpp/vectorarray/list.h>
+#include <nias_cpp/type_traits.h>
 
 namespace nias
 {
@@ -21,7 +24,7 @@ class FunctionBasedInnerProduct : public InnerProductInterface<F>
     using ThisType = FunctionBasedInnerProduct<F>;
     using typename InterfaceType::ScalarType;
 
-    FunctionBasedInnerProduct(
+    explicit FunctionBasedInnerProduct(
         std::function<ScalarType(const VectorArrayInterface<ScalarType>&,
                                  const VectorArrayInterface<ScalarType>&, ssize_t i, ssize_t j)>
             inner_product_function)
@@ -52,18 +55,15 @@ class FunctionBasedInnerProduct : public InnerProductInterface<F>
             }
             return ret;
         }
-        else
+        py_array ret({left.size(), right.size()});
+        for (ssize_t i = 0; i < left.size(); ++i)
         {
-            py_array ret({left.size(), right.size()});
-            for (ssize_t i = 0; i < left.size(); ++i)
+            for (ssize_t j = 0; j < right.size(); ++j)
             {
-                for (ssize_t j = 0; j < right.size(); ++j)
-                {
-                    ret.mutable_at(i, j) = inner_product_function_(left, right, i, j);
-                }
+                ret.mutable_at(i, j) = inner_product_function_(left, right, i, j);
             }
-            return ret;
         }
+        return ret;
     }
 
    private:

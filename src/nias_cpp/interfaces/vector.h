@@ -2,6 +2,7 @@
 #define NIAS_CPP_INTERFACES_VECTOR_H
 
 #include <memory>
+#include <ostream>
 
 #include <nias_cpp/concepts.h>
 #include <nias_cpp/type_traits.h>

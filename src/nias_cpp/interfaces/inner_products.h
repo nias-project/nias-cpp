@@ -1,9 +1,13 @@
 #ifndef NIAS_CPP_INTERFACES_INNER_PRODUCTS_H
 #define NIAS_CPP_INTERFACES_INNER_PRODUCTS_H
 
+#include <memory>
+#include <optional>
+
 #include <nias_cpp/concepts.h>
 #include <nias_cpp/indices.h>
 #include <nias_cpp/interfaces/vectorarray.h>
+#include <nias_cpp/type_traits.h>
 #include <pybind11/numpy.h>
 
 namespace nias
@@ -17,6 +21,10 @@ class SesquilinearFormInterface
     using ScalarType = F;
 
     SesquilinearFormInterface() = default;
+    SesquilinearFormInterface(const SesquilinearFormInterface&) = default;
+    SesquilinearFormInterface(SesquilinearFormInterface&&) = default;
+    SesquilinearFormInterface& operator=(const SesquilinearFormInterface&) = default;
+    SesquilinearFormInterface& operator=(SesquilinearFormInterface&&) = default;
     virtual ~SesquilinearFormInterface() = default;
 
     /**
@@ -41,6 +49,10 @@ class NormInterface
     using ScalarType = F;
 
     NormInterface() = default;
+    NormInterface(const NormInterface&) = default;
+    NormInterface(NormInterface&&) = default;
+    NormInterface& operator=(const NormInterface&) = default;
+    NormInterface& operator=(NormInterface&&) = default;
     virtual ~NormInterface() = default;
 
     /**
@@ -59,12 +71,12 @@ template <floating_point_or_complex F>
 class InnerProductBasedNorm : public NormInterface<F>
 {
    public:
-    InnerProductBasedNorm(const InnerProductInterface<F>& inner_product)
+    explicit InnerProductBasedNorm(const InnerProductInterface<F>& inner_product)
         : inner_product_(inner_product)
     {
     }
 
-    virtual pybind11::array_t<F> operator()(const VectorArrayInterface<F>& vec_array) const override
+    pybind11::array_t<F> operator()(const VectorArrayInterface<F>& vec_array) const override
     {
         auto norms = inner_product_.apply(vec_array, vec_array, true);
         for (ssize_t i = 0; i < vec_array.size(); ++i)
@@ -83,6 +95,10 @@ class InnerProductInterface : public SesquilinearFormInterface<F>
 {
    public:
     InnerProductInterface() = default;
+    InnerProductInterface(const InnerProductInterface&) = default;
+    InnerProductInterface(InnerProductInterface&&) = default;
+    InnerProductInterface& operator=(const InnerProductInterface&) = default;
+    InnerProductInterface& operator=(InnerProductInterface&&) = default;
     virtual ~InnerProductInterface() = default;
 
     virtual std::unique_ptr<NormInterface<F>> norm() const

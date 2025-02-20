@@ -1,6 +1,7 @@
 #ifndef NIAS_CPP_ALGORITHMS_GRAM_SCHMIDT_H
 #define NIAS_CPP_ALGORITHMS_GRAM_SCHMIDT_H
 
+#include <cstddef>
 #include <limits>
 #include <memory>
 #include <vector>
