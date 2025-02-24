@@ -1,0 +1,145 @@
+---
+# This file is part of the NiAS project (https://github.com/nias-project).
+# Copyright NiAS developers and contributors. All rights reserved.
+# License: BSD 2-Clause License (https://opensource.org/licenses/BSD-2-Clause)
+name: Build and Test
+
+# merge_group triggers happen in merge queues
+# workflow_dispatch triggers happen when a user manually runs the workflow
+# pull_request triggers happen when a pull request is updated
+on:
+  pull_request:
+    # defaults + "ready_for_review" (so full matrix is run when that's toggled)
+    types: [opened, synchronize, reopened, ready_for_review]
+
+concurrency:
+  group: build_and_test_${{ github.event.ref }}
+  cancel-in-progress: true
+
+jobs:
+  determine_jobs:
+    name: Determine which jobs to run
+    runs-on: ubuntu-24.04
+    timeout-minutes: 2
+    outputs:
+      ubuntu_matrix: ${{ steps.determine_build_and_test_jobs.outputs.ubuntu_matrix }}
+      windows_matrix: ${{ steps.determine_build_and_test_jobs.outputs.windows_matrix }}
+    steps:
+
+    - name: Determine build and test jobs (draft=${{github.event.pull_request.draft}})
+      id: determine_build_and_test_jobs
+      shell: python {0}
+      env:
+        IS_DRAFT: ${{ github.event.pull_request.draft }}
+      run: |
+        import os
+        from pathlib import Path
+        import json
+
+        ubuntu_types = ['Debug']
+        windows_types = []
+
+        draft = os.getenv('IS_DRAFT') == 'true'
+        if not draft:
+          ubuntu_types += ['Release']
+          windows_types += ['Debug', 'Release']
+
+        ubuntu_types = json.dumps({'include': [{'type': type} for type in ubuntu_types]})
+        windows_types = json.dumps({'include': [{'type': type} for type in windows_types]})
+
+        with Path(os.environ['GITHUB_OUTPUT']).open('wt') as f:
+          f.write(f"ubuntu_matrix={ubuntu_types}\n")
+          f.write(f"windows_matrix={windows_types}\n")
+
+  build_and_test_ubuntu:
+    needs: determine_jobs
+    strategy:
+      matrix: ${{ fromJson(needs.determine_jobs.outputs.ubuntu_matrix) }}
+      fail-fast: false
+    name: Build and Test (Ubuntu/${{ matrix.type }})
+    runs-on: ubuntu-24.04
+    defaults:
+      run:
+        shell: bash -elo pipefail {0}
+    timeout-minutes: 15
+    steps:
+
+    - name: Setup Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: '3.12'
+
+    - name: Setup uv
+      uses: yezz123/setup-uv@v4
+
+    - name: Checkout
+      uses: actions/checkout@v4
+
+    - name: Configure with cmake
+      run: |
+        cmake -B build -DPython_EXECUTABLE="$(which python3.12)" -DCMAKE_BUILD_TYPE=${{ matrix.type }}
+
+    - name: Build with cmake
+      run: |
+        cmake --build build
+
+    - name: Build C++ tests with cmake
+      run: |
+        cmake --build build --target all_test_binaries
+
+    - name: Run C++ tests with ctest
+      id: run_tests
+      run: |
+        ctest --test-dir build
+
+    - name: Re-run failed tests for more information
+      if: always() && steps.run_tests.conclusion == 'failure'
+      run: |
+        ctest --test-dir build --rerun-failed --output-on-failure
+
+
+  build_and_test_windows:
+    needs: determine_jobs
+    strategy:
+      matrix: ${{ fromJson(needs.determine_jobs.outputs.ubuntu_matrix) }}
+      fail-fast: false
+    name: Build and Test (Windows/${{ matrix.type }})
+    runs-on: windows-2022
+    defaults:
+      run:
+        shell: bash -elo pipefail {0}
+    timeout-minutes: 15
+    steps:
+
+    - name: Setup Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: '3.12'
+
+    - name: Setup uv
+      uses: yezz123/setup-uv@v4
+
+    - name: Checkout
+      uses: actions/checkout@v4
+
+    - name: Configure with cmake
+      run: |
+        cmake -B build -DPython_EXECUTABLE="$(which python3.12)" -DCMAKE_BUILD_TYPE=${{ matrix.type }}
+
+    - name: Build with cmake
+      run: |
+        cmake --build build --config ${{ matrix.type }}
+
+    - name: Build C++ tests with cmake
+      run: |
+        cmake --build build --config ${{ matrix.type }} --target all_test_binaries
+
+    - name: Run C++ tests with ctest
+      id: run_tests
+      run: |
+        ctest --test-dir build -C ${{ matrix.type }}
+
+    - name: Re-run failed tests for more information
+      if: always() && steps.run_tests.conclusion == 'failure'
+      run: |
+        ctest --test-dir build -C ${{ matrix.type }} --rerun-failed --output-on-failure

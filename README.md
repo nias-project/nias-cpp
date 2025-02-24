@@ -2,7 +2,7 @@
 
 This library provides C++ bindings for [NiAS](https://github.com/nias-project/nias).
 
-NiAS-C++ can be seen as (modern cmake)-based C++ project with Python bindings and at the sime time
+NiAS-C++ can be seen as (modern cmake)-based C++ project with Python bindings and at the same time
 as a [scikit-build-core](https://github.com/scikit-build/scikit-build-core)-based Python project with C extensions.
 
 ## Quick Start
@@ -10,12 +10,14 @@ as a [scikit-build-core](https://github.com/scikit-build/scikit-build-core)-base
 ### C++ development
 
 To work on the NiAS-C++ as a C++ project, you will need git, cmake, ninja and a recent C++ compiler.
+Our [Build and Test workflow](.github/workflows/build_and_test_yml) give examples how to build and run
+on various platforms. The basic steps are as follows.
 
 1. Clone the repository and (optionally) check out a branch:
 
    ```bash
    git clone https://github.com/nias-project/nias-cpp.git
-   cd nias-cgg
+   cd nias-cpp
    git checkout <some branch>  # optional
    ```
 
