@@ -1,46 +1,56 @@
-# C++ bindings for NIAS - Numerics In Abstract Spaces
+# C++ bindings for NiAS - Numerics In Abstract Spaces
 
-This library provides C++ bindings for [NiAS](https://github.com/nias-project/nias) which is a Python library
-providing numerical algorithms (e.g., Gram-Schmidt orthonormalization) formulated in the context of abstract
-(mathematical) spaces.
+This library provides C++ bindings for [NiAS](https://github.com/nias-project/nias).
+
+NiAS-C++ can be seen as (modern cmake)-based C++ project with Python bindings and at the sime time
+as a [scikit-build-core](https://github.com/scikit-build/scikit-build-core)-based Python project with C extensions.
 
 ## Quick Start
 
-To run the Gram-Schmidt test (which creates a few vectors and orthogonalizes them using NiAS's Gram-Schmidt algorithm)
-you can use the following commands:
+### C++ development
 
-```bash
-python3 -m venv venv
-source venv/bin/activate
-pip install .
-mkdir build && cd build
-cmake ..
-make
-./tests/test_gram_schmidt
-```
+To work on the NiAS-C++ as a C++ project, you will need git, cmake, ninja and a recent C++ compiler.
 
-Alternatively, you can use `uv` for the first steps
+1. Clone the repository and (optionally) check out a branch:
 
-```bash
-uv venv
-uv pip install .
-source .venv/bin/activate
-```
+   ```bash
+   git clone https://github.com/nias-project/nias-cpp.git
+   cd nias-cgg
+   git checkout <some branch>  # optional
+   ```
 
-Additional compiler flags can be added as usual, e.g., you can use
+2. Configure the project with cmake:
 
-```bash
-cmake -GNinja -DCMAKE_BUILD_TYPE=Debug -Wall -Wextra ..
-```
+   ```bash
+   cmake -B build -DPython_EXECUTABLE=$(which python3)
+   ```
 
-to use ninja instead of make and build with debugging information and additional warnings.
+   This will download [uv](https://docs.astral.sh/uv/) and all dependencies
+   (taking [pyproject.toml](pyproject.toml) into account),
+   and configure a release build by default.
+   Passing `-DCMAKE_BUILD_TYPE=Debug` or other cmake options works as usual.
 
-To run the python test, copy the test over to the build directory and run it with the python interpreter:
+3. Build the project with cmake:
 
-```bash
-cp ../tests/test_gram_schmidt.py .
-python3 test_gram_schmidt.py
-```
+   ```bash
+   cmake --build build
+   ```
+
+   This will also create and fill a Python virtualenv.
+
+4. Build the tests with cmake:
+
+   ```bash
+   cmake --build build --target all_test_binaries
+   ```
+
+   This will also copy shared libraries we depend upon into the test folder to allow executing the tests on all platforms.
+
+5. Run the suite of C++ tests with ctest:
+
+   ```bash
+   ctest --test-dir build
+   ```
 
 ## Current Status
 
