@@ -9,8 +9,8 @@ as a [scikit-build-core](https://github.com/scikit-build/scikit-build-core)-base
 
 ### C++ development
 
-To work on the NiAS-C++ as a C++ project, you will need git, cmake, ninja and a recent C++ compiler.
-Our [Build and Test workflow](.github/workflows/build_and_test_yml) give examples how to build and run
+To work on NiAS-C++ as a C++ project, you will need git, cmake, ninja and a recent C++ compiler.
+Our [Build and Test workflow](.github/workflows/build_and_test.yml) give examples how to build and run
 on various platforms. The basic steps are as follows.
 
 1. Clone the repository and (optionally) check out a branch:
