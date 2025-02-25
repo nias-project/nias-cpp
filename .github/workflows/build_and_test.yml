@@ -101,7 +101,7 @@ jobs:
   build_and_test_windows:
     needs: determine_jobs
     strategy:
-      matrix: ${{ fromJson(needs.determine_jobs.outputs.ubuntu_matrix) }}
+      matrix: ${{ fromJson(needs.determine_jobs.outputs.windows_matrix) }}
       fail-fast: false
     name: Build and Test (Windows/${{ matrix.type }})
     runs-on: windows-2022
