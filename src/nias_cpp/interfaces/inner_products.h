@@ -66,8 +66,8 @@ class SesquilinearFormInterface
         }
         else
         {
-            const ssize_t n = left.size();
-            const ssize_t m = right.size();
+            const ssize_t n = left_indices ? left_indices->size(left.size()) : left.size();
+            const ssize_t m = right_indices ? right_indices->size(right.size()) : right.size();
             pybind11::array_t<F> ret_array({n, m});
             auto ret_array_mutable = ret_array.mutable_unchecked();
             for (ssize_t i = 0; i < n; ++i)
