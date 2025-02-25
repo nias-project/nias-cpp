@@ -83,6 +83,10 @@ jobs:
       run: |
         cmake --build build
 
+    - name: Build headerchecks with cmake
+      run: |
+        cmake --build build --target headercheck
+
     - name: Build C++ tests with cmake
       run: |
         cmake --build build --target all_test_binaries
@@ -129,6 +133,10 @@ jobs:
     - name: Build with cmake
       run: |
         cmake --build build --config ${{ matrix.type }}
+
+    - name: Build headerchecks with cmake
+      run: |
+        cmake --build build --config ${{ matrix.type }} --target headercheck
 
     - name: Build C++ tests with cmake
       run: |

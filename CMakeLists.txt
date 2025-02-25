@@ -57,5 +57,11 @@ if(NIAS_CPP_MASTER_PROJECT)
         OVERRIDE_FIND_PACKAGE)
     FetchContent_MakeAvailable(ut)
     find_package(ut REQUIRED)
+
     add_subdirectory(tests)
+
+    # add header checks
+    list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/cmake")
+    include(Headercheck)
+    nias_cpp_add_headercheck()
 endif()
