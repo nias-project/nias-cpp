@@ -1,0 +1,60 @@
+---
+# This file is part of the NiAS project (https://github.com/nias-project).
+# Copyright NiAS developers and contributors. All rights reserved.
+# License: BSD 2-Clause License (https://opensource.org/licenses/BSD-2-Clause)
+name: clang-tidy analysis
+
+# merge_group triggers happen in merge queues
+# workflow_dispatch triggers happen when a user manually runs the workflow
+# pull_request triggers happen when a pull request is updated
+on:
+  pull_request:
+    # defaults + "ready_for_review" (so full matrix is run when that's toggled)
+    types: [opened, synchronize, reopened, ready_for_review]
+
+concurrency:
+  group: clang_tidy_${{ github.event.ref }}
+  cancel-in-progress: true
+
+jobs:
+  clang_tidy:
+    strategy:
+      fail-fast: false
+    name: Apply clang-tidy (Ubuntu)
+    runs-on: ubuntu-24.04
+    defaults:
+      run:
+        shell: bash -elo pipefail {0}
+    timeout-minutes: 30
+    steps:
+
+    - name: Setup Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: '3.12'
+
+    - name: Setup uv
+      uses: yezz123/setup-uv@v4
+
+    - name: Setup clang-tidy
+      run: |
+        uv tool install clang-tidy@latest
+
+    - name: Checkout
+      uses: actions/checkout@v4
+
+    - name: Configure with cmake
+      run: |
+        cmake -DCMAKE_CXX_CLANG_TIDY="clang-tidy" -B build -DPython_EXECUTABLE="$(which python3.12)" -DCMAKE_BUILD_TYPE=Debug
+
+    - name: Build with cmake
+      run: |
+        cmake --build build
+
+    - name: Build headercheck with cmake
+      run: |
+        cmake --build build --target headercheck
+
+    - name: Build C++ tests with cmake
+      run: |
+        cmake --build build --target all_test_binaries
