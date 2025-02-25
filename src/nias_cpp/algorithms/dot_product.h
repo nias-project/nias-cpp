@@ -61,15 +61,15 @@ std::vector<F> dot_product(const VectorArrayInterface<F>& lhs, const VectorArray
     std::vector<F> ret(checked_integer_cast<size_t>(lhs.size()), F(0.));
     for (ssize_t i = 0; i < lhs.size(); ++i)
     {
-        for (ssize_t j = 0; j < lhs.dim(); ++j)
+        for (ssize_t k = 0; k < lhs.dim(); ++k)
         {
             if constexpr (complex<F>)
             {
-                ret[checked_integer_cast<size_t>(i)] += std::conj(lhs.get(i, j)) * rhs.get(i, j);
+                ret[checked_integer_cast<size_t>(i)] += std::conj(lhs.get(i, k)) * rhs.get(i, k);
             }
             else
             {
-                ret[checked_integer_cast<size_t>(i)] += lhs.get(i, j) * rhs.get(i, j);
+                ret[checked_integer_cast<size_t>(i)] += lhs.get(i, k) * rhs.get(i, k);
             }
         }
     }

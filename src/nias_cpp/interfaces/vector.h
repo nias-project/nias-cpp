@@ -1,10 +1,12 @@
 #ifndef NIAS_CPP_INTERFACES_VECTOR_H
 #define NIAS_CPP_INTERFACES_VECTOR_H
 
+#include <format>
 #include <memory>
 #include <ostream>
 
 #include <nias_cpp/concepts.h>
+#include <nias_cpp/exceptions.h>
 #include <nias_cpp/type_traits.h>
 
 namespace nias
@@ -36,10 +38,27 @@ class VectorInterface
     virtual std::shared_ptr<VectorInterface> copy() const = 0;
 
     // scale with a scalar
-    virtual void scal(F alpha) = 0;
+    virtual void scal(F alpha)
+    {
+        for (ssize_t i = 0; i < this->dim(); ++i)
+        {
+            this->get(i) *= alpha;
+        }
+    }
 
     // axpy
-    virtual void axpy(F alpha, const VectorInterface& x) = 0;
+    virtual void axpy(F alpha, const VectorInterface& x)
+    {
+        if (this->dim() != x.dim())
+        {
+            throw InvalidArgumentError(std::format(
+                "Cannot compute axpy of vectors of different sizes: {} and {}", this->dim(), x.dim()));
+        }
+        for (ssize_t i = 0; i < this->dim(); ++i)
+        {
+            this->get(i) += alpha * x.get(i);
+        }
+    }
 };
 
 template <floating_point_or_complex F>

@@ -59,19 +59,19 @@ auto bind_nias_vectorinterface(pybind11::module& m, const std::string& name = "V
 
         void scal(F alpha) override
         {
-            PYBIND11_OVERRIDE_PURE(void,         /* Return type */
-                                   VecInterface, /* Parent class */
-                                   scal,         /* Name of function in C++ (must match Python name) */
-                                   alpha         /* Argument(s) */
+            PYBIND11_OVERRIDE(void,         /* Return type */
+                              VecInterface, /* Parent class */
+                              scal,         /* Name of function in C++ (must match Python name) */
+                              alpha         /* Argument(s) */
             );
         }
 
         void axpy(F alpha, const VecInterface& x) override
         {
-            PYBIND11_OVERRIDE_PURE(void,         /* Return type */
-                                   VecInterface, /* Parent class */
-                                   axpy,         /* Name of function in C++ (must match Python name) */
-                                   alpha, x);
+            PYBIND11_OVERRIDE(void,         /* Return type */
+                              VecInterface, /* Parent class */
+                              axpy,         /* Name of function in C++ (must match Python name) */
+                              alpha, x);
         }
 
         F& get(ssize_t i) override
