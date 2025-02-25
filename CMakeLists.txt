@@ -47,6 +47,7 @@ find_package(nias_cpp PATHS ${CMAKE_CURRENT_SOURCE_DIR}/cmake NO_DEFAULT_PATH)
 
 # add tests if this is the master project
 if(NIAS_CPP_MASTER_PROJECT)
+    include(CTest)
     include(FetchContent)
     # add boost-ext/ut testing framework
     FetchContent_Declare(

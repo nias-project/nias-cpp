@@ -1,12 +1,20 @@
-set(TEST_EXECUTABLES gram_schmidt.cpp vectorarray/numpy.cpp vectorarray/list.cpp)
+set(ROOT_DIR "${CMAKE_CURRENT_SOURCE_DIR}")
+file(
+    GLOB_RECURSE test_sources
+    LIST_DIRECTORIES false
+    RELATIVE "${ROOT_DIR}"
+    "${ROOT_DIR}/*.cpp")
 
-foreach(test_executable IN LISTS TEST_EXECUTABLES)
+add_custom_target(all_test_binaries)
+
+foreach(test_executable ${test_sources})
     cmake_path(REMOVE_EXTENSION test_executable OUTPUT_VARIABLE _test_target)
     string(MAKE_C_IDENTIFIER ${_test_target} _test_target)
     set(_test_target test_${_test_target})
-    add_executable(${_test_target} ${test_executable})
+    add_executable(${_test_target} EXCLUDE_FROM_ALL ${test_executable})
     target_link_libraries(${_test_target} PRIVATE nias_cpp Boost::ut ${Python_LIBRARIES})
-    get_target_property(linked_libraries ${_test_target} LINK_LIBRARIES)
+    add_dependencies(all_test_binaries ${_test_target})
+    add_test(NAME ${_test_target} COMMAND ${_test_target})
 
     # copy python shared libraries to test directory
     # for some reason, the Python_LIBRARIES variable only contains the static libraries, so we
@@ -15,6 +23,7 @@ foreach(test_executable IN LISTS TEST_EXECUTABLES)
     file(GLOB shared_python_libs "${Python_RUNTIME_LIBRARY_DIRS}/*.so" "${Python_RUNTIME_LIBRARY_DIRS}/*.dll")
     set(_library_files ${shared_python_libs})
 
+    get_target_property(linked_libraries ${_test_target} LINK_LIBRARIES)
     foreach(lib IN LISTS linked_libraries)
         if(TARGET ${lib})
             get_property(
