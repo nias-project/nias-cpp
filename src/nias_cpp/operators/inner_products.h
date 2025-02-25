@@ -59,7 +59,7 @@ class FunctionBasedInnerProduct : public InnerProductInterface<F>
         {
             for (ssize_t j = 0; j < right.size(); ++j)
             {
-                ret[i * right.size() + j] = inner_product_function_(left, right, i, j);
+                ret[(i * right.size()) + j] = inner_product_function_(left, right, i, j);
             }
         }
         return ret;
