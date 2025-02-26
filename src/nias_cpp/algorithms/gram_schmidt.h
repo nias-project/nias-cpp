@@ -126,7 +126,7 @@ void gram_schmidt_cpp(VectorArrayInterface<F>& vec_array,
         }
         else
         {
-            vec_array.scal(1. / std::sqrt(norm2), {i});
+            vec_array.scal(F(1.) / std::sqrt(norm2), {i});
         }
     }
     std::vector<ssize_t> indices_to_remove;

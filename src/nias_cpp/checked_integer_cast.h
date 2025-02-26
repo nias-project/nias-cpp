@@ -5,6 +5,7 @@
 
 #include <nias_cpp/concepts.h>
 #include <nias_cpp/exceptions.h>
+#include <nias_cpp/type_traits.h>
 
 namespace nias
 {

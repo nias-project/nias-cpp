@@ -88,6 +88,8 @@ class NIAS_CPP_EXPORT Indices
     // so we have to check it here. Since we want a list of valid C++ indices, we also have to convert negative indices to positive ones.
     [[nodiscard]] static ssize_t positive_index(ssize_t index, ssize_t length);
 
+// See https://stackoverflow.com/questions/4145605/stdvector-needs-to-have-dll-interface-to-be-used-by-clients-of-class-xt-war
+#pragma warning(suppress : 4251)
     std::variant<std::vector<ssize_t>, pybind11::slice> indices_;
 };
 
