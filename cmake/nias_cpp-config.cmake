@@ -2,8 +2,7 @@ include_guard(GLOBAL)
 
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
-# If CMAKE_CXX_VISIBILITY_PRESET is not set, pybind11 will set the visibility for the library to hidden
-set(CMAKE_CXX_VISIBILITY_PRESET default)
+set(CMAKE_CXX_VISIBILITY_PRESET hidden)
 set(CMAKE_POSITION_INDEPENDENT_CODE TRUE)
 
 include(GNUInstallDirs)
@@ -21,7 +20,7 @@ find_program(UV_EXECUTABLE uv uv.exe)
 # if we could not find uv, download it
 if(NOT UV_EXECUTABLE)
     include(FetchContent)
-    set(_uv_version "0.5.1")
+    set(_uv_version "0.6.3")
     if(CMAKE_SYSTEM_NAME STREQUAL "Windows")
         set(_uv_archive_name "uv-x86_64-pc-windows-msvc.zip")
     elseif(CMAKE_SYSTEM_NAME STREQUAL "Linux")
@@ -48,10 +47,7 @@ if(NOT COMMAND pybind11_add_module)
     # add pybind11
     include(FetchContent)
     find_dependency(Python COMPONENTS Interpreter Development REQUIRED)
-    # we have to set these variables to ensure pybind11 uses the same python that we found
-    # if we do not set these variables, pybind11 sometimes uses a different python for some reasonn
-    set(PYBIND11_PYTHON_VERSION "${Python_VERSION}")
-    set(PYTHON_EXECUTABLE "${Python_EXECUTABLE}")
+    set(PYBIND11_FINDPYTHON ON)
     FetchContent_Declare(
         pybind11
         GIT_REPOSITORY https://github.com/pybind/pybind11
@@ -104,7 +100,7 @@ if(DEFINED ENV{VIRTUAL_ENV})
 else()
     # if no virtualenv is active, we set up our own virtual environment to install our python dependencies
     set(NIAS_CPP_VENV_DIR ${CMAKE_CURRENT_BINARY_DIR}/nias_cpp_venv/$<CONFIG>)
-    add_custom_target(create_venv COMMAND ${UV_EXECUTABLE} venv --python ${Python_EXECUTABLE}
+    add_custom_target(create_venv COMMAND ${UV_EXECUTABLE} venv --python ${Python_EXECUTABLE} --quiet
                                           ${NIAS_CPP_VENV_DIR})
     add_custom_target(
         install_dependencies_into_venv
