@@ -22,6 +22,7 @@ jobs:
       fail-fast: false
     name: Apply clang-tidy (Ubuntu)
     runs-on: ubuntu-24.04
+    if: github.event.pull_request.draft == false
     defaults:
       run:
         shell: bash -elo pipefail {0}
