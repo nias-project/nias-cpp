@@ -78,9 +78,8 @@ function(nias_cpp_build_library target_name)
 
     pybind11_add_module(${target_name} SHARED ${ARG_UNPARSED_ARGUMENTS} ${library_sources})
 
-    target_include_directories(
-        ${target_name} SYSTEM PUBLIC $<BUILD_INTERFACE:${_NIAS_CPP_DIR}/src>
-                                     $<INSTALL_INTERFACE:${NIAS_CPP_REL_INCLUDE_INSTALL_DIR}>)
+    target_include_directories(${target_name} PUBLIC $<BUILD_INTERFACE:${_NIAS_CPP_DIR}/src>
+                                                     $<INSTALL_INTERFACE:${NIAS_CPP_REL_INCLUDE_INSTALL_DIR}>)
     target_include_directories(${target_name} PUBLIC $<BUILD_INTERFACE:${CMAKE_CURRENT_BINARY_DIR}>
                                                      $<INSTALL_INTERFACE:${NIAS_CPP_REL_INCLUDE_INSTALL_DIR}>)
 
