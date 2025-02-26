@@ -35,6 +35,11 @@ repos:
     hooks:
       - id: markdownlint-cli2
         args: [--fix]
+  - repo: https://github.com/tcort/markdown-link-check
+    rev: v3.11.2
+    hooks:
+      - id: markdown-link-check
+        args: [--quiet, --config=.markdown_link_check_config.json]
   - repo: https://github.com/Mateusz-Grzelinski/actionlint-py
     rev: v1.7.7.23
     hooks:
