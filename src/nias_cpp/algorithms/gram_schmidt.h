@@ -1,7 +1,6 @@
 #ifndef NIAS_CPP_ALGORITHMS_GRAM_SCHMIDT_H
 #define NIAS_CPP_ALGORITHMS_GRAM_SCHMIDT_H
 
-#include <cstddef>
 #include <limits>
 #include <memory>
 #include <vector>
@@ -107,12 +106,12 @@ void gram_schmidt_cpp(VectorArrayInterface<F>& vec_array,
                           std::make_shared<EuclideanInnerProduct<F>>())
 {
     constexpr F atol = std::numeric_limits<F>::epsilon() * F(10);
-    std::vector<bool> remove(checked_integer_cast<size_t>(vec_array.size()), false);
+    std::vector<bool> remove(as_size_t(vec_array.size()), false);
     for (ssize_t i = 0; i < vec_array.size(); ++i)
     {
         for (ssize_t j = 0; j < i; j++)
         {
-            if (remove[checked_integer_cast<size_t>(j)])
+            if (remove[as_size_t(j)])
             {
                 continue;
             }
@@ -123,7 +122,7 @@ void gram_schmidt_cpp(VectorArrayInterface<F>& vec_array,
         const auto norm2 = inner_product->apply_pairwise(vec_array, vec_array, {i}, {i}).at(0);
         if (norm2 < atol)
         {
-            remove[checked_integer_cast<size_t>(i)] = true;
+            remove[as_size_t(i)] = true;
         }
         else
         {
@@ -133,7 +132,7 @@ void gram_schmidt_cpp(VectorArrayInterface<F>& vec_array,
     std::vector<ssize_t> indices_to_remove;
     for (ssize_t i = 0; i < vec_array.size(); ++i)
     {
-        if (remove[checked_integer_cast<size_t>(i)])
+        if (remove[as_size_t(i)])
         {
             indices_to_remove.push_back(i);
         }

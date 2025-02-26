@@ -6,6 +6,7 @@
 #include <vector>
 // #include <iostream>
 
+#include <nias_cpp/checked_integer_cast.h>
 #include <nias_cpp/interfaces/vector.h>
 #include <nias_cpp/type_traits.h>
 
@@ -21,7 +22,7 @@ class DynamicVector : public nias::VectorInterface<F>
     DynamicVector() = default;
 
     explicit DynamicVector(ssize_t dim, F value = 0.)
-        : data_(dim, value) {};
+        : data_(nias::as_size_t(dim), value) {};
 
     DynamicVector(std::initializer_list<F> init_list)
         : data_(init_list) {};
@@ -91,18 +92,18 @@ class DynamicVector : public nias::VectorInterface<F>
     // DynamicVector accessors
     F& get(ssize_t i) override
     {
-        return data_[i];
+        return data_[nias::as_size_t(i)];
     }
 
     [[nodiscard]] const F& get(ssize_t i) const override
     {
-        return data_[i];
+        return data_[nias::as_size_t(i)];
     }
 
     // DynamicVector methods
     [[nodiscard]] ssize_t dim() const override
     {
-        return data_.size();
+        return std::ssize(data_);
     }
 
     [[nodiscard]] std::shared_ptr<nias::VectorInterface<F>> copy() const override
@@ -130,7 +131,7 @@ class DynamicVector : public nias::VectorInterface<F>
         // because VectorInterface does not define iterators
         for (ssize_t i = 0; i < dim(); ++i)
         {
-            data_[i] += alpha * x.get(i);
+            data_[nias::as_size_t(i)] += alpha * x.get(i);
         }
     }
 

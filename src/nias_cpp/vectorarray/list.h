@@ -10,6 +10,7 @@
 #include <typeinfo>
 #include <vector>
 
+#include <nias_cpp/checked_integer_cast.h>
 #include <nias_cpp/concepts.h>
 #include <nias_cpp/exceptions.h>
 #include <nias_cpp/indices.h>
@@ -69,7 +70,7 @@ class ListVectorArray : public VectorArrayInterface<F>
 
     [[nodiscard]] ssize_t size() const override
     {
-        return vectors_.size();
+        return std::ssize(vectors_);
     }
 
     [[nodiscard]] ssize_t dim() const override
@@ -85,19 +86,19 @@ class ListVectorArray : public VectorArrayInterface<F>
     [[nodiscard]] F get(ssize_t i, ssize_t j) const override
     {
         this->check_indices(i, j);
-        return vectors_[i]->get(j);
+        return vectors_[as_size_t(i)]->get(j);
     }
 
     void set(ssize_t i, ssize_t j, F value) override
     {
         this->check_indices(i, j);
-        vectors_[i]->get(j) = value;
+        vectors_[as_size_t(i)]->get(j) = value;
     }
 
     [[nodiscard]] const VectorInterfaceType& get(ssize_t i) const
     {
         this->check_first_index(i);
-        return *vectors_[i];
+        return *vectors_[as_size_t(i)];
     }
 
     [[nodiscard]] const std::vector<std::shared_ptr<VectorInterfaceType>>& vectors() const
@@ -112,7 +113,7 @@ class ListVectorArray : public VectorArrayInterface<F>
         std::vector<std::shared_ptr<VectorInterfaceType>> copied_vectors;
         if (!indices)
         {
-            copied_vectors.reserve(this->size());
+            copied_vectors.reserve(as_size_t(this->size()));
             std::ranges::transform(vectors_, std::back_inserter(copied_vectors),
                                    [](const auto& vec)
                                    {
@@ -122,11 +123,11 @@ class ListVectorArray : public VectorArrayInterface<F>
         else
         {
             indices->check_valid(this->size());
-            copied_vectors.reserve(indices->size(this->size()));
+            copied_vectors.reserve(as_size_t(indices->size(this->size())));
             indices->for_each(
                 [this, &copied_vectors](ssize_t i)
                 {
-                    copied_vectors.push_back(vectors_[i]->copy());
+                    copied_vectors.push_back(vectors_[as_size_t(i)]->copy());
                 },
                 this->size());
         }
@@ -225,11 +226,11 @@ class ListVectorArray : public VectorArrayInterface<F>
         else
         {
             other_indices->check_valid(other.size());
-            vectors_.reserve(vectors_.size() + other_indices->size(other.size()));
+            vectors_.reserve(vectors_.size() + as_size_t(other_indices->size(other.size())));
             other_indices->for_each(
                 [this, &other](ssize_t i)
                 {
-                    vectors_.push_back(other.vectors_[i]->copy());
+                    vectors_.push_back(other.vectors_[as_size_t(i)]->copy());
                 },
                 other.size());
         }
@@ -247,13 +248,13 @@ class ListVectorArray : public VectorArrayInterface<F>
         else
         {
             other_indices->check_valid(other.size());
-            vectors_.reserve(vectors_.size() + other_indices->size(other.size()));
+            vectors_.reserve(vectors_.size() + as_size_t(other_indices->size(other.size())));
             // copy selected entries of other to the end of this
             other_indices->for_each(
                 [this, &other](ssize_t i)
                 {
                     // we cannot move here because there might be duplicated indices
-                    vectors_.push_back(other.vectors_[i]->copy());
+                    vectors_.push_back(other.vectors_[as_size_t(i)]->copy());
                 },
                 other.size());
             other.delete_vectors(other_indices);

@@ -1,7 +1,6 @@
 #ifndef NIAS_CPP_ALGORITHMS_DOT_PRODUCT_H
 #define NIAS_CPP_ALGORITHMS_DOT_PRODUCT_H
 
-#include <cstddef>
 #include <optional>
 #include <stdexcept>
 #include <vector>
@@ -58,18 +57,18 @@ std::vector<F> dot_product(const VectorArrayInterface<F>& lhs, const VectorArray
     {
         throw std::invalid_argument("lhs and rhs must have the same size and dimension");
     }
-    std::vector<F> ret(checked_integer_cast<size_t>(lhs.size()), F(0.));
+    std::vector<F> ret(as_size_t(lhs.size()), F(0.));
     for (ssize_t i = 0; i < lhs.size(); ++i)
     {
         for (ssize_t k = 0; k < lhs.dim(); ++k)
         {
             if constexpr (complex<F>)
             {
-                ret[checked_integer_cast<size_t>(i)] += std::conj(lhs.get(i, k)) * rhs.get(i, k);
+                ret[as_size_t(i)] += std::conj(lhs.get(i, k)) * rhs.get(i, k);
             }
             else
             {
-                ret[checked_integer_cast<size_t>(i)] += lhs.get(i, k) * rhs.get(i, k);
+                ret[as_size_t(i)] += lhs.get(i, k) * rhs.get(i, k);
             }
         }
     }

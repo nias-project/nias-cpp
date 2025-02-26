@@ -9,6 +9,7 @@
 #include <typeinfo>
 #include <vector>
 
+#include <nias_cpp/checked_integer_cast.h>
 #include <nias_cpp/exceptions.h>
 #include <nias_cpp/indices.h>
 #include <nias_cpp/interfaces/vector.h>
@@ -208,7 +209,7 @@ class NumpyVectorArray : public VectorArrayInterface<F>
                 throw InvalidArgumentError("Indices contain invalid indices");
             }
             // Now we can compute the new size and the indices to keep
-            new_size = size() - unique_indices.size();
+            new_size = size() - std::ssize(unique_indices);
             for (ssize_t i = 0; i < size(); ++i)
             {
                 if (!unique_indices.contains(i))
@@ -216,13 +217,17 @@ class NumpyVectorArray : public VectorArrayInterface<F>
                     indices_to_keep.push_back(i);
                 }
             }
+            if (std::ssize(indices_to_keep) != new_size)
+            {
+                throw InvalidStateError("indices_to_keep has wrong size");
+            }
         }
         auto new_array = pybind11::array_t<F>({new_size, dim()});
-        for (const auto& i : indices_to_keep)
+        for (ssize_t i = 0; i < std::ssize(indices_to_keep); ++i)
         {
             for (ssize_t j = 0; j < dim(); ++j)
             {
-                new_array.mutable_at(indices_to_keep[i], j) = array_.at(i, j);
+                new_array.mutable_at(i, j) = array_.at(indices_to_keep[as_size_t(i)], j);
             }
         }
         array_ = new_array;

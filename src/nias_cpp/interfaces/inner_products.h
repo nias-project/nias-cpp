@@ -1,6 +1,7 @@
 #ifndef NIAS_CPP_INTERFACES_INNER_PRODUCTS_H
 #define NIAS_CPP_INTERFACES_INNER_PRODUCTS_H
 
+#include <algorithm>
 #include <memory>
 #include <optional>
 
@@ -83,11 +84,12 @@ class InnerProductBasedNorm : public NormInterface<F>
 
     std::vector<F> operator()(const VectorArrayInterface<F>& vec_array) const override
     {
-        auto norms = inner_product_.apply(vec_array, vec_array, true);
-        for (ssize_t i = 0; i < vec_array.size(); ++i)
-        {
-            norms[i] = std::sqrt(norms[i]);
-        }
+        auto norms = inner_product_.apply_pairwise(vec_array, vec_array);
+        std::ranges::transform(norms, norms.begin(),
+                               [](const auto& norm)
+                               {
+                                   return std::sqrt(norm);
+                               });
         return norms;
     }
 

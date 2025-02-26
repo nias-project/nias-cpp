@@ -1,7 +1,6 @@
 #include "indices.h"
 
 #include <array>
-#include <cstddef>
 #include <functional>
 #include <initializer_list>
 #include <set>
@@ -46,8 +45,7 @@ ssize_t Indices::size(ssize_t length) const
 {
     if (std::holds_alternative<std::vector<ssize_t>>(indices_))
     {
-        const auto ret = std::get<std::vector<ssize_t>>(indices_).size();
-        return checked_integer_cast<ssize_t>(ret);
+        return std::ssize(std::get<std::vector<ssize_t>>(indices_));
     }
     auto [start, stop, step, slicelength] = compute(length);
     return slicelength;
@@ -57,8 +55,7 @@ ssize_t Indices::get(ssize_t i, ssize_t length) const
 {
     if (std::holds_alternative<std::vector<ssize_t>>(indices_))
     {
-        return positive_index(std::get<std::vector<ssize_t>>(indices_)[checked_integer_cast<size_t>(i)],
-                              length);
+        return positive_index(std::get<std::vector<ssize_t>>(indices_)[as_size_t(i)], length);
     }
     const auto [start, stop, step, slicelength] = compute(length);
     if (i < 0 || i >= slicelength)
@@ -125,7 +122,7 @@ std::vector<ssize_t> Indices::as_vec(ssize_t length) const
     }
     const auto [start, stop, step, slicelength] = compute(length);
     std::vector<ssize_t> indices;
-    indices.reserve(checked_integer_cast<size_t>(slicelength));
+    indices.reserve(as_size_t(slicelength));
     if (step > 0)
     {
         for (ssize_t i = start; i < stop; i += step)

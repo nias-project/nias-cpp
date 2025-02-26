@@ -9,6 +9,7 @@
 #include <vector>
 
 #include <nias_cpp/algorithms/gram_schmidt.h>
+#include <nias_cpp/checked_integer_cast.h>
 #include <nias_cpp/indices.h>
 #include <nias_cpp/inner_products/euclidean.h>
 #include <nias_cpp/inner_products/function_based.h>
@@ -335,7 +336,7 @@ pybind11::array_t<F> py_apply_inner_product(const InnerProductInterface<F>& self
         auto ret_array_mutable = ret_array.mutable_unchecked();
         for (ssize_t i = 0; i < std::ssize(ret); ++i)
         {
-            ret_array_mutable(i) = ret[i];
+            ret_array_mutable(i) = ret[as_size_t(i)];
         }
     }
 
@@ -352,7 +353,7 @@ pybind11::array_t<F> py_apply_inner_product(const InnerProductInterface<F>& self
     {
         for (ssize_t j = 0; j < m; ++j)
         {
-            ret_array_mutable(i, j) = ret[(i * m) + j];
+            ret_array_mutable(i, j) = ret[as_size_t((i * m) + j)];
         }
     }
     return ret_array;

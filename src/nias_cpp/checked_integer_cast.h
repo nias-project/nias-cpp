@@ -17,6 +17,18 @@ constexpr T checked_integer_cast(S source)
     return static_cast<T>(source);
 }
 
+template <integer S>
+constexpr size_t as_size_t(S source)
+{
+    return checked_integer_cast<size_t>(source);
+}
+
+template <integer S>
+constexpr ssize_t as_ssize_t(S source)
+{
+    return checked_integer_cast<ssize_t>(source);
+}
+
 
 }  // namespace nias
 

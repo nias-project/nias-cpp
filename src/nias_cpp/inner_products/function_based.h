@@ -6,6 +6,7 @@
 #include <utility>
 
 #include <nias_cpp/algorithms/dot_product.h>
+#include <nias_cpp/checked_integer_cast.h>
 #include <nias_cpp/concepts.h>
 #include <nias_cpp/exceptions.h>
 #include <nias_cpp/indices.h>
@@ -42,12 +43,12 @@ class FunctionBasedInnerProduct : public InnerProductInterface<F>
         {
             return apply(left[left_indices], right[right_indices], std::nullopt, std::nullopt);
         }
-        std::vector<F> ret(left.size() * right.size());
+        std::vector<F> ret(as_size_t(left.size() * right.size()));
         for (ssize_t i = 0; i < left.size(); ++i)
         {
             for (ssize_t j = 0; j < right.size(); ++j)
             {
-                ret[(i * right.size()) + j] = inner_product_function_(left, right, i, j);
+                ret[as_size_t((i * right.size()) + j)] = inner_product_function_(left, right, i, j);
             }
         }
         return ret;
@@ -66,10 +67,10 @@ class FunctionBasedInnerProduct : public InnerProductInterface<F>
         {
             throw InvalidArgumentError("Vector arrays must have the same size for pairwise application.");
         }
-        std::vector<F> ret(left.size());
+        std::vector<F> ret(as_size_t(left.size()));
         for (ssize_t i = 0; i < left.size(); ++i)
         {
-            ret[i] = inner_product_function_(left, right, i, i);
+            ret[as_size_t(i)] = inner_product_function_(left, right, i, i);
         }
         return ret;
     }
