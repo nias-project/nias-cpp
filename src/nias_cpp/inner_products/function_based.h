@@ -3,6 +3,7 @@
 
 #include <functional>
 #include <optional>
+#include <utility>
 
 #include <nias_cpp/algorithms/dot_product.h>
 #include <nias_cpp/concepts.h>
@@ -28,14 +29,14 @@ class FunctionBasedInnerProduct : public InnerProductInterface<F>
         std::function<ScalarType(const VectorArrayInterface<ScalarType>&,
                                  const VectorArrayInterface<ScalarType>&, ssize_t i, ssize_t j)>
             inner_product_function)
-        : inner_product_function_(inner_product_function)
+        : inner_product_function_(std::move(std::move(inner_product_function)))
     {
     }
 
-    std::vector<F> apply(const VectorArrayInterface<ScalarType>& left,
-                         const VectorArrayInterface<ScalarType>& right,
-                         const std::optional<Indices>& left_indices = std::nullopt,
-                         const std::optional<Indices>& right_indices = std::nullopt) const override
+    [[nodiscard]] std::vector<F> apply(
+        const VectorArrayInterface<ScalarType>& left, const VectorArrayInterface<ScalarType>& right,
+        const std::optional<Indices>& left_indices = std::nullopt,
+        const std::optional<Indices>& right_indices = std::nullopt) const override
     {
         if (left_indices || right_indices)
         {
@@ -52,10 +53,10 @@ class FunctionBasedInnerProduct : public InnerProductInterface<F>
         return ret;
     }
 
-    std::vector<F> apply_pairwise(const VectorArrayInterface<ScalarType>& left,
-                                  const VectorArrayInterface<ScalarType>& right,
-                                  const std::optional<Indices>& left_indices = std::nullopt,
-                                  const std::optional<Indices>& right_indices = std::nullopt) const override
+    [[nodiscard]] std::vector<F> apply_pairwise(
+        const VectorArrayInterface<ScalarType>& left, const VectorArrayInterface<ScalarType>& right,
+        const std::optional<Indices>& left_indices = std::nullopt,
+        const std::optional<Indices>& right_indices = std::nullopt) const override
     {
         if (left_indices || right_indices)
         {

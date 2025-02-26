@@ -50,7 +50,7 @@ auto bind_nias_vectorinterface(pybind11::module& m, const std::string& name = "V
             );
         }
 
-        std::shared_ptr<VecInterface> copy() const override
+        [[nodiscard]] std::shared_ptr<VecInterface> copy() const override
         {
             PYBIND11_OVERRIDE_PURE(std::shared_ptr<VecInterface>, /* Return type */
                                    VecInterface,                  /* Parent class */
@@ -85,7 +85,7 @@ auto bind_nias_vectorinterface(pybind11::module& m, const std::string& name = "V
             );
         }
 
-        const F& get(ssize_t i) const override
+        [[nodiscard]] const F& get(ssize_t i) const override
         {
             PYBIND11_OVERRIDE_PURE_NAME(const F&,      /* Return type */
                                         VecInterface,  /* Parent class */
@@ -144,7 +144,7 @@ auto bind_nias_listvectorarray(pybind11::module& m, const std::string& field_typ
             );
         }
 
-        bool is_compatible_array(const VecArrayInterface& other) const override
+        [[nodiscard]] bool is_compatible_array(const VecArrayInterface& other) const override
         {
             PYBIND11_OVERRIDE(bool,                /* Return type */
                               VecArrayInterface,   /* Parent class */
@@ -153,7 +153,7 @@ auto bind_nias_listvectorarray(pybind11::module& m, const std::string& field_typ
             );
         }
 
-        F get(ssize_t i, ssize_t j) const override
+        [[nodiscard]] F get(ssize_t i, ssize_t j) const override
         {
             PYBIND11_OVERRIDE_PURE(F,                 /* Return type */
                                    VecArrayInterface, /* Parent class */
@@ -163,7 +163,8 @@ auto bind_nias_listvectorarray(pybind11::module& m, const std::string& field_typ
         }
 
         // copy (a subset of) the VectorArray to a new VectorArray
-        std::shared_ptr<VecArrayInterface> copy(const std::optional<Indices>& indices = std::nullopt) const
+        [[nodiscard]] std::shared_ptr<VecArrayInterface> copy(
+            const std::optional<Indices>& indices = std::nullopt) const override
         {
             PYBIND11_OVERRIDE_PURE(std::shared_ptr<VecArrayInterface>, /* Return type */
                                    VecArrayInterface,                  /* Parent class */
@@ -330,9 +331,9 @@ pybind11::array_t<F> py_apply_inner_product(const InnerProductInterface<F>& self
         // TODO: check if the following leads to a dangling pointer (does the array copy ret.data()?)
         // return pybind11::array(ret.size(), ret.data());
         // for now, copy the data explicitly
-        pybind11::array_t<F> ret_array({ret.size()});
+        pybind11::array_t<F> ret_array({std::ssize(ret)});
         auto ret_array_mutable = ret_array.mutable_unchecked();
-        for (ssize_t i = 0; i < ret.size(); ++i)
+        for (ssize_t i = 0; i < std::ssize(ret); ++i)
         {
             ret_array_mutable(i) = ret[i];
         }
@@ -341,6 +342,10 @@ pybind11::array_t<F> py_apply_inner_product(const InnerProductInterface<F>& self
     const auto ret = self.apply(left, right, left_indices, right_indices);
     const ssize_t n = left_indices ? left_indices->size(left.size()) : left.size();
     const ssize_t m = right_indices ? right_indices->size(right.size()) : right.size();
+    if (std::ssize(ret) != n * m)
+    {
+        throw nias::InvalidStateError("Result has wrong size.");
+    }
     pybind11::array_t<F> ret_array({n, m});
     auto ret_array_mutable = ret_array.mutable_unchecked();
     for (ssize_t i = 0; i < n; ++i)
@@ -367,9 +372,10 @@ auto bind_function_based_inner_product(pybind11::module& m, const std::string& f
         /* Inherit the constructors */
         using InterfaceType::InterfaceType;
 
-        std::vector<F> apply(const VectorArrayInterface<F>& left, const VectorArrayInterface<F>& right,
-                             const std::optional<Indices>& left_indices = std::nullopt,
-                             const std::optional<Indices>& right_indices = std::nullopt) const override
+        [[nodiscard]] std::vector<F> apply(
+            const VectorArrayInterface<F>& left, const VectorArrayInterface<F>& right,
+            const std::optional<Indices>& left_indices = std::nullopt,
+            const std::optional<Indices>& right_indices = std::nullopt) const override
         {
             PYBIND11_OVERRIDE_PURE(std::vector<F>,                          /* Return type */
                                    InterfaceType,                           /* Parent class */
@@ -378,7 +384,7 @@ auto bind_function_based_inner_product(pybind11::module& m, const std::string& f
             );
         }
 
-        std::vector<F> apply_pairwise(
+        [[nodiscard]] std::vector<F> apply_pairwise(
             const VectorArrayInterface<F>& left, const VectorArrayInterface<F>& right,
             const std::optional<Indices>& left_indices = std::nullopt,
             const std::optional<Indices>& right_indices = std::nullopt) const override

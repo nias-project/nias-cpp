@@ -77,12 +77,12 @@ class ListVectorArray : public VectorArrayInterface<F>
         return dim_;
     }
 
-    bool is_compatible_array(const InterfaceType& other) const override
+    [[nodiscard]] bool is_compatible_array(const InterfaceType& other) const override
     {
         return dim() == other.dim();
     }
 
-    F get(ssize_t i, ssize_t j) const override
+    [[nodiscard]] F get(ssize_t i, ssize_t j) const override
     {
         this->check_indices(i, j);
         return vectors_[i]->get(j);
@@ -94,18 +94,19 @@ class ListVectorArray : public VectorArrayInterface<F>
         vectors_[i]->get(j) = value;
     }
 
-    const VectorInterfaceType& get(ssize_t i) const
+    [[nodiscard]] const VectorInterfaceType& get(ssize_t i) const
     {
         this->check_first_index(i);
         return *vectors_[i];
     }
 
-    const std::vector<std::shared_ptr<VectorInterfaceType>>& vectors() const
+    [[nodiscard]] const std::vector<std::shared_ptr<VectorInterfaceType>>& vectors() const
     {
         return vectors_;
     }
 
-    std::shared_ptr<InterfaceType> copy(const std::optional<Indices>& indices = std::nullopt) const override
+    [[nodiscard]] std::shared_ptr<InterfaceType> copy(
+        const std::optional<Indices>& indices = std::nullopt) const override
     {
         // std::cout << "Copy called in VecArray!" << std::endl;
         std::vector<std::shared_ptr<VectorInterfaceType>> copied_vectors;
@@ -167,7 +168,7 @@ class ListVectorArray : public VectorArrayInterface<F>
         // We sort in reverse order (by using std::greater as second template argument) to avoid
         // invalidating indices when removing elements from the vector
         const auto indices_vec = indices->as_vec(this->size());
-        std::set<ssize_t, std::greater<>> sorted_indices(indices_vec.begin(), indices_vec.end());
+        std::set<ssize_t, std::greater<>> const sorted_indices(indices_vec.begin(), indices_vec.end());
         for (auto&& i : sorted_indices)
         {
             vectors_.erase(vectors_.begin() + i);
@@ -178,11 +179,12 @@ class ListVectorArray : public VectorArrayInterface<F>
     using InterfaceType::scal;
 
    private:
-    bool is_list_vector_array(const InterfaceType& other) const
+    [[nodiscard]] bool is_list_vector_array(const InterfaceType& other) const
     {
         try
         {
-            dynamic_cast<const ThisType&>(other);
+            const auto& ret = dynamic_cast<const ThisType&>(other);
+            static_cast<void>(ret);
             return true;
         }
         catch (std::bad_cast&)

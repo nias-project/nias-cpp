@@ -34,8 +34,9 @@ namespace nias
  */
 template <floating_point_or_complex F>
 std::shared_ptr<ListVectorArray<F>> gram_schmidt(
-    std::shared_ptr<ListVectorArray<F>> vec_array,
-    std::shared_ptr<InnerProductInterface<F>> inner_product = std::make_shared<EuclideanInnerProduct<F>>())
+    const std::shared_ptr<ListVectorArray<F>>& vec_array,
+    const std::shared_ptr<InnerProductInterface<F>>& inner_product =
+        std::make_shared<EuclideanInnerProduct<F>>())
 {
     ensure_interpreter_and_venv_are_active();
 
@@ -56,7 +57,8 @@ std::shared_ptr<ListVectorArray<F>> gram_schmidt(
     auto nias_vec_array = NiasVecArray("impl"_a = NiasVecArrayImpl(vec_array));
 
     // execute the Python gram_schmidt function
-    py::object result = NiasGramSchmidt(nias_vec_array, NiasCppInnerProduct(inner_product), "copy"_a = true);
+    const py::object result =
+        NiasGramSchmidt(nias_vec_array, NiasCppInnerProduct(inner_product), "copy"_a = true);
 
     auto ret = result.attr("impl").attr("impl").cast<std::shared_ptr<ListVectorArray<F>>>();
     return ret;
@@ -70,9 +72,9 @@ std::shared_ptr<ListVectorArray<F>> gram_schmidt(
  * modifies the input ListVectorArray in-place.
  */
 template <floating_point_or_complex F>
-void gram_schmidt_in_place(
-    std::shared_ptr<ListVectorArray<F>> vec_array,
-    std::shared_ptr<InnerProductInterface<F>> inner_product = std::make_shared<EuclideanInnerProduct<F>>())
+void gram_schmidt_in_place(const std::shared_ptr<ListVectorArray<F>>& vec_array,
+                           const std::shared_ptr<InnerProductInterface<F>>& inner_product =
+                               std::make_shared<EuclideanInnerProduct<F>>())
 {
     ensure_interpreter_and_venv_are_active();
 
@@ -100,9 +102,9 @@ void gram_schmidt_in_place(
  * \brief Simple C++ implementation of the Gram-Schmidt orthogonalization algorithm
  */
 template <floating_point_or_complex F>
-void gram_schmidt_cpp(
-    VectorArrayInterface<F>& vec_array,
-    std::shared_ptr<InnerProductInterface<F>> inner_product = std::make_shared<EuclideanInnerProduct<F>>())
+void gram_schmidt_cpp(VectorArrayInterface<F>& vec_array,
+                      const std::shared_ptr<InnerProductInterface<F>>& inner_product =
+                          std::make_shared<EuclideanInnerProduct<F>>())
 {
     constexpr F atol = std::numeric_limits<F>::epsilon() * F(10);
     std::vector<bool> remove(checked_integer_cast<size_t>(vec_array.size()), false);

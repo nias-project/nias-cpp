@@ -37,12 +37,12 @@ class SesquilinearFormInterface
      * (where the <tt>i * right.size() + j</tt>-th element contains the result of applying the form to
      * the <tt>i</tt>-th vector of the left array with the <tt>j</tt>-th vector of the right array).
      */
-    virtual std::vector<ScalarType> apply(
+    [[nodiscard]] virtual std::vector<ScalarType> apply(
         const VectorArrayInterface<ScalarType>& left, const VectorArrayInterface<ScalarType>& right,
         const std::optional<Indices>& left_indices = std::nullopt,
         const std::optional<Indices>& right_indices = std::nullopt) const = 0;
 
-    virtual std::vector<ScalarType> apply_pairwise(
+    [[nodiscard]] virtual std::vector<ScalarType> apply_pairwise(
         const VectorArrayInterface<ScalarType>& left, const VectorArrayInterface<ScalarType>& right,
         const std::optional<Indices>& left_indices = std::nullopt,
         const std::optional<Indices>& right_indices = std::nullopt) const = 0;
@@ -106,9 +106,9 @@ class InnerProductInterface : public SesquilinearFormInterface<F>
     InnerProductInterface(InnerProductInterface&&) = default;
     InnerProductInterface& operator=(const InnerProductInterface&) = delete;
     InnerProductInterface& operator=(InnerProductInterface&&) = default;
-    virtual ~InnerProductInterface() = default;
+    ~InnerProductInterface() override = default;
 
-    virtual const NormInterface<F>& induced_norm() const
+    [[nodiscard]] virtual const NormInterface<F>& induced_norm() const
     {
         return *induced_norm_;
     }

@@ -233,7 +233,7 @@ inline bool contains_invalid_index(const std::vector<ssize_t>& indices, ssize_t 
         expect(fatal(nothrow(                      \
             [&]()                                  \
             {                                      \
-                expression;                        \
+                static_cast<void>(expression);     \
             })));                                  \
     }
 
@@ -246,7 +246,7 @@ inline bool contains_invalid_index(const std::vector<ssize_t>& indices, ssize_t 
             expect(fatal(throws<error_type>(                   \
                 [&]()                                          \
                 {                                              \
-                    v_tmp->method_call;                        \
+                    static_cast<void>(v_tmp->method_call);     \
                 })));                                          \
         };                                                     \
         then("v remains unchanged") = [&]()                    \

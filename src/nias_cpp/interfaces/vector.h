@@ -29,13 +29,13 @@ class VectorInterface
 
     // accessors
     virtual F& get(ssize_t i) = 0;
-    virtual const F& get(ssize_t i) const = 0;
+    [[nodiscard]] virtual const F& get(ssize_t i) const = 0;
 
     // return the dimension (length) of the vector
     [[nodiscard]] virtual ssize_t dim() const = 0;
 
     // copy the Vector to a new Vector
-    virtual std::shared_ptr<VectorInterface> copy() const = 0;
+    [[nodiscard]] virtual std::shared_ptr<VectorInterface> copy() const = 0;
 
     // scale with a scalar
     virtual void scal(F alpha)

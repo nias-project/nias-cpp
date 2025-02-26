@@ -47,7 +47,8 @@ class ConstVectorArrayView : public VectorArrayInterface<F>
         return vec_array_.dim();
     }
 
-    std::shared_ptr<InterfaceType> copy(const std::optional<Indices>& view_indices = std::nullopt) const
+    [[nodiscard]] std::shared_ptr<InterfaceType> copy(
+        const std::optional<Indices>& view_indices = std::nullopt) const override
     {
         const auto indices = new_indices(view_indices);
         return vec_array_.copy(indices);
@@ -68,12 +69,12 @@ class ConstVectorArrayView : public VectorArrayInterface<F>
 
     void axpy(const std::vector<F>& /*alpha*/, const InterfaceType& /*x*/,
               const std::optional<Indices>& /*view_indices*/ = std::nullopt,
-              const std::optional<Indices>& /*x_indices*/ = std::nullopt)
+              const std::optional<Indices>& /*x_indices*/ = std::nullopt) override
     {
         throw NotImplementedError("ConstVectorArrayView: axpy is not implemented, use VectorArrayView.");
     }
 
-    F get(ssize_t i, ssize_t j) const override
+    [[nodiscard]] F get(ssize_t i, ssize_t j) const override
     {
         return vec_array_.get(indices_ ? indices_->get(i, vec_array_.size()) : i, j);
     }
@@ -84,7 +85,7 @@ class ConstVectorArrayView : public VectorArrayInterface<F>
             "ConstVectorArrayView: cannot modify vector array entries through a const view.");
     }
 
-    virtual void delete_vectors(const std::optional<Indices>& /*indices*/)
+    void delete_vectors(const std::optional<Indices>& /*indices*/) override
     {
         throw NotImplementedError(
             "ConstVectorArrayView: cannot delete vectors from vector array through a const view.");
@@ -202,7 +203,7 @@ class VectorArrayInterface
      * \brief Checks that other is compatible with this VectorArray
      * \todo What does that mean exactly? Currently only checks dimensions.
      */
-    virtual bool is_compatible_array(const ThisType& other) const
+    [[nodiscard]] virtual bool is_compatible_array(const ThisType& other) const
     {
         return dim() == other.dim();
     }
@@ -219,7 +220,8 @@ class VectorArrayInterface
      * \todo: Should this be a unique ptr?
      * \todo: Return a view?
      */
-    virtual std::shared_ptr<ThisType> copy(const std::optional<Indices>& indices = std::nullopt) const = 0;
+    [[nodiscard]] virtual std::shared_ptr<ThisType> copy(
+        const std::optional<Indices>& indices = std::nullopt) const = 0;
 
     /**
      * \brief Appends (a subset of) another VectorArray to this VectorArray
@@ -249,7 +251,7 @@ class VectorArrayInterface
     {
         if (!indices)
         {
-            check(alpha.size() == 1 || alpha.size() == this->size(),
+            check(alpha.size() == 1 || std::ssize(alpha) == this->size(),
                   "alpha must have size 1 or the same size as the array.");
             for (ssize_t i = 0; i < size(); ++i)
             {
@@ -263,7 +265,7 @@ class VectorArrayInterface
         else
         {
             indices->check_valid(this->size());
-            check(alpha.size() == 1 || alpha.size() == indices->size(this->size()),
+            check(alpha.size() == 1 || std::ssize(alpha) == indices->size(this->size()),
                   "alpha must have size 1 or the same size as indices");
             ssize_t alpha_index = 0;
             indices->for_each(
@@ -323,7 +325,7 @@ class VectorArrayInterface
         const auto this_size = indices ? indices->size(size()) : size();
         const auto x_size = x_indices ? x_indices->size(x.size()) : x.size();
         check(x_size == this_size || x_size == 1, "x must have length 1 or the same length as this");
-        check(alpha.size() == this_size || alpha.size() == 1,
+        check(std::ssize(alpha) == this_size || alpha.size() == 1,
               "alpha must be scalar or have the same length as this");
         for (ssize_t i = 0; i < this_size; ++i)
         {
@@ -353,7 +355,7 @@ class VectorArrayInterface
     /**
      * \brief Returns the j-th entry of the i-th vector
      */
-    virtual F get(ssize_t i, ssize_t j) const = 0;
+    [[nodiscard]] virtual F get(ssize_t i, ssize_t j) const = 0;
 
     /**
      * \brief Sets the j-th entry of the i-th vector to \c value
