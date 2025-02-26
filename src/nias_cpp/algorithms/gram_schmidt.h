@@ -8,10 +8,10 @@
 
 #include <nias_cpp/checked_integer_cast.h>
 #include <nias_cpp/concepts.h>
+#include <nias_cpp/inner_products/euclidean.h>
 #include <nias_cpp/interfaces/inner_products.h>
 #include <nias_cpp/interfaces/vectorarray.h>
 #include <nias_cpp/interpreter.h>
-#include <nias_cpp/operators/inner_products.h>
 #include <nias_cpp/type_traits.h>
 #include <nias_cpp/vectorarray/list.h>
 #include <pybind11/cast.h>
@@ -114,11 +114,11 @@ void gram_schmidt_cpp(
             {
                 continue;
             }
-            F projection = inner_product->apply(vec_array, vec_array, true, {i}, {j}).at(0) /
-                           inner_product->apply(vec_array, vec_array, true, {j}, {j}).at(0);
+            F projection = inner_product->apply_pairwise(vec_array, vec_array, {i}, {j}).at(0) /
+                           inner_product->apply_pairwise(vec_array, vec_array, {j}, {j}).at(0);
             vec_array.axpy(-projection, vec_array, {i}, {j});
         }
-        const auto norm2 = inner_product->apply(vec_array, vec_array, true, {i}, {i}).at(0);
+        const auto norm2 = inner_product->apply_pairwise(vec_array, vec_array, {i}, {i}).at(0);
         if (norm2 < atol)
         {
             remove[checked_integer_cast<size_t>(i)] = true;

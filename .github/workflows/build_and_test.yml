@@ -4,16 +4,13 @@
 # License: BSD 2-Clause License (https://opensource.org/licenses/BSD-2-Clause)
 name: Build and Test
 
-# merge_group triggers happen in merge queues
-# workflow_dispatch triggers happen when a user manually runs the workflow
-# pull_request triggers happen when a pull request is updated
 on:
   pull_request:
     # defaults + "ready_for_review" (so full matrix is run when that's toggled)
     types: [opened, synchronize, reopened, ready_for_review]
 
 concurrency:
-  group: build_and_test_${{ github.event.ref }}
+  group: build_and_test_${{ github.ref }}
   cancel-in-progress: true
 
 jobs:

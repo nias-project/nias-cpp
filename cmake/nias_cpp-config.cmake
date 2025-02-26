@@ -70,26 +70,13 @@ function(nias_cpp_build_library target_name)
         return()
     endif()
 
-    pybind11_add_module(
-        ${target_name}
-        SHARED
-        ${ARG_UNPARSED_ARGUMENTS}
-        ${_NIAS_CPP_DIR}/src/nias_cpp/algorithms/gram_schmidt.h
-        ${_NIAS_CPP_DIR}/src/nias_cpp/algorithms/dot_product.h
-        ${_NIAS_CPP_DIR}/src/nias_cpp/checked_integer_cast.h
-        ${_NIAS_CPP_DIR}/src/nias_cpp/concepts.h
-        ${_NIAS_CPP_DIR}/src/nias_cpp/exceptions.h
-        ${_NIAS_CPP_DIR}/src/nias_cpp/exceptions.cpp
-        ${_NIAS_CPP_DIR}/src/nias_cpp/indices.h
-        ${_NIAS_CPP_DIR}/src/nias_cpp/indices.cpp
-        ${_NIAS_CPP_DIR}/src/nias_cpp/interpreter.h
-        ${_NIAS_CPP_DIR}/src/nias_cpp/interpreter.cpp
-        ${_NIAS_CPP_DIR}/src/nias_cpp/interfaces/vector.h
-        ${_NIAS_CPP_DIR}/src/nias_cpp/interfaces/vectorarray.h
-        ${_NIAS_CPP_DIR}/src/nias_cpp/vectorarray/list.h
-        ${_NIAS_CPP_DIR}/src/nias_cpp/vectorarray/numpy.h
-        ${_NIAS_CPP_DIR}/src/nias_cpp/bindings.h
-        ${_NIAS_CPP_DIR}/src/nias_cpp/bindings.cpp)
+    # find C++ source files
+    file(
+        GLOB_RECURSE library_sources
+        LIST_DIRECTORIES false
+        "${PROJECT_SOURCE_DIR}/src/*.h" "${PROJECT_SOURCE_DIR}/src/*.cpp")
+
+    pybind11_add_module(${target_name} SHARED ${ARG_UNPARSED_ARGUMENTS} ${library_sources})
 
     target_include_directories(
         ${target_name} SYSTEM PUBLIC $<BUILD_INTERFACE:${_NIAS_CPP_DIR}/src>

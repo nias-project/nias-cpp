@@ -1,5 +1,5 @@
-#ifndef NIAS_CPP_OPERATORS_INNER_PRODUCTS_H
-#define NIAS_CPP_OPERATORS_INNER_PRODUCTS_H
+#ifndef NIAS_CPP_INNER_PRODUCTS_FUNCTION_BASED_H
+#define NIAS_CPP_INNER_PRODUCTS_FUNCTION_BASED_H
 
 #include <functional>
 #include <optional>
@@ -33,26 +33,13 @@ class FunctionBasedInnerProduct : public InnerProductInterface<F>
     }
 
     std::vector<F> apply(const VectorArrayInterface<ScalarType>& left,
-                         const VectorArrayInterface<ScalarType>& right, bool pairwise = false,
+                         const VectorArrayInterface<ScalarType>& right,
                          const std::optional<Indices>& left_indices = std::nullopt,
                          const std::optional<Indices>& right_indices = std::nullopt) const override
     {
         if (left_indices || right_indices)
         {
-            return apply(left[left_indices], right[right_indices], pairwise, std::nullopt, std::nullopt);
-        }
-        if (pairwise)
-        {
-            if (left.size() != right.size())
-            {
-                throw InvalidArgumentError("Vector arrays must have the same size for pairwise application.");
-            }
-            std::vector<F> ret(left.size());
-            for (ssize_t i = 0; i < left.size(); ++i)
-            {
-                ret[i] = inner_product_function_(left, right, i, i);
-            }
-            return ret;
+            return apply(left[left_indices], right[right_indices], std::nullopt, std::nullopt);
         }
         std::vector<F> ret(left.size() * right.size());
         for (ssize_t i = 0; i < left.size(); ++i)
@@ -65,28 +52,34 @@ class FunctionBasedInnerProduct : public InnerProductInterface<F>
         return ret;
     }
 
+    std::vector<F> apply_pairwise(const VectorArrayInterface<ScalarType>& left,
+                                  const VectorArrayInterface<ScalarType>& right,
+                                  const std::optional<Indices>& left_indices = std::nullopt,
+                                  const std::optional<Indices>& right_indices = std::nullopt) const override
+    {
+        if (left_indices || right_indices)
+        {
+            return apply_pairwise(left[left_indices], right[right_indices], std::nullopt, std::nullopt);
+        }
+        if (left.size() != right.size())
+        {
+            throw InvalidArgumentError("Vector arrays must have the same size for pairwise application.");
+        }
+        std::vector<F> ret(left.size());
+        for (ssize_t i = 0; i < left.size(); ++i)
+        {
+            ret[i] = inner_product_function_(left, right, i, i);
+        }
+        return ret;
+    }
+
    private:
     std::function<ScalarType(const VectorArrayInterface<ScalarType>&, const VectorArrayInterface<ScalarType>&,
                              ssize_t, ssize_t)>
         inner_product_function_;
 };
 
-template <floating_point_or_complex F>
-class EuclideanInnerProduct : public FunctionBasedInnerProduct<F>
-{
-   public:
-    EuclideanInnerProduct()
-        : FunctionBasedInnerProduct<F>(
-              [](const VectorArrayInterface<F>& left, const VectorArrayInterface<F>& right, const ssize_t i,
-                 const ssize_t j)
-              {
-                  return dot_product(left, right, {i}, {j}).at(0);
-              })
-    {
-    }
-};
-
 
 }  // namespace nias
 
-#endif  // NIAS_CPP_OPERATORS_INNER_PRODUCTS_H
+#endif  // NIAS_CPP_INNER_PRODUCTS_FUNCTION_BASED_H

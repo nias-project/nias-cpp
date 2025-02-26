@@ -39,45 +39,13 @@ class SesquilinearFormInterface
      */
     virtual std::vector<ScalarType> apply(
         const VectorArrayInterface<ScalarType>& left, const VectorArrayInterface<ScalarType>& right,
-        bool pairwise = false, const std::optional<Indices>& left_indices = std::nullopt,
+        const std::optional<Indices>& left_indices = std::nullopt,
         const std::optional<Indices>& right_indices = std::nullopt) const = 0;
 
-    /**
-      * \brief Call apply and return the result as a numpy array
-      *
-      * If \c pairwise is \c true, the form is applied to each pair of vectors in the arrays
-      * and the result is a 1D array of the same length as the input arrays (which have to
-      * have the same size in this case).
-      * If \c pairwise is \c false, the form is applied to each vector in the first array with each vector
-      * of the second array, and the result is a 2D array of shape <tt>(left.size(), right.size())</tt>.
-      *
-      * \note Only used for python bindings at the moment, can be removed/improved
-      * once we have a better return type for apply
-      */
-    virtual pybind11::array_t<ScalarType> py_apply(
+    virtual std::vector<ScalarType> apply_pairwise(
         const VectorArrayInterface<ScalarType>& left, const VectorArrayInterface<ScalarType>& right,
-        bool pairwise = false, const std::optional<Indices>& left_indices = std::nullopt,
-        const std::optional<Indices>& right_indices = std::nullopt) const
-    {
-        const auto ret = apply(left, right, pairwise, left_indices, right_indices);
-        if (pairwise)
-        {
-            return pybind11::array(ret.size(), ret.data());
-        }
-
-        const ssize_t n = left_indices ? left_indices->size(left.size()) : left.size();
-        const ssize_t m = right_indices ? right_indices->size(right.size()) : right.size();
-        pybind11::array_t<F> ret_array({n, m});
-        auto ret_array_mutable = ret_array.mutable_unchecked();
-        for (ssize_t i = 0; i < n; ++i)
-        {
-            for (ssize_t j = 0; j < m; ++j)
-            {
-                ret_array_mutable(i, j) = ret[(i * m) + j];
-            }
-        }
-        return ret_array;
-    }
+        const std::optional<Indices>& left_indices = std::nullopt,
+        const std::optional<Indices>& right_indices = std::nullopt) const = 0;
 };
 
 template <floating_point_or_complex F>
@@ -140,7 +108,7 @@ class InnerProductInterface : public SesquilinearFormInterface<F>
     InnerProductInterface& operator=(InnerProductInterface&&) = default;
     virtual ~InnerProductInterface() = default;
 
-    virtual const NormInterface<F>& norm() const
+    virtual const NormInterface<F>& induced_norm() const
     {
         return *induced_norm_;
     }

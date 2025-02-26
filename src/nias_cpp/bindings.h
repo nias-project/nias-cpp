@@ -10,10 +10,11 @@
 
 #include <nias_cpp/algorithms/gram_schmidt.h>
 #include <nias_cpp/indices.h>
+#include <nias_cpp/inner_products/euclidean.h>
+#include <nias_cpp/inner_products/function_based.h>
 #include <nias_cpp/interfaces/inner_products.h>
 #include <nias_cpp/interfaces/vector.h>
 #include <nias_cpp/interfaces/vectorarray.h>
-#include <nias_cpp/operators/inner_products.h>
 #include <nias_cpp/type_traits.h>
 #include <nias_cpp/vectorarray/list.h>
 #include <nias_cpp/vectorarray/numpy.h>
@@ -307,6 +308,51 @@ auto bind_cpp_gram_schmidt(pybind11::module& m, const std::string& field_type_na
           });
 }
 
+/**
+ * \brief Call apply or apply_pairwise on inner_product and return the result as a numpy array.
+ *
+ * If \c pairwise is \c true, the form is applied to each pair of vectors in the arrays
+ * and the result is a 1D array of the same length as the input arrays (which have to
+ * have the same size in this case).
+ * If \c pairwise is \c false, the form is applied to each vector in the first array with each vector
+ * of the second array, and the result is a 2D array of shape <tt>(left.size(), right.size())</tt>.
+ */
+template <class F>
+pybind11::array_t<F> py_apply_inner_product(const InnerProductInterface<F>& self,
+                                            const VectorArrayInterface<F>& left,
+                                            const VectorArrayInterface<F>& right, bool pairwise = false,
+                                            const std::optional<Indices>& left_indices = std::nullopt,
+                                            const std::optional<Indices>& right_indices = std::nullopt)
+{
+    if (pairwise)
+    {
+        const auto ret = self.apply_pairwise(left, right, left_indices, right_indices);
+        // TODO: check if the following leads to a dangling pointer (does the array copy ret.data()?)
+        // return pybind11::array(ret.size(), ret.data());
+        // for now, copy the data explicitly
+        pybind11::array_t<F> ret_array({ret.size()});
+        auto ret_array_mutable = ret_array.mutable_unchecked();
+        for (ssize_t i = 0; i < ret.size(); ++i)
+        {
+            ret_array_mutable(i) = ret[i];
+        }
+    }
+
+    const auto ret = self.apply(left, right, left_indices, right_indices);
+    const ssize_t n = left_indices ? left_indices->size(left.size()) : left.size();
+    const ssize_t m = right_indices ? right_indices->size(right.size()) : right.size();
+    pybind11::array_t<F> ret_array({n, m});
+    auto ret_array_mutable = ret_array.mutable_unchecked();
+    for (ssize_t i = 0; i < n; ++i)
+    {
+        for (ssize_t j = 0; j < m; ++j)
+        {
+            ret_array_mutable(i, j) = ret[(i * m) + j];
+        }
+    }
+    return ret_array;
+}
+
 template <class F>
     requires std::floating_point<F> || std::is_same_v<F, std::complex<typename F::value_type>>
 auto bind_function_based_inner_product(pybind11::module& m, const std::string& field_type_name)
@@ -321,16 +367,26 @@ auto bind_function_based_inner_product(pybind11::module& m, const std::string& f
         /* Inherit the constructors */
         using InterfaceType::InterfaceType;
 
-        py::array_t<F> py_apply(const VectorArrayInterface<F>& left, const VectorArrayInterface<F>& right,
-                                bool pairwise = false,
-                                const std::optional<Indices>& left_indices = std::nullopt,
-                                const std::optional<Indices>& right_indices = std::nullopt) const override
+        std::vector<F> apply(const VectorArrayInterface<F>& left, const VectorArrayInterface<F>& right,
+                             const std::optional<Indices>& left_indices = std::nullopt,
+                             const std::optional<Indices>& right_indices = std::nullopt) const override
         {
-            PYBIND11_OVERRIDE_NAME(py::array_t<F>, /* Return type */
-                                   InterfaceType,  /* Parent class */
-                                   "apply",        /* Name of function in Python */
-                                   py_apply,       /* Name of function in C++ */
-                                   left, right, pairwise, left_indices, right_indices /* Argument(s) */
+            PYBIND11_OVERRIDE_PURE(std::vector<F>,                          /* Return type */
+                                   InterfaceType,                           /* Parent class */
+                                   apply,                                   /* Name of function in C++ */
+                                   left, right, left_indices, right_indices /* Argument(s) */
+            );
+        }
+
+        std::vector<F> apply_pairwise(
+            const VectorArrayInterface<F>& left, const VectorArrayInterface<F>& right,
+            const std::optional<Indices>& left_indices = std::nullopt,
+            const std::optional<Indices>& right_indices = std::nullopt) const override
+        {
+            PYBIND11_OVERRIDE_PURE(std::vector<F>,                          /* Return type */
+                                   InterfaceType,                           /* Parent class */
+                                   apply_pairwise,                          /* Name of function in C++ */
+                                   left, right, left_indices, right_indices /* Argument(s) */
             );
         }
     };
@@ -338,17 +394,37 @@ auto bind_function_based_inner_product(pybind11::module& m, const std::string& f
     using InnerProdInterface = InnerProductInterface<F>;
     py::class_<InnerProdInterface, PyInnerProductInterface, std::shared_ptr<InnerProdInterface>>(
         m, (field_type_name + "InnerProductInterface").c_str())
-        .def("apply", &InnerProdInterface::py_apply);
+        .def("apply",
+             [](const InnerProdInterface& self, const VectorArrayInterface<F>& left,
+                const VectorArrayInterface<F>& right, bool pairwise,
+                const std::optional<Indices>& left_indices, const std::optional<Indices>& right_indices)
+             {
+                 return py_apply_inner_product<F>(self, left, right, pairwise, left_indices, right_indices);
+             });
 
     using FunctionBasedInnerProd = FunctionBasedInnerProduct<F>;
     py::class_<FunctionBasedInnerProd, InnerProdInterface, std::shared_ptr<FunctionBasedInnerProd>>(
         m, (field_type_name + "FunctionBasedInnerProduct").c_str())
-        .def("apply", &FunctionBasedInnerProd::py_apply);
+        .def("apply",
+             [](const FunctionBasedInnerProd& self, const VectorArrayInterface<F>& left,
+                const VectorArrayInterface<F>& right, bool pairwise,
+                const std::optional<Indices>& left_indices, const std::optional<Indices>& right_indices)
+             {
+                 return py_apply_inner_product<F>(self, left, right, pairwise, left_indices, right_indices);
+             });
 
     using EuclideanInnerProd = EuclideanInnerProduct<F>;
-    auto ret = py::class_<EuclideanInnerProd, FunctionBasedInnerProd, std::shared_ptr<EuclideanInnerProd>>(
-                   m, (field_type_name + "EuclideanInnerProduct").c_str())
-                   .def("apply", &EuclideanInnerProd::py_apply);
+    auto ret =
+        py::class_<EuclideanInnerProd, FunctionBasedInnerProd, std::shared_ptr<EuclideanInnerProd>>(
+            m, (field_type_name + "EuclideanInnerProduct").c_str())
+            .def("apply",
+                 [](const EuclideanInnerProd& self, const VectorArrayInterface<F>& left,
+                    const VectorArrayInterface<F>& right, bool pairwise,
+                    const std::optional<Indices>& left_indices, const std::optional<Indices>& right_indices)
+                 {
+                     return py_apply_inner_product<F>(self, left, right, pairwise, left_indices,
+                                                      right_indices);
+                 });
 
     return ret;
 }
