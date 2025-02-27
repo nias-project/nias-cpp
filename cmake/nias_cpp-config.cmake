@@ -36,8 +36,8 @@ endif()
 # now we should have uv
 find_program(UV_EXECUTABLE uv uv.exe HINTS ${uv_BINARY_DIR} REQUIRED)
 
-include(CMakeFindDependencyMacro)
 if(NOT COMMAND pybind11_add_module)
+    include(CMakeFindDependencyMacro)
     # parse pyproject.toml to get pybind11 version
     execute_process(
         COMMAND ${UV_EXECUTABLE} run --no-project --with toml cmake/parse_pyproject_toml.py pybind11
