@@ -44,11 +44,12 @@ class NIAS_CPP_EXPORT Indices
     /// Destructor
     ~Indices();
 
-    // copy and move constructors
+    // copy and move constructor
     Indices(const Indices& other);
-    Indices(Indices&& other);
+    Indices(Indices&& other) noexcept;
+    // copy and move assignment operators
     Indices& operator=(const Indices& other);
-    Indices& operator=(Indices&& other);
+    Indices& operator=(Indices&& other) noexcept;
 
     /**
       * \brief Get number of indices for a sequence of given length
@@ -98,6 +99,12 @@ class NIAS_CPP_EXPORT Indices
     // we cannot check this in the constructor because the length of the sequence is not known at that point,
     // so we have to check it here. Since we want a list of valid C++ indices, we also have to convert negative indices to positive ones.
     [[nodiscard]] static ssize_t positive_index(ssize_t index, ssize_t length);
+
+    // check if indices_ holds a vector (and not a slice)
+    [[nodiscard]] bool holds_vector() const;
+
+    // get the stored vector (check with holds_vector() first)
+    [[nodiscard]] const std::vector<ssize_t>& stored_vector() const;
 
     // See https://stackoverflow.com/questions/4145605/stdvector-needs-to-have-dll-interface-to-be-used-by-clients-of-class-xt-war on why this is a pointer
     ValueType* indices_;

@@ -4,6 +4,7 @@
 #include <functional>
 #include <initializer_list>
 #include <set>
+#include <utility>
 #include <variant>
 #include <vector>
 
@@ -47,18 +48,15 @@ Indices::Indices(std::initializer_list<ssize_t> indices)
 
 Indices::~Indices()
 {
-    if (indices_)
-    {
-        delete indices_;
-    }
+    delete indices_;
 }
 
 Indices::Indices(const Indices& other)
-    : indices_(other.indices_ ? new ValueType(*other.indices_) : nullptr)
+    : indices_((other.indices_ != nullptr) ? new ValueType(*other.indices_) : nullptr)
 {
 }
 
-Indices::Indices(Indices&& other)
+Indices::Indices(Indices&& other) noexcept
     : indices_(nullptr)
 {
     std::swap(indices_, other.indices_);
@@ -71,7 +69,7 @@ Indices& Indices::operator=(const Indices& other)
     return *this;
 }
 
-Indices& Indices::operator=(Indices&& other)
+Indices& Indices::operator=(Indices&& other) noexcept
 {
     Indices tmp(std::move(other));
     std::swap(indices_, tmp.indices_);
@@ -80,9 +78,9 @@ Indices& Indices::operator=(Indices&& other)
 
 ssize_t Indices::size(ssize_t length) const
 {
-    if (std::holds_alternative<std::vector<ssize_t>>(*indices_))
+    if (holds_vector())
     {
-        return std::ssize(std::get<std::vector<ssize_t>>(*indices_));
+        return std::ssize(stored_vector());
     }
     auto [start, stop, step, slicelength] = compute(length);
     return slicelength;
@@ -90,9 +88,9 @@ ssize_t Indices::size(ssize_t length) const
 
 ssize_t Indices::get(ssize_t i, ssize_t length) const
 {
-    if (std::holds_alternative<std::vector<ssize_t>>(*indices_))
+    if (holds_vector())
     {
-        return positive_index(std::get<std::vector<ssize_t>>(*indices_)[as_size_t(i)], length);
+        return positive_index(stored_vector()[as_size_t(i)], length);
     }
     const auto [start, stop, step, slicelength] = compute(length);
     if (i < 0 || i >= slicelength)
@@ -104,9 +102,9 @@ ssize_t Indices::get(ssize_t i, ssize_t length) const
 
 void Indices::check_valid(ssize_t length) const
 {
-    if (std::holds_alternative<std::vector<ssize_t>>(*indices_))
+    if (holds_vector())
     {
-        for (auto&& index : std::get<std::vector<ssize_t>>(*indices_))
+        for (auto&& index : stored_vector())
         {
             if (index < -length || index >= length)
             {
@@ -118,9 +116,9 @@ void Indices::check_valid(ssize_t length) const
 
 void Indices::for_each(const std::function<void(ssize_t)>& func, ssize_t length) const
 {
-    if (std::holds_alternative<std::vector<ssize_t>>(*indices_))
+    if (holds_vector())
     {
-        for (auto index : std::get<std::vector<ssize_t>>(*indices_))
+        for (auto index : stored_vector())
         {
             func(positive_index(index, length));
         }
@@ -148,9 +146,9 @@ void Indices::for_each(const std::function<void(ssize_t)>& func, ssize_t length)
 
 std::vector<ssize_t> Indices::as_vec(ssize_t length) const
 {
-    if (std::holds_alternative<std::vector<ssize_t>>(*indices_))
+    if (holds_vector())
     {
-        auto indices = std::get<std::vector<ssize_t>>(*indices_);
+        auto indices = stored_vector();
         for (auto& index : indices)
         {
             index = positive_index(index, length);
@@ -186,7 +184,7 @@ std::set<ssize_t> Indices::unique_indices(ssize_t length) const
 
 std::array<ssize_t, 4> Indices::compute(ssize_t length) const
 {
-    if (!std::holds_alternative<pybind11::slice>(*indices_))
+    if (holds_vector())
     {
         throw InvalidStateError("compute can only be called if indices_ holds a slice");
     }
@@ -213,6 +211,16 @@ ssize_t Indices::positive_index(ssize_t index, ssize_t length)
         throw InvalidIndexError("Index must be between -length and length - 1");
     }
     return index;
+}
+
+bool Indices::holds_vector() const
+{
+    return std::holds_alternative<std::vector<ssize_t>>(*indices_);
+}
+
+const std::vector<ssize_t>& Indices::stored_vector() const
+{
+    return std::get<std::vector<ssize_t>>(*indices_);
 }
 
 }  // namespace nias
