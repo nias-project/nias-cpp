@@ -40,16 +40,22 @@ if(CMAKE_CXX_COMPILER_ID MATCHES "GNU" OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
     set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -Wall -Wextra -Wpedantic")
 endif()
 
-find_package(Python REQUIRED COMPONENTS Interpreter Development.Module)
-
 # find our own package
 find_package(nias_cpp PATHS ${CMAKE_CURRENT_SOURCE_DIR}/cmake NO_DEFAULT_PATH)
 
 # add tests if this is the master project
 if(NIAS_CPP_MASTER_PROJECT)
-    include(CTest)
-    include(FetchContent)
+    # enable warnings in debug mode
+    if(CMAKE_CXX_COMPILER_ID MATCHES "GNU" OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
+        set(CMAKE_CXX_FLAGS_DEBUG
+            "${CMAKE_CXX_FLAGS_DEBUG} -Wall -Wextra -Wpedantic -Werror -Wsign-conversion")
+    elseif(CMAKE_CXX_COMPILER_ID MATCHES "MSVC")
+        set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} /W4 /WX")
+    endif()
+    set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -DDEBUG")
+
     # add boost-ext/ut testing framework
+    include(FetchContent)
     FetchContent_Declare(
         ut
         GIT_REPOSITORY https://github.com/boost-ext/ut
@@ -57,5 +63,13 @@ if(NIAS_CPP_MASTER_PROJECT)
         OVERRIDE_FIND_PACKAGE)
     FetchContent_MakeAvailable(ut)
     find_package(ut REQUIRED)
+
+    # add tests
+    include(CTest)
     add_subdirectory(tests)
+
+    # add header checks
+    list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/cmake")
+    include(Headercheck)
+    nias_cpp_add_headercheck()
 endif()

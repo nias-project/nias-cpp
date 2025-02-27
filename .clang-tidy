@@ -1,0 +1,139 @@
+---
+# This file is part of the NiAS project (https://github.com/nias-project).
+# Copyright NiAS developers and contributors. All rights reserved.
+# License: BSD 2-Clause License (https://opensource.org/licenses/BSD-2-Clause)
+
+# Note that the tests and/or examples subdir might have a sub-config that disables some checks.
+
+HeaderFilterRegex: (src|tests|examples)/.*
+ExcludeHeaderFilterRegex: .*/ut.hpp
+WarningsAsErrors: '*,-clang-diagnostic-unused-function'
+Checks: >
+  *,
+  We enable all warnings by default. This ensures we don't miss new and useful
+  warnings when a new version of clang-tidy is dropped.  The * to enable everything needs to be the first entry in the list.
+  Otherwise everything else gets ignored.
+
+  IMPORTANT
+  clang-tidy doesn't support comments but we can simulate comments by just
+  writing text directly here. These are then interpreted as warnings and will
+  be dropped. As long as you start every sentence with a capital letter and
+  don't use commas in your "comments" you should be fine.
+
+
+  We then disable individual checks with -<check_id> where <check_id> can be one
+  of https://clang.llvm.org/extra/clang-tidy/checks/list.html
+
+  Warnings that are rarely useful,
+  -altera-*, Checks related to OpenCL programming for FPGAs. Not relevant,
+  -abseil-*, We're not using Abseil,
+  -android-*,
+  -fuchsia-*, Fuchsia specific,
+  -zircon-*, Zircon specific,
+  -linuxkernel*,
+  -mpi-*,
+  -*-osx-*, Apple is not a target platform for us atm,
+  -darwin-*,
+  -objc-*, Objective-c not relevant,
+  -llvmlibc-*, We want to use glibc,
+  -misc-no-recursion,
+  -readability-function-cognitive-complexity,
+  -google-upgrade-googletest-case, we do not use gtest,
+
+
+  These don't match our general guidance,
+  -modernize-use-trailing-return-type,
+  -google-readability-braces-around-statements,
+  -readability-identifier-length,
+  This warns even for 'using namespace' in a .cpp file. We don't want that,
+  -google-build-using-namespace,
+
+  These warrant more discussion,
+  -cppcoreguidelines-avoid-const-or-ref-data-members,
+  -bugprone-easily-swappable-parameters,
+  -cppcoreguidelines-non-private-member-variables-in-classes,
+  -misc-non-private-member-variables-in-classes, This should be a duplicate of the above?,
+  -google-default-arguments,
+
+  Cannot use due a bug in clang-tidy (https://github.com/llvm/llvm-project/issues/52682),
+  -llvm-header-guard,
+
+  Aliases. These are just duplicates of other warnings and should always be ignored,
+  -bugprone-narrowing-conversions,
+  -cert-dcl37-c,
+  -cert-dcl51-cpp,
+  -cert-exp42-c,
+  -cert-flp37-c,
+  -cert-msc24-c,
+  -cert-msc33-c,
+  -readability-magic-numbers,
+  -google-readability-function-size,
+  -hicpp-function-size,
+  -llvm-else-after-return,
+  -hicpp-braces-around-statements,
+  -hicpp-named-parameter,
+  -hicpp-use-auto,
+  -cert-con36-c, alias for  bugprone-spuriously-wake-up-functions,
+  -cert-con54-cpp, alias for  bugprone-spuriously-wake-up-functions,
+  -cert-ctr56-cpp, alias for  bugprone-pointer-arithmetic-on-polymorphic-object,
+  -cert-dcl03-c, alias for  misc-static-assert,
+  -cert-dcl16-c, alias for  readability-uppercase-literal-suffix,
+  -cert-dcl54-cpp, alias for  misc-new-delete-overloads,
+  -cert-dcl59-cpp, alias for  google-build-namespaces,
+  -cert-err09-cpp, alias for  misc-throw-by-value-catch-by-reference,
+  -cert-err61-cpp, alias for  misc-throw-by-value-catch-by-reference,
+  -cert-fio38-c, alias for  misc-non-copyable-objects,
+  -cert-int09-c, alias for  readability-enum-initial-value,
+  -cert-msc30-c, alias for  cert-msc50-cpp,
+  -cert-msc32-c, alias for  cert-msc51-cpp,
+  -cert-msc54-cpp, alias for  bugprone-signal-handler,
+  -cert-oop11-cpp, alias for  performance-move-constructor-init,
+  -cert-oop54-cpp, alias for  bugprone-unhandled-self-assignment,
+  -cert-pos44-c, alias for  bugprone-bad-signal-to-kill-thread,
+  -cert-pos47-c, alias for  concurrency-thread-canceltype-asynchronous,
+  -cert-sig30-c, alias for  bugprone-signal-handler,
+  -cert-str34-c, alias for  bugprone-signed-char-misuse,
+  -cppcoreguidelines-avoid-c-arrays, alias for  modernize-avoid-c-arrays,
+  -cppcoreguidelines-avoid-magic-numbers, alias for  readability-magic-numbers,
+  -cppcoreguidelines-c-copy-assignment-signature, alias for  misc-unconventional-assign-operator,
+  -cppcoreguidelines-explicit-virtual-functions, alias for  modernize-use-override,
+  -cppcoreguidelines-macro-to-enum, alias for  modernize-macro-to-enum,
+  -cppcoreguidelines-noexcept-destructor, alias for  performance-noexcept-destructor,
+  -cppcoreguidelines-noexcept-move-operations, alias for  performance-noexcept-move-constructor,
+  -cppcoreguidelines-noexcept-swap, alias for  performance-noexcept-swap,
+  -cppcoreguidelines-use-default-member-init, alias for  modernize-use-default-member-init,
+  -google-readability-namespace-comments, alias for  llvm-namespace-comment,
+  -hicpp-avoid-c-arrays, alias for  modernize-avoid-c-arrays,
+  -hicpp-avoid-goto, alias for  cppcoreguidelines-avoid-goto,
+  -hicpp-deprecated-headers, alias for  modernize-deprecated-headers,
+  -hicpp-explicit-conversions, alias for  google-explicit-constructor,
+  -hicpp-invalid-access-moved, alias for  bugprone-use-after-move,
+  -hicpp-member-init, alias for  cppcoreguidelines-pro-type-member-init,
+  -hicpp-move-const-arg, alias for  performance-move-const-arg,
+  -hicpp-new-delete-operators, alias for  misc-new-delete-overloads,
+  -hicpp-no-array-decay, alias for  cppcoreguidelines-pro-bounds-array-to-pointer-decay,
+  -hicpp-no-malloc, alias for  cppcoreguidelines-no-malloc,
+  -hicpp-noexcept-move, alias for  performance-noexcept-move-constructor,
+  -hicpp-special-member-functions, alias for  cppcoreguidelines-special-member-functions,
+  -hicpp-static-assert, alias for  misc-static-assert,
+  -hicpp-undelegated-constructor, alias for  bugprone-undelegated-constructor,
+  -hicpp-uppercase-literal-suffix, alias for  readability-uppercase-literal-suffix,
+  -hicpp-use-emplace, alias for  modernize-use-emplace,
+  -hicpp-use-equals-default, alias for  modernize-use-equals-default,
+  -hicpp-use-equals-delete, alias for  modernize-use-equals-delete,
+  -hicpp-use-noexcept, alias for  modernize-use-noexcept,
+  -hicpp-use-nullptr, alias for  modernize-use-nullptr,
+  -hicpp-use-override, alias for  modernize-use-override,
+  -hicpp-vararg, alias for  cppcoreguidelines-pro-type-vararg,
+  -llvm-qualified-auto, alias for  readability-qualified-auto,
+
+  This warns for any TODO left in source and could be useful,
+  -google-readability-todo,
+
+# clang-tidy can auto-run clang-format for us. Tell it which style to use.
+FormatStyle: file
+
+CheckOptions:
+  - { key: misc-include-cleaner.IgnoreHeaders, value: pybind11/detail/.* }
+  # See https://clang.llvm.org/extra/clang-tidy/checks/readability/identifier-naming.html for a list of possible options
+  - { key: readability-identifier-naming.NamespaceCase,          value: lower_case }

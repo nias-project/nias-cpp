@@ -8,6 +8,7 @@
 #include <string>
 #include <vector>
 
+#include <nias_cpp/checked_integer_cast.h>
 #include <nias_cpp/concepts.h>
 #include <nias_cpp/exceptions.h>
 #include <nias_cpp/indices.h>
@@ -47,7 +48,8 @@ class ConstVectorArrayView : public VectorArrayInterface<F>
         return vec_array_.dim();
     }
 
-    std::shared_ptr<InterfaceType> copy(const std::optional<Indices>& view_indices = std::nullopt) const
+    [[nodiscard]] std::shared_ptr<InterfaceType> copy(
+        const std::optional<Indices>& view_indices = std::nullopt) const override
     {
         const auto indices = new_indices(view_indices);
         return vec_array_.copy(indices);
@@ -68,12 +70,12 @@ class ConstVectorArrayView : public VectorArrayInterface<F>
 
     void axpy(const std::vector<F>& /*alpha*/, const InterfaceType& /*x*/,
               const std::optional<Indices>& /*view_indices*/ = std::nullopt,
-              const std::optional<Indices>& /*x_indices*/ = std::nullopt)
+              const std::optional<Indices>& /*x_indices*/ = std::nullopt) override
     {
         throw NotImplementedError("ConstVectorArrayView: axpy is not implemented, use VectorArrayView.");
     }
 
-    F get(ssize_t i, ssize_t j) const override
+    [[nodiscard]] F get(ssize_t i, ssize_t j) const override
     {
         return vec_array_.get(indices_ ? indices_->get(i, vec_array_.size()) : i, j);
     }
@@ -84,7 +86,7 @@ class ConstVectorArrayView : public VectorArrayInterface<F>
             "ConstVectorArrayView: cannot modify vector array entries through a const view.");
     }
 
-    virtual void delete_vectors(const std::optional<Indices>& /*indices*/)
+    void delete_vectors(const std::optional<Indices>& /*indices*/) override
     {
         throw NotImplementedError(
             "ConstVectorArrayView: cannot delete vectors from vector array through a const view.");
@@ -104,7 +106,7 @@ class ConstVectorArrayView : public VectorArrayInterface<F>
         }
         // TODO: can we do this more efficiently?
         std::vector<ssize_t> new_indices_vec;
-        new_indices_vec.reserve(view_indices->size(this->size()));
+        new_indices_vec.reserve(as_size_t(view_indices->size(this->size())));
         const auto old_indices_vec = indices_->as_vec(vec_array_.size());
         std::cerr << "old_indices_vec: ";
         for (auto i : old_indices_vec)
@@ -115,7 +117,7 @@ class ConstVectorArrayView : public VectorArrayInterface<F>
         view_indices->for_each(
             [&new_indices_vec, &old_indices_vec](ssize_t i)
             {
-                new_indices_vec.push_back(old_indices_vec[i]);
+                new_indices_vec.push_back(old_indices_vec[as_size_t(i)]);
             },
             this->size());
         std::cerr << "new_indices_vec: ";
@@ -202,7 +204,7 @@ class VectorArrayInterface
      * \brief Checks that other is compatible with this VectorArray
      * \todo What does that mean exactly? Currently only checks dimensions.
      */
-    virtual bool is_compatible_array(const ThisType& other) const
+    [[nodiscard]] virtual bool is_compatible_array(const ThisType& other) const
     {
         return dim() == other.dim();
     }
@@ -219,7 +221,8 @@ class VectorArrayInterface
      * \todo: Should this be a unique ptr?
      * \todo: Return a view?
      */
-    virtual std::shared_ptr<ThisType> copy(const std::optional<Indices>& indices = std::nullopt) const = 0;
+    [[nodiscard]] virtual std::shared_ptr<ThisType> copy(
+        const std::optional<Indices>& indices = std::nullopt) const = 0;
 
     /**
      * \brief Appends (a subset of) another VectorArray to this VectorArray
@@ -249,11 +252,11 @@ class VectorArrayInterface
     {
         if (!indices)
         {
-            check(alpha.size() == 1 || alpha.size() == this->size(),
+            check(alpha.size() == 1 || std::ssize(alpha) == this->size(),
                   "alpha must have size 1 or the same size as the array.");
             for (ssize_t i = 0; i < size(); ++i)
             {
-                const auto alpha_index = alpha.size() == 1 ? 0 : i;
+                const auto alpha_index = as_size_t(alpha.size() == 1 ? 0 : i);
                 for (ssize_t j = 0; j < dim(); ++j)
                 {
                     this->set(i, j, this->get(i, j) * alpha[alpha_index]);
@@ -263,9 +266,9 @@ class VectorArrayInterface
         else
         {
             indices->check_valid(this->size());
-            check(alpha.size() == 1 || alpha.size() == indices->size(this->size()),
+            check(alpha.size() == 1 || std::ssize(alpha) == indices->size(this->size()),
                   "alpha must have size 1 or the same size as indices");
-            ssize_t alpha_index = 0;
+            size_t alpha_index = 0;
             indices->for_each(
                 [this, &alpha, &alpha_index](ssize_t i)
                 {
@@ -323,7 +326,7 @@ class VectorArrayInterface
         const auto this_size = indices ? indices->size(size()) : size();
         const auto x_size = x_indices ? x_indices->size(x.size()) : x.size();
         check(x_size == this_size || x_size == 1, "x must have length 1 or the same length as this");
-        check(alpha.size() == this_size || alpha.size() == 1,
+        check(std::ssize(alpha) == this_size || alpha.size() == 1,
               "alpha must be scalar or have the same length as this");
         for (ssize_t i = 0; i < this_size; ++i)
         {
@@ -331,7 +334,7 @@ class VectorArrayInterface
             // x and alpha can either have the same length as this or length 1
             ssize_t x_index = x_size == 1 ? 0 : i;
             x_index = x_indices ? x_indices->get(x_index, x.size()) : x_index;
-            const auto alpha_index = alpha.size() == 1 ? 0 : i;
+            const auto alpha_index = as_size_t(alpha.size() == 1 ? 0 : i);
             for (ssize_t j = 0; j < dim(); ++j)
             {
                 this->set(this_index, j, this->get(this_index, j) + (alpha[alpha_index] * x.get(x_index, j)));
@@ -353,7 +356,7 @@ class VectorArrayInterface
     /**
      * \brief Returns the j-th entry of the i-th vector
      */
-    virtual F get(ssize_t i, ssize_t j) const = 0;
+    [[nodiscard]] virtual F get(ssize_t i, ssize_t j) const = 0;
 
     /**
      * \brief Sets the j-th entry of the i-th vector to \c value
@@ -383,7 +386,7 @@ class VectorArrayInterface
     /**
      * \brief Returns a view on the vectors corresponding to the given indices
      */
-    virtual VectorArrayView<F> operator[](const Indices& indices)
+    virtual VectorArrayView<F> operator[](const std::optional<Indices>& indices)
     {
         return VectorArrayView<F>(*this, indices);
     }
@@ -391,7 +394,7 @@ class VectorArrayInterface
     /**
      * \brief Returns a const view on the vectors corresponding to the given indices
      */
-    virtual ConstVectorArrayView<F> operator[](const Indices& indices) const
+    virtual ConstVectorArrayView<F> operator[](const std::optional<Indices>& indices) const
     {
         return ConstVectorArrayView<F>(*this, indices);
     }
@@ -443,6 +446,21 @@ class VectorArrayInterface
         }
     }
 };
+
+template <floating_point_or_complex F>
+std::ostream& operator<<(std::ostream& os, const VectorArrayInterface<F>& vec_array)
+{
+    os << "VectorArray with " << vec_array.size() << " vectors of dimension " << vec_array.dim() << std::endl;
+    for (ssize_t i = 0; i < vec_array.size(); ++i)
+    {
+        for (ssize_t j = 0; j < vec_array.dim(); ++j)
+        {
+            os << vec_array.get(i, j) << " ";
+        }
+        os << '\n';
+    }
+    return os;
+}
 
 
 }  // namespace nias
