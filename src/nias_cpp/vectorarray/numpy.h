@@ -171,7 +171,7 @@ class NumpyVectorArray : public VectorArrayInterface<F>
             {
                 // deduplicate other_indices
                 const auto other_indices_vec = other_indices->as_vec(other.size());
-                std::set<ssize_t> const unique_indices(other_indices_vec.begin(), other_indices_vec.end());
+                const std::set<ssize_t> unique_indices(other_indices_vec.begin(), other_indices_vec.end());
                 // now remove entries corresponding to unique_indices from other
                 this->check(std::ssize(unique_indices) <= other.size(),
                             "unique_indices contains invalid indices");
@@ -203,7 +203,7 @@ class NumpyVectorArray : public VectorArrayInterface<F>
         {
             // We first sort and deduplicate indices by converting to a std::set
             const auto indices_vec = indices->as_vec(this->size());
-            std::set<ssize_t> const unique_indices(indices_vec.begin(), indices_vec.end());
+            const std::set<ssize_t> unique_indices(indices_vec.begin(), indices_vec.end());
             if (std::ssize(unique_indices) > size())
             {
                 throw InvalidArgumentError("Indices contain invalid indices");

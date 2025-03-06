@@ -169,7 +169,7 @@ class ListVectorArray : public VectorArrayInterface<F>
         // We sort in reverse order (by using std::greater as second template argument) to avoid
         // invalidating indices when removing elements from the vector
         const auto indices_vec = indices->as_vec(this->size());
-        std::set<ssize_t, std::greater<>> const sorted_indices(indices_vec.begin(), indices_vec.end());
+        const std::set<ssize_t, std::greater<>> sorted_indices(indices_vec.begin(), indices_vec.end());
         for (auto&& i : sorted_indices)
         {
             vectors_.erase(vectors_.begin() + i);

@@ -140,7 +140,7 @@ struct TestVectorArrayFactory<ListVectorArray<F>>
         auto current_number = start;
         for (ssize_t i = 0; i < size; ++i)
         {
-            std::shared_ptr<VectorInterface<F>> const new_vec = std::make_shared<DynamicVector<F>>(dim);
+            const std::shared_ptr<VectorInterface<F>> new_vec = std::make_shared<DynamicVector<F>>(dim);
             for (ssize_t j = 0; j < dim; ++j)
             {
                 new_vec->get(j) = current_number;
