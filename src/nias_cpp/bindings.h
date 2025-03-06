@@ -343,7 +343,7 @@ pybind11::array_t<F> py_apply_inner_product(const InnerProductInterface<F>& self
     const auto ret = self.apply(left, right, left_indices, right_indices);
     const ssize_t n = left_indices ? left_indices->size(left.size()) : left.size();
     const ssize_t m = right_indices ? right_indices->size(right.size()) : right.size();
-    if (std::ssize(ret) != n * m)
+    if (std::ssize(ret) != n || (n > 0 && std::ssize(ret[0]) != m))
     {
         throw nias::InvalidStateError("Result has wrong size.");
     }
@@ -353,7 +353,7 @@ pybind11::array_t<F> py_apply_inner_product(const InnerProductInterface<F>& self
     {
         for (ssize_t j = 0; j < m; ++j)
         {
-            ret_array_mutable(i, j) = ret[as_size_t((i * m) + j)];
+            ret_array_mutable(i, j) = ret[as_size_t(i)][as_size_t(j)];
         }
     }
     return ret_array;
@@ -373,12 +373,12 @@ auto bind_function_based_inner_product(pybind11::module& m, const std::string& f
         /* Inherit the constructors */
         using InterfaceType::InterfaceType;
 
-        [[nodiscard]] std::vector<F> apply(
+        [[nodiscard]] std::vector<std::vector<F>> apply(
             const VectorArrayInterface<F>& left, const VectorArrayInterface<F>& right,
             const std::optional<Indices>& left_indices = std::nullopt,
             const std::optional<Indices>& right_indices = std::nullopt) const override
         {
-            PYBIND11_OVERRIDE_PURE(std::vector<F>,                          /* Return type */
+            PYBIND11_OVERRIDE_PURE(std::vector<std::vector<F>>,             /* Return type */
                                    InterfaceType,                           /* Parent class */
                                    apply,                                   /* Name of function in C++ */
                                    left, right, left_indices, right_indices /* Argument(s) */

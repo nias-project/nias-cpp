@@ -30,11 +30,11 @@ class FunctionBasedInnerProduct : public InnerProductInterface<F>
         std::function<ScalarType(const VectorArrayInterface<ScalarType>&,
                                  const VectorArrayInterface<ScalarType>&, ssize_t i, ssize_t j)>
             inner_product_function)
-        : inner_product_function_(std::move(std::move(inner_product_function)))
+        : inner_product_function_(std::move(inner_product_function))
     {
     }
 
-    [[nodiscard]] std::vector<F> apply(
+    [[nodiscard]] std::vector<std::vector<F>> apply(
         const VectorArrayInterface<ScalarType>& left, const VectorArrayInterface<ScalarType>& right,
         const std::optional<Indices>& left_indices = std::nullopt,
         const std::optional<Indices>& right_indices = std::nullopt) const override
@@ -43,12 +43,12 @@ class FunctionBasedInnerProduct : public InnerProductInterface<F>
         {
             return apply(left[left_indices], right[right_indices], std::nullopt, std::nullopt);
         }
-        std::vector<F> ret(as_size_t(left.size() * right.size()));
+        std::vector<std::vector<F>> ret(as_size_t(left.size()), std::vector<F>(as_size_t(right.size())));
         for (ssize_t i = 0; i < left.size(); ++i)
         {
             for (ssize_t j = 0; j < right.size(); ++j)
             {
-                ret[as_size_t((i * right.size()) + j)] = inner_product_function_(left, right, i, j);
+                ret[as_size_t(i)][as_size_t(j)] = inner_product_function_(left, right, i, j);
             }
         }
         return ret;

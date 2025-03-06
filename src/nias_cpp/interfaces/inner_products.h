@@ -32,11 +32,11 @@ class SesquilinearFormInterface
      * \brief Apply the sesquilinear form
      *
      * The form is applied to each combination of vectors from \c left and \c right,
-     * i.e., the result has size <tt>left.size() * right.size()</tt>
-     * (where the <tt>i * right.size() + j</tt>-th element contains the result of applying the form to
-     * the <tt>i</tt>-th vector of the \c left array with the <tt>j</tt>-th vector of the \c right array).
+     * i.e., the <tt>(i, j)</tt>-th element of the returned vector of vectors contains
+     * the result of applying the form to the <tt>i</tt>-th vector of the \c left array
+     * with the <tt>j</tt>-th vector of the \c right array).
      */
-    [[nodiscard]] virtual std::vector<ScalarType> apply(
+    [[nodiscard]] virtual std::vector<std::vector<ScalarType>> apply(
         const VectorArrayInterface<ScalarType>& left, const VectorArrayInterface<ScalarType>& right,
         const std::optional<Indices>& left_indices = std::nullopt,
         const std::optional<Indices>& right_indices = std::nullopt) const = 0;
