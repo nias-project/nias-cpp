@@ -31,18 +31,23 @@ class SesquilinearFormInterface
     /**
      * \brief Apply the sesquilinear form
      *
-     * If \c pairwise is \c true, the form is applied to each pair of vectors in the arrays and
-     * the result has the same length as the input arrays (which have to have the same size in this case).
-     * If \c pairwise is \c false, the form is applied to each vector in the first array with each vector
-     * of the second array, and the result has size <tt>left.size() * right.size()</tt>
+     * The form is applied to each combination of vectors from \c left and \c right,
+     * i.e., the result has size <tt>left.size() * right.size()</tt>
      * (where the <tt>i * right.size() + j</tt>-th element contains the result of applying the form to
-     * the <tt>i</tt>-th vector of the left array with the <tt>j</tt>-th vector of the right array).
+     * the <tt>i</tt>-th vector of the \c left array with the <tt>j</tt>-th vector of the \c right array).
      */
     [[nodiscard]] virtual std::vector<ScalarType> apply(
         const VectorArrayInterface<ScalarType>& left, const VectorArrayInterface<ScalarType>& right,
         const std::optional<Indices>& left_indices = std::nullopt,
         const std::optional<Indices>& right_indices = std::nullopt) const = 0;
 
+    /**
+     * \brief Apply the sesquilinear form pairwise
+     *
+     * The form is applied to each pair of vectors (first vector in \c left paired with first vector of \c right,
+     * second vector of \c left with second vector of \c right, and so on).
+     * The result has the same length as the input arrays (which have to have the same size in this case).
+     */
     [[nodiscard]] virtual std::vector<ScalarType> apply_pairwise(
         const VectorArrayInterface<ScalarType>& left, const VectorArrayInterface<ScalarType>& right,
         const std::optional<Indices>& left_indices = std::nullopt,
