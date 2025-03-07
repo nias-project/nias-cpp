@@ -42,13 +42,15 @@ if(NOT COMMAND pybind11_add_module)
     execute_process(
         COMMAND ${UV_EXECUTABLE} run --no-project --with toml cmake/parse_pyproject_toml.py pybind11
         WORKING_DIRECTORY ${_NIAS_CPP_DIR}
-        OUTPUT_VARIABLE PYBIND11_VERSION)
+        OUTPUT_VARIABLE PYBIND11_VERSION
+        ERROR_VARIABLE _pybind11_version_error)
 
-    string(FIND "${PYBIND11_VERSION}" "Error:" _pybind11_version_error)
-    if(_pybind11_version_error GREATER -1)
-        message(WARNING "Could not parse pyproject.toml to get pybind11 version.")
-        set(PYBIND11_VERSION 2.13.6)
-        message(WARNING "Setting pybind11 version to default value ${PYBIND11_VERSION}.")
+    string(FIND "${PYBIND11_VERSION}" "Error:" _pybind11_error_in_result)
+    if(_pybind11_version_error OR _pybind11_error_in_result GREATER -1)
+        set(_error_line1 "Could not parse pyproject.toml to get pybind11 version.\n")
+        # only one of these variables should not be empty
+        set(_error_line2 "The following error occurred: ${_pybind11_version_error}${PYBIND11_VERSION}")
+        message(WARNING "${_error_line1}${_error_line2}")
     endif()
 
     # add pybind11
