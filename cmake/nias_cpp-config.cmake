@@ -36,8 +36,8 @@ endif()
 # now we should have uv
 find_program(UV_EXECUTABLE uv uv.exe HINTS ${uv_BINARY_DIR} REQUIRED)
 
+include(CMakeFindDependencyMacro)
 if(NOT COMMAND pybind11_add_module)
-    include(CMakeFindDependencyMacro)
     # parse pyproject.toml to get pybind11 version
     execute_process(
         COMMAND ${UV_EXECUTABLE} run --no-project --with toml cmake/parse_pyproject_toml.py pybind11
@@ -63,7 +63,6 @@ if(NOT COMMAND pybind11_add_module)
         GIT_TAG "v${PYBIND11_VERSION}"
         OVERRIDE_FIND_PACKAGE)
     FetchContent_MakeAvailable(pybind11)
-    find_dependency(pybind11 CONFIG REQUIRED)
 endif()
 
 set(NIAS_CPP_REL_INCLUDE_INSTALL_DIR "nias_cpp/src")
@@ -81,6 +80,7 @@ function(nias_cpp_build_library target_name)
         LIST_DIRECTORIES false
         "${PROJECT_SOURCE_DIR}/src/*.h" "${PROJECT_SOURCE_DIR}/src/*.cpp")
 
+    find_dependency(pybind11 CONFIG REQUIRED)
     pybind11_add_module(${target_name} SHARED ${ARG_UNPARSED_ARGUMENTS} ${library_sources})
 
     target_include_directories(${target_name} PUBLIC $<BUILD_INTERFACE:${_NIAS_CPP_DIR}/src>
