@@ -1,0 +1,145 @@
+---
+# This file is part of the NiAS project (https://github.com/nias-project).
+# Copyright NiAS developers and contributors. All rights reserved.
+# License: BSD 2-Clause License (https://opensource.org/licenses/BSD-2-Clause)
+name: downstream inclusion
+
+on:
+  pull_request:
+    # defaults + "ready_for_review" (so full matrix is run when that's toggled)
+    types: [opened, synchronize, reopened, ready_for_review]
+
+concurrency:
+  group: downstream_inclusion_${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  inclusion_as_submodule:
+    strategy:
+      fail-fast: false
+    name: as submodule
+    runs-on: ubuntu-24.04
+    defaults:
+      run:
+        shell: bash -elo pipefail {0}
+    timeout-minutes: 30
+    env:
+      TEST_PROJECT_DIR: submodule_test_project
+    steps:
+
+    - name: Setup Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: '3.12'
+
+    - name: Setup uv
+      uses: yezz123/setup-uv@v4
+
+    - name: Checkout nias-cpp
+      uses: actions/checkout@v4
+      with:
+        path: nias-cpp
+
+    - name: Create test project dir
+      run: |
+        mkdir "${TEST_PROJECT_DIR}"
+        cp nias-cpp/.test_projects/main.cpp "${TEST_PROJECT_DIR}/"
+        cp nias-cpp/tests/test_vector.h "${TEST_PROJECT_DIR}/"
+        cp nias-cpp/.test_projects/CMakeLists.txt.Submodule "${TEST_PROJECT_DIR}/CMakeLists.txt"
+
+    - name: Checkout nias_cpp as submodule
+      uses: actions/checkout@v4
+      with:
+        path: ${{ env.TEST_PROJECT_DIR }}/nias-cpp
+
+    - name: Run test project tests
+      run: |
+        cd "${TEST_PROJECT_DIR}"
+        mkdir build
+        cmake -B build -DPython_EXECUTABLE="$(which python3.12)" -DCMAKE_BUILD_TYPE=Debug
+        cmake --build build
+
+  # inclusion_via_fetchcontent:
+  #   strategy:
+  #     fail-fast: false
+  #   name: using FetchContent
+  #   runs-on: ubuntu-24.04
+  #   defaults:
+  #     run:
+  #       shell: bash -elo pipefail {0}
+  #   timeout-minutes: 30
+  #   env:
+  #     TEST_PROJECT_DIR: fetchcontent_test_project
+  #   steps:
+  #
+  #   - name: Setup Python
+  #     uses: actions/setup-python@v5
+  #     with:
+  #       python-version: '3.12'
+  #
+  #   - name: Setup uv
+  #     uses: yezz123/setup-uv@v4
+  #
+  #   - name: Create test project dir
+  #     run: |
+  #       mkdir "${TEST_PROJECT_DIR}"
+  #       echo "${TEST_PROJECT_DIR}"
+  #
+  #   - name: Fill test project dir
+  #     run: |
+  #       cd "${TEST_PROJECT_DIR}"
+  #       cp nias-cpp/.test_projects/main.cpp .
+  #       cp nias-cpp/tests/test_vector.h .
+  #       cp nias-cpp/.test_projects/CMakeLists.txt.FetchContent CMakeLists.txt
+  #
+  #   - name: Run test project tests
+  #     run: |
+  #       cd "${TEST_PROJECT_DIR}"
+  #       mkdir build
+  #       cmake -B build -DPython_EXECUTABLE="$(which python3.12)" -DCMAKE_BUILD_TYPE=Debug
+  #       cmake --build build
+  #
+  # use_from_virtualenv:
+  #   strategy:
+  #     fail-fast: false
+  #   name: from virtualenv
+  #   runs-on: ubuntu-24.04
+  #   defaults:
+  #     run:
+  #       shell: bash -elo pipefail {0}
+  #   timeout-minutes: 30
+  #   env:
+  #     TEST_PROJECT_DIR: fetchcontent_test_project
+  #   steps:
+  #
+  #   - name: Setup Python
+  #     uses: actions/setup-python@v5
+  #     with:
+  #       python-version: '3.12'
+  #
+  #   - name: Setup uv
+  #     uses: yezz123/setup-uv@v4
+  #
+  #   - name: Create test project dir
+  #     run: |
+  #       mkdir "${TEST_PROJECT_DIR}"
+  #       echo "${TEST_PROJECT_DIR}"
+  #
+  #   - name: Checkout nias_cpp as submodule
+  #     uses: actions/checkout@v4
+  #     with:
+  #       path: ${{ env.TEST_PROJECT_DIR }}/nias-cpp
+  #
+  #   - name: Fill test project dir
+  #     run: |
+  #       cd "${TEST_PROJECT_DIR}"
+  #       cp nias-cpp/.test_projects/main.cpp .
+  #       cp nias-cpp/tests/test_vector.h .
+  #       cp nias-cpp/.test_projects/CMakeLists.txt.FetchContent CMakeLists.txt
+  #
+  #   - name: Run test project tests
+  #     run: |
+  #       cd "${TEST_PROJECT_DIR}"
+  #       mkdir build
+  #       cmake -B build -DPython_EXECUTABLE="$(which python3.12)" -DCMAKE_BUILD_TYPE=Debug
+  #       cmake --build build
