@@ -76,3 +76,6 @@ AllowAllArgumentsOnNextLine: true
 BreakConstructorInitializers: BeforeComma
 AlwaysBreakTemplateDeclarations: true
 ConstructorInitializerAllOnOneLineOrOnePerLine: false
+
+# We want const int var = 0 and not int const var = 0
+QualifierAlignment: Left

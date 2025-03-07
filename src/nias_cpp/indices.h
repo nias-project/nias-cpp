@@ -20,9 +20,11 @@ namespace nias
 
 class NIAS_CPP_EXPORT Indices
 {
+    using ValueType = std::variant<std::vector<ssize_t>, pybind11::slice>;
+
    public:
     /// The default constructor initializes indices_ to an empty vector
-    Indices() = default;
+    Indices();
 
     /// Construct from a single index
     explicit(false) Indices(ssize_t index);
@@ -38,6 +40,16 @@ class NIAS_CPP_EXPORT Indices
 
     /// Construct from a list of indices
     Indices(std::initializer_list<ssize_t> indices);
+
+    /// Destructor
+    ~Indices();
+
+    // copy and move constructor
+    Indices(const Indices& other);
+    Indices(Indices&& other) noexcept;
+    // copy and move assignment operators
+    Indices& operator=(const Indices& other);
+    Indices& operator=(Indices&& other) noexcept;
 
     /**
       * \brief Get number of indices for a sequence of given length
@@ -88,7 +100,14 @@ class NIAS_CPP_EXPORT Indices
     // so we have to check it here. Since we want a list of valid C++ indices, we also have to convert negative indices to positive ones.
     [[nodiscard]] static ssize_t positive_index(ssize_t index, ssize_t length);
 
-    std::variant<std::vector<ssize_t>, pybind11::slice> indices_;
+    // check if indices_ holds a vector (and not a slice)
+    [[nodiscard]] bool holds_vector() const;
+
+    // get the stored vector (check with holds_vector() first)
+    [[nodiscard]] const std::vector<ssize_t>& stored_vector() const;
+
+    // See https://stackoverflow.com/questions/4145605/stdvector-needs-to-have-dll-interface-to-be-used-by-clients-of-class-xt-war on why this is a pointer
+    ValueType* indices_;
 };
 
 // Convenience class to not have to write Indices(pybind11::slice(start, stop, step)) when creating a slice

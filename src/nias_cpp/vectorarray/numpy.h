@@ -9,6 +9,7 @@
 #include <typeinfo>
 #include <vector>
 
+#include <nias_cpp/checked_integer_cast.h>
 #include <nias_cpp/exceptions.h>
 #include <nias_cpp/indices.h>
 #include <nias_cpp/interfaces/vector.h>
@@ -33,7 +34,7 @@ class NumpyVectorArray : public VectorArrayInterface<F>
         : array_(array)
     {
         // Check if the array has the correct data type
-        if (array.dtype() != pybind11::dtype::of<F>())
+        if (!array.dtype().is(pybind11::dtype::of<F>()))
         {
             throw InvalidArgumentError("NumpyVectorArray: array must have F as data type");
         }
@@ -74,7 +75,7 @@ class NumpyVectorArray : public VectorArrayInterface<F>
         return array_;
     }
 
-    const auto& array() const
+    [[nodiscard]] const auto& array() const
     {
         return array_;
     }
@@ -89,12 +90,12 @@ class NumpyVectorArray : public VectorArrayInterface<F>
         return array_.shape(1);
     }
 
-    bool is_compatible_array(const InterfaceType& other) const override
+    [[nodiscard]] bool is_compatible_array(const InterfaceType& other) const override
     {
         return dim() == other.dim();
     }
 
-    F get(ssize_t i, ssize_t j) const override
+    [[nodiscard]] F get(ssize_t i, ssize_t j) const override
     {
         this->check_indices(i, j);
         return array_.at(i, j);
@@ -106,7 +107,8 @@ class NumpyVectorArray : public VectorArrayInterface<F>
         array_.mutable_at(i, j) = value;
     }
 
-    std::shared_ptr<InterfaceType> copy(const std::optional<Indices>& indices = std::nullopt) const override
+    [[nodiscard]] std::shared_ptr<InterfaceType> copy(
+        const std::optional<Indices>& indices = std::nullopt) const override
     {
         if (!indices)
         {
@@ -169,9 +171,10 @@ class NumpyVectorArray : public VectorArrayInterface<F>
             {
                 // deduplicate other_indices
                 const auto other_indices_vec = other_indices->as_vec(other.size());
-                std::set<ssize_t> unique_indices(other_indices_vec.begin(), other_indices_vec.end());
+                const std::set<ssize_t> unique_indices(other_indices_vec.begin(), other_indices_vec.end());
                 // now remove entries corresponding to unique_indices from other
-                this->check(unique_indices.size() <= other.size(), "unique_indices contains invalid indices");
+                this->check(std::ssize(unique_indices) <= other.size(),
+                            "unique_indices contains invalid indices");
                 const ssize_t new_size = other.size() - std::ssize(unique_indices);
                 pybind11::array_t<F> new_array_other(std::vector<ssize_t>{new_size, dim()});
                 ssize_t j = 0;  // index for new_array_other
@@ -194,39 +197,49 @@ class NumpyVectorArray : public VectorArrayInterface<F>
 
     void delete_vectors(const std::optional<Indices>& indices) override
     {
-        // We first sort and deduplicate indices by converting to a std::set
-        const auto indices_vec = indices->as_vec(this->size());
-        std::set<ssize_t> unique_indices(indices_vec.begin(), indices_vec.end());
-        if (unique_indices.size() > size())
-        {
-            throw InvalidArgumentError("Indices contain invalid indices");
-        }
-        const ssize_t new_size = size() - unique_indices.size();
         std::vector<ssize_t> indices_to_keep;
-        for (ssize_t i = 0; i < size(); ++i)
+        ssize_t new_size = 0;
+        if (indices)
         {
-            if (!unique_indices.contains(i))
+            // We first sort and deduplicate indices by converting to a std::set
+            const auto indices_vec = indices->as_vec(this->size());
+            const std::set<ssize_t> unique_indices(indices_vec.begin(), indices_vec.end());
+            if (std::ssize(unique_indices) > size())
             {
-                indices_to_keep.push_back(i);
+                throw InvalidArgumentError("Indices contain invalid indices");
+            }
+            // Now we can compute the new size and the indices to keep
+            new_size = size() - std::ssize(unique_indices);
+            for (ssize_t i = 0; i < size(); ++i)
+            {
+                if (!unique_indices.contains(i))
+                {
+                    indices_to_keep.push_back(i);
+                }
+            }
+            if (std::ssize(indices_to_keep) != new_size)
+            {
+                throw InvalidStateError("indices_to_keep has wrong size");
             }
         }
         auto new_array = pybind11::array_t<F>({new_size, dim()});
-        for (const auto& i : indices_to_keep)
+        for (ssize_t i = 0; i < std::ssize(indices_to_keep); ++i)
         {
             for (ssize_t j = 0; j < dim(); ++j)
             {
-                new_array.mutable_at(indices_to_keep[i], j) = array_.at(i, j);
+                new_array.mutable_at(i, j) = array_.at(indices_to_keep[as_size_t(i)], j);
             }
         }
         array_ = new_array;
     }
 
    private:
-    bool is_numpy_vector_array(const InterfaceType& other) const
+    [[nodiscard]] bool is_numpy_vector_array(const InterfaceType& other) const
     {
         try
         {
-            dynamic_cast<const ThisType&>(other);
+            const auto& ret = dynamic_cast<const ThisType&>(other);
+            static_cast<void>(ret);
             return true;
         }
         catch (std::bad_cast&)

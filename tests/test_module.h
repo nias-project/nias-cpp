@@ -1,13 +1,12 @@
 #ifndef NIAS_TEST_MODULE_H
 #define NIAS_TEST_MODULE_H
 
-#include <complex>
 #include <initializer_list>
 #include <memory>
-#include <type_traits>
 #include <vector>
 // #include <iostream>
 
+#include <nias_cpp/checked_integer_cast.h>
 #include <nias_cpp/interfaces/vector.h>
 #include <nias_cpp/type_traits.h>
 
@@ -23,7 +22,7 @@ class DynamicVector : public nias::VectorInterface<F>
     DynamicVector() = default;
 
     explicit DynamicVector(ssize_t dim, F value = 0.)
-        : data_(dim, value) {};
+        : data_(nias::as_size_t(dim), value) {};
 
     DynamicVector(std::initializer_list<F> init_list)
         : data_(init_list) {};
@@ -93,44 +92,24 @@ class DynamicVector : public nias::VectorInterface<F>
     // DynamicVector accessors
     F& get(ssize_t i) override
     {
-        return data_[i];
+        return data_[nias::as_size_t(i)];
     }
 
     [[nodiscard]] const F& get(ssize_t i) const override
     {
-        return data_[i];
+        return data_[nias::as_size_t(i)];
     }
 
     // DynamicVector methods
     [[nodiscard]] ssize_t dim() const override
     {
-        return data_.size();
+        return std::ssize(data_);
     }
 
     [[nodiscard]] std::shared_ptr<nias::VectorInterface<F>> copy() const override
     {
         // std::cout << "Copy called!" << std::endl;
         return std::make_shared<DynamicVector>(*this);
-    }
-
-    [[nodiscard]] F dot(const nias::VectorInterface<F>& other) const override
-    {
-        // We cannot use
-        // return std::inner_product(begin(), end(), other.begin(), 0.0);
-        // because VectorInterface does not define iterators
-        F ret = 0;
-        for (ssize_t i = 0; i < dim(); ++i)
-        {
-            if constexpr (std::is_floating_point_v<F>)
-            {
-                ret += data_[i] * other.get(i);
-            }
-            else
-            {
-                ret += data_[i] * std::conj(other.get(i));
-            }
-        }
-        return ret;
     }
 
     void scal(F alpha) override
@@ -152,7 +131,7 @@ class DynamicVector : public nias::VectorInterface<F>
         // because VectorInterface does not define iterators
         for (ssize_t i = 0; i < dim(); ++i)
         {
-            data_[i] += alpha * x.get(i);
+            data_[nias::as_size_t(i)] += alpha * x.get(i);
         }
     }
 

@@ -5,17 +5,18 @@
 #include <string>
 #include <string_view>
 
-#include "nias_cpp_export.h"
-
 namespace nias
 {
 
 
 /// Base class for all exceptions in the nias_cpp library.
-class NIAS_CPP_EXPORT ErrorInNiasCpp : public std::exception
+class ErrorInNiasCpp : public std::exception
 {
    public:
-    explicit ErrorInNiasCpp(std::string_view message);
+    explicit ErrorInNiasCpp(std::string_view message)
+        : message_(message)
+    {
+    }
 
     [[nodiscard]] const char* what() const noexcept override;
 
@@ -23,34 +24,40 @@ class NIAS_CPP_EXPORT ErrorInNiasCpp : public std::exception
     const std::string message_;
 };
 
-class NIAS_CPP_EXPORT InvalidIndexError : public ErrorInNiasCpp
+// See https://stackoverflow.com/questions/24511376/how-to-dllexport-a-class-derived-from-stdruntime-error
+inline const char* ErrorInNiasCpp::what() const noexcept
+{
+    return message_.c_str();
+}
+
+class InvalidIndexError : public ErrorInNiasCpp
 {
    public:
-    explicit InvalidIndexError(std::string_view message);
+    using ErrorInNiasCpp::ErrorInNiasCpp;
 };
 
-class NIAS_CPP_EXPORT InvalidStateError : public ErrorInNiasCpp
+class InvalidStateError : public ErrorInNiasCpp
 {
    public:
-    explicit InvalidStateError(std::string_view message);
+    using ErrorInNiasCpp::ErrorInNiasCpp;
 };
 
-class NIAS_CPP_EXPORT InvalidArgumentError : public ErrorInNiasCpp
+class InvalidArgumentError : public ErrorInNiasCpp
 {
    public:
-    explicit InvalidArgumentError(std::string_view message);
+    using ErrorInNiasCpp::ErrorInNiasCpp;
 };
 
-class NIAS_CPP_EXPORT OverflowError : public ErrorInNiasCpp
+class OverflowError : public ErrorInNiasCpp
 {
    public:
-    explicit OverflowError(std::string_view message);
+    using ErrorInNiasCpp::ErrorInNiasCpp;
 };
 
-class NIAS_CPP_EXPORT NotImplementedError : public ErrorInNiasCpp
+class NotImplementedError : public ErrorInNiasCpp
 {
    public:
-    explicit NotImplementedError(std::string_view message);
+    using ErrorInNiasCpp::ErrorInNiasCpp;
 };
 
 

@@ -10,6 +10,7 @@
 #include <typeinfo>
 #include <vector>
 
+#include <nias_cpp/checked_integer_cast.h>
 #include <nias_cpp/concepts.h>
 #include <nias_cpp/exceptions.h>
 #include <nias_cpp/indices.h>
@@ -69,7 +70,7 @@ class ListVectorArray : public VectorArrayInterface<F>
 
     [[nodiscard]] ssize_t size() const override
     {
-        return vectors_.size();
+        return std::ssize(vectors_);
     }
 
     [[nodiscard]] ssize_t dim() const override
@@ -77,41 +78,42 @@ class ListVectorArray : public VectorArrayInterface<F>
         return dim_;
     }
 
-    bool is_compatible_array(const InterfaceType& other) const override
+    [[nodiscard]] bool is_compatible_array(const InterfaceType& other) const override
     {
         return dim() == other.dim();
     }
 
-    F get(ssize_t i, ssize_t j) const override
+    [[nodiscard]] F get(ssize_t i, ssize_t j) const override
     {
         this->check_indices(i, j);
-        return vectors_[i]->get(j);
+        return vectors_[as_size_t(i)]->get(j);
     }
 
     void set(ssize_t i, ssize_t j, F value) override
     {
         this->check_indices(i, j);
-        vectors_[i]->get(j) = value;
+        vectors_[as_size_t(i)]->get(j) = value;
     }
 
-    const VectorInterfaceType& get(ssize_t i) const
+    [[nodiscard]] const VectorInterfaceType& get(ssize_t i) const
     {
         this->check_first_index(i);
-        return *vectors_[i];
+        return *vectors_[as_size_t(i)];
     }
 
-    const std::vector<std::shared_ptr<VectorInterfaceType>>& vectors() const
+    [[nodiscard]] const std::vector<std::shared_ptr<VectorInterfaceType>>& vectors() const
     {
         return vectors_;
     }
 
-    std::shared_ptr<InterfaceType> copy(const std::optional<Indices>& indices = std::nullopt) const override
+    [[nodiscard]] std::shared_ptr<InterfaceType> copy(
+        const std::optional<Indices>& indices = std::nullopt) const override
     {
         // std::cout << "Copy called in VecArray!" << std::endl;
         std::vector<std::shared_ptr<VectorInterfaceType>> copied_vectors;
         if (!indices)
         {
-            copied_vectors.reserve(this->size());
+            copied_vectors.reserve(as_size_t(this->size()));
             std::ranges::transform(vectors_, std::back_inserter(copied_vectors),
                                    [](const auto& vec)
                                    {
@@ -121,11 +123,11 @@ class ListVectorArray : public VectorArrayInterface<F>
         else
         {
             indices->check_valid(this->size());
-            copied_vectors.reserve(indices->size(this->size()));
+            copied_vectors.reserve(as_size_t(indices->size(this->size())));
             indices->for_each(
                 [this, &copied_vectors](ssize_t i)
                 {
-                    copied_vectors.push_back(vectors_[i]->copy());
+                    copied_vectors.push_back(vectors_[as_size_t(i)]->copy());
                 },
                 this->size());
         }
@@ -167,7 +169,7 @@ class ListVectorArray : public VectorArrayInterface<F>
         // We sort in reverse order (by using std::greater as second template argument) to avoid
         // invalidating indices when removing elements from the vector
         const auto indices_vec = indices->as_vec(this->size());
-        std::set<ssize_t, std::greater<>> sorted_indices(indices_vec.begin(), indices_vec.end());
+        const std::set<ssize_t, std::greater<>> sorted_indices(indices_vec.begin(), indices_vec.end());
         for (auto&& i : sorted_indices)
         {
             vectors_.erase(vectors_.begin() + i);
@@ -178,11 +180,12 @@ class ListVectorArray : public VectorArrayInterface<F>
     using InterfaceType::scal;
 
    private:
-    bool is_list_vector_array(const InterfaceType& other) const
+    [[nodiscard]] bool is_list_vector_array(const InterfaceType& other) const
     {
         try
         {
-            dynamic_cast<const ThisType&>(other);
+            const auto& ret = dynamic_cast<const ThisType&>(other);
+            static_cast<void>(ret);
             return true;
         }
         catch (std::bad_cast&)
@@ -223,11 +226,11 @@ class ListVectorArray : public VectorArrayInterface<F>
         else
         {
             other_indices->check_valid(other.size());
-            vectors_.reserve(vectors_.size() + other_indices->size(other.size()));
+            vectors_.reserve(vectors_.size() + as_size_t(other_indices->size(other.size())));
             other_indices->for_each(
                 [this, &other](ssize_t i)
                 {
-                    vectors_.push_back(other.vectors_[i]->copy());
+                    vectors_.push_back(other.vectors_[as_size_t(i)]->copy());
                 },
                 other.size());
         }
@@ -245,13 +248,13 @@ class ListVectorArray : public VectorArrayInterface<F>
         else
         {
             other_indices->check_valid(other.size());
-            vectors_.reserve(vectors_.size() + other_indices->size(other.size()));
+            vectors_.reserve(vectors_.size() + as_size_t(other_indices->size(other.size())));
             // copy selected entries of other to the end of this
             other_indices->for_each(
                 [this, &other](ssize_t i)
                 {
                     // we cannot move here because there might be duplicated indices
-                    vectors_.push_back(other.vectors_[i]->copy());
+                    vectors_.push_back(other.vectors_[as_size_t(i)]->copy());
                 },
                 other.size());
             other.delete_vectors(other_indices);

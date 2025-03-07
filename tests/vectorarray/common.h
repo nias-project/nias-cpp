@@ -140,7 +140,7 @@ struct TestVectorArrayFactory<ListVectorArray<F>>
         auto current_number = start;
         for (ssize_t i = 0; i < size; ++i)
         {
-            std::shared_ptr<VectorInterface<F>> const new_vec = std::make_shared<DynamicVector<F>>(dim);
+            const std::shared_ptr<VectorInterface<F>> new_vec = std::make_shared<DynamicVector<F>>(dim);
             for (ssize_t j = 0; j < dim; ++j)
             {
                 new_vec->get(j) = current_number;
@@ -185,13 +185,13 @@ template <class F>
 auto create_test_alphas(ssize_t size)
 {
     // We test an empty vector, a vector of size 1, a vector of size size, and a vector thas has neither size 1 nor size (size + 2)
-    auto ret = std::vector{std::vector<F>{}, std::vector<F>(1, F(42)), std::vector<F>(size, F(42)),
-                           std::vector<F>(size + 2, F(42))};
+    auto ret = std::vector{std::vector<F>{}, std::vector<F>(1, F(42)), std::vector<F>(as_size_t(size), F(42)),
+                           std::vector<F>(as_size_t(size) + 2, F(42))};
     // and we add a vector of size size filled with the numbers -1, 0, 1, 2, ..., size - 1
-    std::vector<F> iota_alpha(size);
+    std::vector<F> iota_alpha(as_size_t(size));
     for (ssize_t i = 0; i < size; ++i)
     {
-        iota_alpha[checked_integer_cast<size_t>(i)] = F(-1 + i);
+        iota_alpha[as_size_t(i)] = F(-1 + i);
     }
     ret.push_back(iota_alpha);
     return ret;
@@ -199,8 +199,8 @@ auto create_test_alphas(ssize_t size)
 
 inline auto create_test_index_vectors(ssize_t size)
 {
-    return std::vector{std::vector<ssize_t>{}, std::vector<ssize_t>({0, 2}), std::vector<ssize_t>(size, 0),
-                       std::vector<ssize_t>{-1, 0, 1}};
+    return std::vector{std::vector<ssize_t>{}, std::vector<ssize_t>({0, 2}),
+                       std::vector<ssize_t>(as_size_t(size), 0), std::vector<ssize_t>{-1, 0, 1}};
 }
 
 template <class VectorArray>
@@ -233,7 +233,7 @@ inline bool contains_invalid_index(const std::vector<ssize_t>& indices, ssize_t 
         expect(fatal(nothrow(                      \
             [&]()                                  \
             {                                      \
-                expression;                        \
+                static_cast<void>(expression);     \
             })));                                  \
     }
 
@@ -246,7 +246,7 @@ inline bool contains_invalid_index(const std::vector<ssize_t>& indices, ssize_t 
             expect(fatal(throws<error_type>(                   \
                 [&]()                                          \
                 {                                              \
-                    v_tmp->method_call;                        \
+                    static_cast<void>(v_tmp->method_call);     \
                 })));                                          \
         };                                                     \
         then("v remains unchanged") = [&]()                    \
@@ -526,7 +526,8 @@ void check_scal(const VectorArrayInterface<F>& v, ssize_t size, ssize_t dim)
                         {
                             for (ssize_t i = 0; i < size; ++i)
                             {
-                                const auto scaling_factor = alpha.size() == 1 ? alpha[0] : alpha[i];
+                                const auto scaling_factor =
+                                    alpha.size() == 1 ? alpha[0] : alpha[as_size_t(i)];
                                 for (ssize_t j = 0; j < dim; ++j)
                                 {
                                     expect(v_scaled->get(i, j) == scaling_factor * v.get(i, j));
@@ -654,7 +655,7 @@ void check_axpy(const VectorArrayInterface<typename VectorArray::ScalarType>& v,
                                     {
                                         for (ssize_t i = 0; i < size; ++i)
                                         {
-                                            const auto alpha_index = alpha.size() == 1 ? 0 : i;
+                                            const auto alpha_index = as_size_t(alpha.size() == 1 ? 0 : i);
                                             const auto x_index = x->size() == 1 ? 0 : i;
                                             for (ssize_t j = 0; j < dim; ++j)
                                             {
@@ -755,8 +756,9 @@ void check_axpy(const VectorArrayInterface<typename VectorArray::ScalarType>& v,
                                                                         alpha_x_ij +=
                                                                             (alpha.size() == 1 ? alpha[0]
                                                                                                : alpha[k]) *
-                                                                            (x->size() == 1 ? x->get(0, j)
-                                                                                            : x->get(k, j));
+                                                                            (x->size() == 1
+                                                                                 ? x->get(0, j)
+                                                                                 : x->get(as_ssize_t(k), j));
                                                                     }
                                                                 }
                                                                 expect(approx_equal(v_axpy->get(i, j),
