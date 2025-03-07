@@ -44,6 +44,13 @@ if(NOT COMMAND pybind11_add_module)
         WORKING_DIRECTORY ${_NIAS_CPP_DIR}
         OUTPUT_VARIABLE PYBIND11_VERSION)
 
+    string(FIND "${PYBIND11_VERSION}" "Error:" _pybind11_version_error)
+    if(_pybind11_version_error GREATER -1)
+        message(WARNING "Could not parse pyproject.toml to get pybind11 version.")
+        set(PYBIND11_VERSION 2.13.6)
+        message(WARNING "Setting pybind11 version to default value ${PYBIND11_VERSION}.")
+    endif()
+
     # add pybind11
     include(FetchContent)
     find_dependency(Python COMPONENTS Interpreter Development REQUIRED)
@@ -57,8 +64,8 @@ if(NOT COMMAND pybind11_add_module)
     find_dependency(pybind11 CONFIG REQUIRED)
 endif()
 
-set(NIAS_CPP_REL_INCLUDE_INSTALL_DIR "src")
-set(NIAS_CPP_REL_CMAKE_INSTALL_DIR "cmake")
+set(NIAS_CPP_REL_INCLUDE_INSTALL_DIR "nias_cpp/src")
+set(NIAS_CPP_REL_CMAKE_INSTALL_DIR "nias_cpp/cmake")
 
 # add nias_cpp library target
 function(nias_cpp_build_library target_name)
