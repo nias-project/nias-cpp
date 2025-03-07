@@ -47,14 +47,16 @@ if(NOT COMMAND pybind11_add_module)
 
     string(FIND "${PYBIND11_VERSION}" "Error:" _pybind11_error_in_result)
     if(_pybind11_version_result OR _pybind11_error_in_result GREATER -1)
-        set(_error_line1 "Could not parse pyproject.toml to get pybind11 version.\n")
-        # only one of these variables should not be empty
-        message(WARNING "Error message1: ${_pybind11_version_result}")
-        message(WARNING "Error message2: ${PYBIND11_VERSION}")
-        # set(_error_line2 "The following error occurred: ${_pybind11_version_error}${PYBIND11_VERSION}")
-        # message(WARNING "${_error_line1}${_error_line2}")
+        set(_message "Parsing pyproject.toml to get pybind11 version failed with the following error:\n")
+        if(_pybind11_version_result)
+            set(_message "${_message}${_pybind11_version_result}\n")
+        endif()
+        if(_pybind11_error_in_result GREATER -1)
+            set(_message "${_message}${PYBIND11_VERSION}\n")
+        endif()
         set(PYBIND11_VERSION 2.13.6)
-        message(WARNING "Setting pybind11 version to default value ${PYBIND11_VERSION}.")
+        set(_message "${_message}Setting pybind11 version to default value ${PYBIND11_VERSION}.")
+        message(WARNING "${_message}")
     endif()
 
     # add pybind11
@@ -82,7 +84,7 @@ function(nias_cpp_build_library target_name)
     file(
         GLOB_RECURSE library_sources
         LIST_DIRECTORIES false
-        "${PROJECT_SOURCE_DIR}/src/*.h" "${PROJECT_SOURCE_DIR}/src/*.cpp")
+        "${_NIAS_CPP_DIR}/src/*.h" "${_NIAS_CPP_DIR}/src/*.cpp")
 
     find_dependency(pybind11 CONFIG REQUIRED)
     pybind11_add_module(${target_name} SHARED ${ARG_UNPARSED_ARGUMENTS} ${library_sources})
@@ -148,6 +150,8 @@ install(
     EXPORT nias_cpp
     NAMESPACE nias_cpp::
     DESTINATION ${NIAS_CPP_REL_CMAKE_INSTALL_DIR})
+
+install(FILES "${_NIAS_CPP_DIR}/pyproject.toml" DESTINATION nias_cpp)
 
 # generate export header
 include(GenerateExportHeader)

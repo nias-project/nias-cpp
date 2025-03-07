@@ -40,7 +40,7 @@ jobs:
       with:
         path: nias-cpp
 
-    - name: Create test project dir
+    - name: Create test project
       run: |
         mkdir "${TEST_PROJECT_DIR}"
         cp nias-cpp/.test_projects/main.cpp "${TEST_PROJECT_DIR}/"
@@ -85,7 +85,7 @@ jobs:
       with:
         path: nias-cpp
 
-    - name: Create test project dir
+    - name: Create test project
       run: |
         mkdir "${TEST_PROJECT_DIR}"
         cp nias-cpp/.test_projects/main.cpp "${TEST_PROJECT_DIR}/"
@@ -100,47 +100,49 @@ jobs:
         cmake -B build -DPython_EXECUTABLE="$(which python3.12)" -DCMAKE_BUILD_TYPE=Debug
         cmake --build build
 
-  # use_from_virtualenv:
-  #   strategy:
-  #     fail-fast: false
-  #   name: from virtualenv
-  #   runs-on: ubuntu-24.04
-  #   defaults:
-  #     run:
-  #       shell: bash -elo pipefail {0}
-  #   timeout-minutes: 30
-  #   env:
-  #     TEST_PROJECT_DIR: fetchcontent_test_project
-  #   steps:
-  #
-  #   - name: Setup Python
-  #     uses: actions/setup-python@v5
-  #     with:
-  #       python-version: '3.12'
-  #
-  #   - name: Setup uv
-  #     uses: yezz123/setup-uv@v4
-  #
-  #   - name: Create test project dir
-  #     run: |
-  #       mkdir "${TEST_PROJECT_DIR}"
-  #       echo "${TEST_PROJECT_DIR}"
-  #
-  #   - name: Checkout nias_cpp as submodule
-  #     uses: actions/checkout@v4
-  #     with:
-  #       path: ${{ env.TEST_PROJECT_DIR }}/nias-cpp
-  #
-  #   - name: Fill test project dir
-  #     run: |
-  #       cd "${TEST_PROJECT_DIR}"
-  #       cp nias-cpp/.test_projects/main.cpp .
-  #       cp nias-cpp/tests/test_vector.h .
-  #       cp nias-cpp/.test_projects/CMakeLists.txt.FetchContent CMakeLists.txt
-  #
-  #   - name: Run test project tests
-  #     run: |
-  #       cd "${TEST_PROJECT_DIR}"
-  #       mkdir build
-  #       cmake -B build -DPython_EXECUTABLE="$(which python3.12)" -DCMAKE_BUILD_TYPE=Debug
-  #       cmake --build build
+  use_from_virtualenv:
+    strategy:
+      fail-fast: false
+    name: from virtualenv
+    runs-on: ubuntu-24.04
+    defaults:
+      run:
+        shell: bash -elo pipefail {0}
+    timeout-minutes: 30
+    env:
+      TEST_PROJECT_DIR: virtualenv_test_project
+      PYTHON_VERSION: 3.12
+    steps:
+
+    - name: Setup Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: ${{ env.PYTHON_VERSION }}
+
+    - name: Setup uv
+      uses: yezz123/setup-uv@v4
+
+    - name: Checkout nias-cpp
+      uses: actions/checkout@v4
+      with:
+        path: nias-cpp
+
+    - name: Setup virtualenv
+      run: |
+        uv venv --python=${{ env.PYTHON_VERSION }}
+        uv pip install ./nias-cpp
+
+    - name: Create test project
+      run: |
+        mkdir "${TEST_PROJECT_DIR}"
+        cp nias-cpp/.test_projects/main.cpp "${TEST_PROJECT_DIR}/"
+        cp nias-cpp/tests/test_vector.h "${TEST_PROJECT_DIR}/"
+        cp nias-cpp/.test_projects/CMakeLists.txt.VirtualEnv "${TEST_PROJECT_DIR}/CMakeLists.txt"
+
+    - name: Configure and build test project
+      run: |
+        source .venv/bin/activate
+        cd "${TEST_PROJECT_DIR}"
+        mkdir build
+        cmake -B build -DPython_EXECUTABLE="$(which python${{ env.PYTHON_VERSION }})" -DCMAKE_BUILD_TYPE=Debug
+        cmake --build build
