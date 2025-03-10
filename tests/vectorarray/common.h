@@ -24,7 +24,7 @@
 
 #include "../boost_ext_ut_no_module.h"
 #include "../common.h"
-#include "../test_module.h"
+#include "../test_vector.h"
 
 // NOLINTBEGIN(google-global-names-in-headers)
 using namespace nias;

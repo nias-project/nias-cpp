@@ -22,6 +22,6 @@ dependencies = [
 ]
 
 [tool.scikit-build]
-# disable C++ file inclusion, rely on CMake to install the C++ files (see CMakelists.txt)
+# disable C++ file inclusion, rely on CMake to install the C++ files (see cmake/nias_cpp-config.cmake)
 sdist.exclude = ["*.cpp", "*.h"]
 wheel.expand-macos-universal-tags = true
