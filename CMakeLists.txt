@@ -212,7 +212,7 @@ generate_export_header(
 install(FILES "${PROJECT_BINARY_DIR}/nias_cpp_export.h" DESTINATION "${NIAS_CPP_INCLUDE_INSTALL_DIR}")
 
 # add tests if this is the master project
-if(NIAS_CPP_MASTER_PROJECT)
+if(NIAS_CPP_MASTER_PROJECT AND NOT NIAS_CPP_DISABLE_TESTS)
     # enable warnings in debug mode
     if(CMAKE_CXX_COMPILER_ID MATCHES "GNU" OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
         set(CMAKE_CXX_FLAGS_DEBUG
