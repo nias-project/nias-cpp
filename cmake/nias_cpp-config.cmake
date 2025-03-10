@@ -75,7 +75,8 @@ set(NIAS_CPP_REL_INCLUDE_INSTALL_DIR "nias_cpp/src")
 set(NIAS_CPP_REL_CMAKE_INSTALL_DIR "nias_cpp/cmake")
 
 # add nias_cpp library target
-function(nias_cpp_build_library target_name)
+function(nias_cpp_build_library)
+    set(target_name nias_cpp)
     if(TARGET ${target_name})
         return()
     endif()
@@ -98,15 +99,7 @@ function(nias_cpp_build_library target_name)
     set_target_properties(${target_name} PROPERTIES LINKER_LANGUAGE CXX)
 endfunction()
 
-function(nias_cpp_add_module name)
-    cmake_parse_arguments(PARSE_ARGV 1 ARG "" "" "")
-
-    pybind11_add_module(${name} SHARED ${ARG_UNPARSED_ARGUMENTS})
-
-    target_link_libraries(${name} PUBLIC nias_cpp)
-endfunction()
-
-nias_cpp_build_library(nias_cpp)
+nias_cpp_build_library()
 add_library(nias_cpp::nias_cpp ALIAS nias_cpp)
 
 if(DEFINED ENV{VIRTUAL_ENV})
