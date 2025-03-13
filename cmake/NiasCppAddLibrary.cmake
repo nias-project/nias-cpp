@@ -21,6 +21,11 @@ macro(NIAS_CPP_ADD_LIBRARY)
                         ${_NIAS_CPP_DIR}/src/bindings/bindings.h ${_NIAS_CPP_DIR}/src/bindings/bindings.cpp)
 
     target_link_libraries(${bindings_lib_name} PUBLIC ${lib_name})
+    if(MINGW)
+        # Use lld linker. With the standard linker, GCC fails with lots of undefined
+        # references, and Clang fails with relocation errors
+        target_link_libraries(${bindings_lib_name} PUBLIC -fuse-ld=lld)
+    endif()
 
     target_include_directories(${lib_name} PUBLIC $<BUILD_INTERFACE:${_NIAS_CPP_DIR}/src>
                                                   $<INSTALL_INTERFACE:${NIAS_CPP_INCLUDE_INSTALL_DIR}>)
