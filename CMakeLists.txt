@@ -56,33 +56,8 @@ list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_LIST_DIR}/cmake")
 include(NiasCppEnsureUvAndPybind11)
 ensure_uv_and_pybind11_are_available()
 
-# add nias_cpp library target
-function(nias_cpp_build_library)
-    set(target_name nias_cpp)
-    if(TARGET ${target_name})
-        return()
-    endif()
-
-    # find C++ source files
-    file(
-        GLOB_RECURSE library_sources
-        LIST_DIRECTORIES false
-        "${_NIAS_CPP_DIR}/src/*.h" "${_NIAS_CPP_DIR}/src/*.cpp")
-
-    find_package(pybind11 CONFIG REQUIRED)
-    pybind11_add_module(${target_name} SHARED ${ARG_UNPARSED_ARGUMENTS} ${library_sources})
-
-    target_include_directories(${target_name} PUBLIC $<BUILD_INTERFACE:${_NIAS_CPP_DIR}/src>
-                                                     $<INSTALL_INTERFACE:${NIAS_CPP_INCLUDE_INSTALL_DIR}>)
-    target_include_directories(${target_name} PUBLIC $<BUILD_INTERFACE:${CMAKE_CURRENT_BINARY_DIR}>
-                                                     $<INSTALL_INTERFACE:${NIAS_CPP_INCLUDE_INSTALL_DIR}>)
-
-    target_link_libraries(${target_name} PUBLIC pybind11::pybind11 pybind11::embed)
-    set_target_properties(${target_name} PROPERTIES LINKER_LANGUAGE CXX)
-endfunction()
-
-nias_cpp_build_library()
-add_library(nias_cpp::nias_cpp ALIAS nias_cpp)
+include(NiasCppAddLibrary)
+nias_cpp_add_library()
 
 if(DEFINED ENV{VIRTUAL_ENV})
     set(NIAS_CPP_VENV_DIR $ENV{VIRTUAL_ENV})
@@ -109,7 +84,7 @@ target_compile_definitions(nias_cpp PRIVATE NIAS_CPP_VENV_DIR="${NIAS_CPP_VENV_D
 target_compile_definitions(nias_cpp PRIVATE NIAS_CPP_BUILD_DIR="$<TARGET_FILE_DIR:nias_cpp>")
 
 export(
-    TARGETS nias_cpp
+    TARGETS nias_cpp nias_cpp_bindings
     NAMESPACE nias_cpp::
     FILE "${PROJECT_BINARY_DIR}/nias_cpp-targets.cmake")
 export(PACKAGE nias_cpp)
@@ -127,7 +102,7 @@ install(
 install(DIRECTORY cmake/ DESTINATION "${NIAS_CPP_REL_CMAKE_INSTALL_DIR}")
 
 install(
-    TARGETS nias_cpp
+    TARGETS nias_cpp nias_cpp_bindings
     EXPORT nias_cpp-targets
     LIBRARY DESTINATION nias_cpp)
 
