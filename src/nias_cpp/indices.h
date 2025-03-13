@@ -17,7 +17,6 @@
 namespace nias
 {
 
-#pragma GCC visibility push(default)
 
 class NIAS_CPP_EXPORT Indices
 {
@@ -122,8 +121,6 @@ class NIAS_CPP_EXPORT Slice : public Indices
     {
     }
 };
-
-#pragma GCC visibility pop
 
 
 }  // namespace nias

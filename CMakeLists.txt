@@ -42,6 +42,19 @@ if(CMAKE_CXX_COMPILER_ID MATCHES "GNU" OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
     set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -Wall -Wextra -Wpedantic")
 endif()
 
+# Use lld linker for MinGW on Windows.
+# With the standard linker, GCC fails with lots of undefined references,
+# and Clang fails with relocation errors.
+if(MINGW)
+    set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -fuse-ld=lld")
+endif()
+
+# Disable pybind11's binary stripping for MinGW Clang on Windows since it fails
+# with an "unexpected associative section index" error.
+if(MINGW AND CMAKE_CXX_COMPILER_ID MATCHES "Clang")
+    set(NIAS_CPP_PYBIND11_NO_EXTRAS NO_EXTRAS)
+endif()
+
 get_filename_component(_NIAS_CPP_DIR "${CMAKE_CURRENT_LIST_FILE}" PATH)
 set(_NIAS_CPP_DIR
     ${_NIAS_CPP_DIR}
