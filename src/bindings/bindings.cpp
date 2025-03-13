@@ -1,7 +1,8 @@
+#include "bindings.h"
+
 #include <complex>
 #include <vector>
 
-#include <nias_cpp/bindings.h>
 #include <nias_cpp/indices.h>
 #include <nias_cpp/type_traits.h>
 #include <pybind11/complex.h>  // IWYU pragma: keep

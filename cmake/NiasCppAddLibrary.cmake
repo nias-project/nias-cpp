@@ -11,14 +11,14 @@ macro(NIAS_CPP_ADD_LIBRARY)
     file(
         GLOB_RECURSE library_sources
         LIST_DIRECTORIES false
-        "${_NIAS_CPP_DIR}/src/*.h" "${_NIAS_CPP_DIR}/src/*.cpp")
+        "${_NIAS_CPP_DIR}/src/nias_cpp/*.h" "${_NIAS_CPP_DIR}/src/nias_cpp/*.cpp")
 
     # add C++ library
     add_library(${lib_name} ${library_sources})
 
     find_package(pybind11 CONFIG REQUIRED)
     pybind11_add_module(${lib_name}_bindings MODULE ${ARG_UNPARSED_ARGUMENTS}
-                        ${_NIAS_CPP_DIR}/src/nias_cpp/bindings.h ${_NIAS_CPP_DIR}/src/nias_cpp/bindings.cpp)
+                        ${_NIAS_CPP_DIR}/src/bindings/bindings.h ${_NIAS_CPP_DIR}/src/bindings/bindings.cpp)
 
     target_link_libraries(${bindings_lib_name} PUBLIC ${lib_name})
 
@@ -29,6 +29,7 @@ macro(NIAS_CPP_ADD_LIBRARY)
 
     target_link_libraries(${lib_name} PUBLIC pybind11::pybind11 pybind11::embed)
     target_link_libraries(${bindings_lib_name} PUBLIC pybind11::pybind11)
+
     set_target_properties(${lib_name} PROPERTIES LINKER_LANGUAGE CXX)
 
     add_library(nias_cpp::nias_cpp ALIAS nias_cpp)
