@@ -39,9 +39,9 @@ std::shared_ptr<ListVectorArray<F>> gram_schmidt(
 {
     ensure_interpreter_and_venv_are_active();
 
-    // import nias_cpp module
+    // import nias_cpp_bindings module
     namespace py = pybind11;
-    const py::module_ nias_cpp_module = py::module::import("nias_cpp");
+    const py::module_ nias_cpp_module = py::module::import("nias_cpp_bindings");
 
     // get the classes we need from the Python nias module
     const py::module_ nias_cpp_vectorarray = py::module::import("nias.bindings.nias_cpp.vectorarray");
@@ -79,7 +79,7 @@ void gram_schmidt_in_place(const std::shared_ptr<ListVectorArray<F>>& vec_array,
 
     // import nias_cpp module
     namespace py = pybind11;
-    const py::module_ nias_cpp_module = py::module::import("nias_cpp");
+    const py::module_ nias_cpp_module = py::module::import("nias_cpp_bindings");
 
     // get the classes we need from the Python nias module
     const py::module_ nias_cpp_vectorarray = py::module::import("nias.bindings.nias_cpp.vectorarray");

@@ -1,0 +1,19 @@
+include_guard(GLOBAL)
+
+get_filename_component(_NIAS_CPP_DIR "${CMAKE_CURRENT_LIST_FILE}" PATH)
+cmake_path(GET _NIAS_CPP_DIR PARENT_PATH _NIAS_CPP_DIR)
+
+# find dependencies
+list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_LIST_DIR}")
+include(NiasCppEnsureUvAndPybind11)
+ENSURE_UV_AND_PYBIND11_ARE_AVAILABLE()
+
+# set up paths
+get_filename_component(_NIAS_CPP_DIR "${CMAKE_CURRENT_LIST_FILE}" PATH)
+set(NIAS_CPP_INCLUDE_DIRS "@CONF_INCLUDE_DIRS@")
+
+if (NOT TARGET nias_cpp)
+  include("${_NIAS_CPP_DIR}/nias_cpp-targets.cmake")
+endif()
+
+set(NIAS_CPP_LIBRARIES nias_cpp)

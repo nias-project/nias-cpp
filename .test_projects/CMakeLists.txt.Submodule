@@ -1,0 +1,13 @@
+cmake_minimum_required(VERSION 3.27..3.31)
+set(CMAKE_CXX_STANDARD 20)
+
+project(
+    test-project
+    VERSION 0.1.0
+    DESCRIPTION "A very simple test project to ensure that using nias_cpp as a dependency works"
+    LANGUAGES CXX)
+
+add_subdirectory(nias-cpp)
+
+add_executable(test-project-main main.cpp)
+target_link_libraries(test-project-main PUBLIC nias_cpp::nias_cpp)

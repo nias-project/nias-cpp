@@ -17,7 +17,7 @@
 #include <pybind11/numpy.h>
 
 #include "boost_ext_ut_no_module.h"
-#include "test_module.h"
+#include "test_vector.h"
 
 namespace
 {

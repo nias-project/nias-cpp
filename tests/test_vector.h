@@ -122,13 +122,6 @@ class DynamicVector : public nias::VectorInterface<F>
 
     void axpy(F alpha, const nias::VectorInterface<F>& x) override
     {
-        // We cannot use
-        // std::ranges::transform(*this, x, begin(),
-        //                        [alpha](F a, F b)
-        //                        {
-        //                            return a + alpha * b;
-        //                        });
-        // because VectorInterface does not define iterators
         for (ssize_t i = 0; i < dim(); ++i)
         {
             data_[nias::as_size_t(i)] += alpha * x.get(i);
