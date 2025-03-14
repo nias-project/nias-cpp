@@ -6,7 +6,7 @@ macro(ENSURE_UV_AND_PYBIND11_ARE_AVAILABLE)
     # if we could not find uv, download it
     if(NOT UV_EXECUTABLE)
         include(FetchContent)
-        set(_uv_version "0.6.3")
+        set(_uv_version "0.6.6")
         if(CMAKE_SYSTEM_NAME STREQUAL "Windows")
             set(_uv_archive_name "uv-x86_64-pc-windows-msvc.zip")
         elseif(CMAKE_SYSTEM_NAME STREQUAL "Linux")

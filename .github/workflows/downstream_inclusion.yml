@@ -13,6 +13,9 @@ concurrency:
   group: downstream_inclusion_${{ github.ref }}
   cancel-in-progress: true
 
+env:
+  PYTHON_VERSION: '3.13'
+
 jobs:
   inclusion_as_submodule:
     strategy:
@@ -29,11 +32,12 @@ jobs:
 
     - name: Setup Python
       uses: actions/setup-python@v5
+      id: setup_python
       with:
-        python-version: '3.12'
+        python-version: ${{ env.PYTHON_VERSION }}
 
     - name: Setup uv
-      uses: yezz123/setup-uv@v4
+      uses: astral-sh/setup-uv@v5
 
     - name: Checkout nias-cpp
       uses: actions/checkout@v4
@@ -56,7 +60,7 @@ jobs:
       run: |
         cd "${TEST_PROJECT_DIR}"
         mkdir build
-        cmake -B build -DPython_EXECUTABLE="$(which python3.12)" -DCMAKE_BUILD_TYPE=Debug
+        cmake -B build -DCMAKE_BUILD_TYPE=Debug
         cmake --build build
 
   inclusion_via_fetchcontent:
@@ -74,11 +78,12 @@ jobs:
 
     - name: Setup Python
       uses: actions/setup-python@v5
+      id: setup_python
       with:
-        python-version: '3.12'
+        python-version: ${{ env.PYTHON_VERSION }}
 
     - name: Setup uv
-      uses: yezz123/setup-uv@v4
+      uses: astral-sh/setup-uv@v5
 
     - name: Checkout nias-cpp
       uses: actions/checkout@v4
@@ -97,7 +102,7 @@ jobs:
       run: |
         cd "${TEST_PROJECT_DIR}"
         mkdir build
-        cmake -B build -DPython_EXECUTABLE="$(which python3.12)" -DCMAKE_BUILD_TYPE=Debug
+        cmake -B build -DCMAKE_BUILD_TYPE=Debug
         cmake --build build
 
   use_from_virtualenv:
@@ -111,16 +116,16 @@ jobs:
     timeout-minutes: 30
     env:
       TEST_PROJECT_DIR: virtualenv_test_project
-      PYTHON_VERSION: 3.12
     steps:
 
     - name: Setup Python
       uses: actions/setup-python@v5
+      id: setup_python
       with:
         python-version: ${{ env.PYTHON_VERSION }}
 
     - name: Setup uv
-      uses: yezz123/setup-uv@v4
+      uses: astral-sh/setup-uv@v5
 
     - name: Checkout nias-cpp
       uses: actions/checkout@v4
@@ -129,7 +134,7 @@ jobs:
 
     - name: Setup virtualenv
       run: |
-        uv venv --python=${{ env.PYTHON_VERSION }}
+        uv venv --python='${{ steps.setup_python.outputs.python-path }}'
         uv pip install ./nias-cpp
 
     - name: Create test project
