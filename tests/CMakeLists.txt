@@ -13,7 +13,7 @@ foreach(test_executable ${test_sources})
     set(_test_target test_${_test_target})
     add_executable(${_test_target} EXCLUDE_FROM_ALL ${test_executable})
     target_link_libraries(${_test_target} PRIVATE nias_cpp Boost::ut ${Python_LIBRARIES})
-    add_dependencies(all_test_binaries ${_test_target})
+    add_dependencies(all_test_binaries ${_test_target} nias_cpp_bindings)
     add_test(NAME ${_test_target} COMMAND ${_test_target})
 
     # copy python shared libraries to test directory
@@ -49,12 +49,10 @@ foreach(test_executable ${test_sources})
     # to avoid shared librarys not being found when executing a test or example manually (not
     # using ctest), e.g. from within VSCode or from the terminal, we copy the shared libraries
     # over to the test directory
-    if(NOT TARGET nias_cpp_copy_libraries_to_test_folder)
-        add_custom_target(
-            nias_cpp_copy_libraries_to_test_folder
-            COMMAND ${CMAKE_COMMAND} -E make_directory $<TARGET_FILE_DIR:${_test_target}>
-            COMMAND ${CMAKE_COMMAND} -E copy_if_different ${_library_files} $<TARGET_FILE_DIR:${_test_target}>
-            COMMENT "Copying shared libraries to test directory")
-    endif()
-    add_dependencies(${_test_target} nias_cpp_copy_libraries_to_test_folder)
+    add_custom_command(
+        TARGET ${_test_target}
+        POST_BUILD
+        COMMAND ${CMAKE_COMMAND} -E make_directory $<TARGET_FILE_DIR:${_test_target}>
+        COMMAND ${CMAKE_COMMAND} -E copy_if_different ${_library_files} $<TARGET_FILE_DIR:${_test_target}>
+        COMMENT "Copying shared libraries to test directory")
 endforeach()

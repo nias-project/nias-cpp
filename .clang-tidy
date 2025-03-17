@@ -32,7 +32,8 @@ Checks: >
   -zircon-*, Zircon specific,
   -linuxkernel*,
   -mpi-*,
-  -*-osx-*, Apple is not a target platform for us atm,
+  -*-osx*, Apple is not a target platform for us atm,
+  -clang-analyzer-optin.osx.*,
   -darwin-*,
   -objc-*, Objective-c not relevant,
   -llvmlibc-*, We want to use glibc,
@@ -54,6 +55,7 @@ Checks: >
   -cppcoreguidelines-non-private-member-variables-in-classes,
   -misc-non-private-member-variables-in-classes, This should be a duplicate of the above?,
   -google-default-arguments,
+  -portability-template-virtual-member-function,
 
   Cannot use due a bug in clang-tidy (https://github.com/llvm/llvm-project/issues/52682),
   -llvm-header-guard,

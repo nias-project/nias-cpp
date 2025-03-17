@@ -14,11 +14,11 @@ def get_dependency_version(dependency_name):
         for dependency in dependencies:
             if dependency.startswith(dependency_name):
                 return dependency.split("==")[-1]
-        return f"Dependency '{dependency_name}' not found."
+        return f"Error: Dependency '{dependency_name}' not found."
     except FileNotFoundError:
-        return "pyproject.toml file not found."
+        return "Error: pyproject.toml file not found."
     except Exception as e:
-        return f"An error occurred: {e}"
+        return f"Error: An error occurred: {e}"
 
 
 if __name__ == "__main__":

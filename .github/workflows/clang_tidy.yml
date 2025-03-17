@@ -2,7 +2,7 @@
 # This file is part of the NiAS project (https://github.com/nias-project).
 # Copyright NiAS developers and contributors. All rights reserved.
 # License: BSD 2-Clause License (https://opensource.org/licenses/BSD-2-Clause)
-name: clang-tidy analysis
+name: Clang-Tidy Analysis
 
 on:
   pull_request:
@@ -12,6 +12,10 @@ on:
 concurrency:
   group: clang_tidy_${{ github.ref }}
   cancel-in-progress: true
+
+env:
+  PYTHON_VERSION: '3.13'
+  LLVM_VERSION: '20'
 
 jobs:
   clang_tidy:
@@ -29,21 +33,37 @@ jobs:
     - name: Setup Python
       uses: actions/setup-python@v5
       with:
-        python-version: '3.12'
+        python-version: ${{ env.PYTHON_VERSION }}
 
     - name: Setup uv
       uses: yezz123/setup-uv@v4
 
+    - name: Setup Clang toolchain (on Linux)
+      if: runner.os == 'Linux'
+      run: |
+        sudo apt purge -y llvm clang clang-{14,15,16,17,18,19} llvm-{14,15,16,17,18,19}
+        wget https://apt.llvm.org/llvm.sh
+        llvm_version=${{ env.LLVM_VERSION }}
+        chmod +x llvm.sh
+        sudo ./llvm.sh ${llvm_version} all
+        sudo update-alternatives --install /usr/bin/clang clang /usr/bin/clang-${llvm_version} 100
+        sudo update-alternatives --install /usr/bin/clang++ clang++ /usr/bin/clang++-${llvm_version} 100
+        which clang
+        which llvm-cov-${llvm_version}
+      shell: bash -eo pipefail -l {0}
+
     - name: Setup clang-tidy
       run: |
-        uv tool install clang-tidy@latest
+        llvm_version=${{ env.LLVM_VERSION }}
+        next_major_version=$(( llvm_version + 1 ))
+        uv tool install "clang-tidy>=${llvm_version},<${next_major_version}"
 
     - name: Checkout
       uses: actions/checkout@v4
 
     - name: Configure with cmake
       run: |
-        cmake -DCMAKE_CXX_CLANG_TIDY="clang-tidy" -B build -DPython_EXECUTABLE="$(which python3.12)" -DCMAKE_BUILD_TYPE=Debug
+        cmake -B build -DCMAKE_CXX_CLANG_TIDY="clang-tidy" -DCMAKE_CXX_COMPILER="clang++" -DCMAKE_BUILD_TYPE=Debug
 
     - name: Build with cmake
       run: |
