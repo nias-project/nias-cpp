@@ -8,6 +8,9 @@
 
 #include <nias_cpp/algorithms/gram_schmidt.h>
 #include <nias_cpp/concepts.h>
+#include <nias_cpp/exceptions.h>
+#include <nias_cpp/inner_products/function_based.h>
+#include <nias_cpp/interfaces/inner_products.h>
 #include <nias_cpp/interfaces/vector.h>
 #include <nias_cpp/interfaces/vectorarray.h>
 #include <nias_cpp/interpreter.h>
@@ -32,7 +35,7 @@ void print(const std::vector<std::shared_ptr<nias::VectorInterface<F>>>& vecs, s
     }
 
     // print result
-    std::cout << "Inner products: " << '\n';
+    std::cout << "Euclidean inner products: " << '\n';
     for (auto&& vec1 : vecs)
     {
         for (auto&& vec2 : vecs)
@@ -76,6 +79,33 @@ void test_gram_schmidt()
     auto vec_array = std::make_shared<ListVectorArray<F>>(vectors, 3);
     auto orthonormalized_vectorarray = nias::gram_schmidt(vec_array);
     print(orthonormalized_vectorarray->vectors(), "Output");
+
+    // Use our own inner product (a, b) = a^T * D * b where D = diag(1, 2, 3) is a diagonal matrix
+    const auto vector_inner_product = [](const auto& lhs, const auto& rhs)
+    {
+        F ret = 0;
+        if (lhs.dim() != rhs.dim())
+        {
+            throw nias::InvalidArgumentError("lhs and rhs must have the same dimension");
+        }
+        for (ssize_t i = 0; i < lhs.dim(); ++i)
+        {
+            if constexpr (complex<F>)
+            {
+                ret += std::conj(lhs.get(i)) * F(i + 1) * rhs.get(i);
+            }
+            else
+            {
+                ret += lhs.get(i) * F(i + 1) * rhs.get(i);
+            }
+        }
+        return ret;
+    };
+    const auto inner_product = std::make_shared<VectorFunctionBasedInnerProduct<F>>(vector_inner_product);
+    auto orthonormalized_vectorarray_2 =
+        nias::gram_schmidt(vec_array, static_cast<std::shared_ptr<InnerProductInterface<F>>>(inner_product));
+    print(orthonormalized_vectorarray_2->vectors(), "Output with custom inner product");
+
     // in-place
     nias::gram_schmidt_in_place(vec_array);
     std::cout << "\n";

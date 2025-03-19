@@ -77,6 +77,10 @@ if(DEFINED ENV{VIRTUAL_ENV})
     # TODO: check that nias_cpp is installed in the virtual environment
 else()
     # if no virtualenv is active, we set up our own virtual environment to install our python dependencies
+    find_package(
+        Python
+        COMPONENTS Interpreter
+        REQUIRED)
     set(NIAS_CPP_VENV_DIR ${CMAKE_CURRENT_BINARY_DIR}/nias_cpp_venv/$<CONFIG>)
     add_custom_target(create_venv COMMAND ${UV_EXECUTABLE} venv --python ${Python_EXECUTABLE} --quiet
                                           ${NIAS_CPP_VENV_DIR})

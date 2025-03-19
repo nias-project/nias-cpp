@@ -12,6 +12,7 @@
 #include <nias_cpp/concepts.h>
 #include <nias_cpp/exceptions.h>
 #include <nias_cpp/indices.h>
+#include <nias_cpp/interfaces/vector.h>
 #include <nias_cpp/type_traits.h>
 #include <sys/types.h>
 
@@ -73,6 +74,11 @@ class ConstVectorArrayView : public VectorArrayInterface<F>
               const std::optional<Indices>& /*x_indices*/ = std::nullopt) override
     {
         throw NotImplementedError("ConstVectorArrayView: axpy is not implemented, use VectorArrayView.");
+    }
+
+    [[nodiscard]] const VectorInterface<F>& vector(ssize_t i) const override
+    {
+        return vec_array_.vector(indices_ ? indices_->get(i, vec_array_.size()) : i);
     }
 
     [[nodiscard]] F get(ssize_t i, ssize_t j) const override
@@ -351,6 +357,17 @@ class VectorArrayInterface
                       const std::optional<Indices>& x_indices = std::nullopt)
     {
         axpy(std::vector<F>{alpha}, x, indices, x_indices);
+    }
+
+    /**
+     * \brief Returns a const reference to the i-th vector
+     *
+     * \note Not all vector array implementations give access to the underlying vectors,
+     * e.g., the NumpyVectorArray does not. In this case, the method will throw a NotImplementedError.
+     */
+    [[nodiscard]] virtual const VectorInterface<F>& vector(ssize_t /*i*/) const
+    {
+        throw nias::NotImplementedError("No access to underlying vectors.");
     }
 
     /**
