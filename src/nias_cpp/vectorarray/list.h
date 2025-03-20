@@ -104,6 +104,21 @@ class ListVectorArray : public VectorArrayInterface<F>
         }
     }
 
+    template <class VectorType>
+        requires std::derived_from<VectorType, VectorInterfaceType>
+    [[nodiscard]] VectorType& vector_as(ssize_t i)
+    {
+        try
+        {
+            return dynamic_cast<const VectorType&>(*vectors_.at(as_size_t(i)));
+        }
+        catch (std::bad_cast&)
+        {
+            throw InvalidArgumentError("ListVectorArray: vector_as: vector at index " + std::to_string(i) +
+                                       " is not of type " + typeid(VectorType).name());
+        }
+    }
+
     [[nodiscard]] F get(ssize_t i, ssize_t j) const override
     {
         this->check_indices(i, j);
