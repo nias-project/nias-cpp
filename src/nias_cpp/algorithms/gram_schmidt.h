@@ -33,7 +33,7 @@ namespace nias
  */
 template <floating_point_or_complex F>
 std::shared_ptr<ListVectorArray<F>> gram_schmidt(
-    const std::shared_ptr<ListVectorArray<F>>& vec_array,
+    const ListVectorArray<F>& vec_array,
     const InnerProductInterface<F>& inner_product = EuclideanInnerProduct<F>())
 {
     ensure_interpreter_and_venv_are_active();
@@ -52,7 +52,8 @@ std::shared_ptr<ListVectorArray<F>> gram_schmidt(
 
     // create a Python VectorArray
     using namespace pybind11::literals;  // for the _a literal
-    auto nias_vec_array = NiasVecArray("impl"_a = NiasVecArrayImpl(vec_array));
+    const auto py_vec_array = py::cast(vec_array, py::return_value_policy::reference);
+    auto nias_vec_array = NiasVecArray("impl"_a = NiasVecArrayImpl(py_vec_array));
 
     // execute the Python gram_schmidt function
     const auto py_inner_product = py::cast(inner_product, py::return_value_policy::reference);
@@ -71,7 +72,7 @@ std::shared_ptr<ListVectorArray<F>> gram_schmidt(
  * modifies the input ListVectorArray in-place.
  */
 template <floating_point_or_complex F>
-void gram_schmidt_in_place(const std::shared_ptr<ListVectorArray<F>>& vec_array,
+void gram_schmidt_in_place(ListVectorArray<F>& vec_array,
                            const InnerProductInterface<F>& inner_product = EuclideanInnerProduct<F>())
 {
     ensure_interpreter_and_venv_are_active();
@@ -90,7 +91,8 @@ void gram_schmidt_in_place(const std::shared_ptr<ListVectorArray<F>>& vec_array,
 
     // create a Python VectorArray
     using namespace pybind11::literals;  // for the _a literal
-    auto nias_vec_array = NiasVecArray("impl"_a = NiasVecArrayImpl(vec_array));
+    const auto py_vec_array = py::cast(vec_array, py::return_value_policy::reference);
+    auto nias_vec_array = NiasVecArray("impl"_a = NiasVecArrayImpl(py_vec_array));
 
     // execute the Python gram_schmidt function
     const auto py_inner_product = py::cast(inner_product, py::return_value_policy::reference);

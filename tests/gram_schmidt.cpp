@@ -76,7 +76,7 @@ void test_gram_schmidt()
     std::cout << "\n";
 
     // Perform Gram-Schmidt orthogonalization and print result
-    auto vec_array = std::make_shared<ListVectorArray<F>>(vectors, 3);
+    auto vec_array = ListVectorArray<F>(vectors, 3);
     auto orthonormalized_vectorarray = nias::gram_schmidt(vec_array);
     print(orthonormalized_vectorarray->vectors(), "Output");
 
@@ -109,7 +109,7 @@ void test_gram_schmidt()
     // in-place
     nias::gram_schmidt_in_place(vec_array);
     std::cout << "\n";
-    print(vec_array->vectors(), "Output in-place");
+    print(vec_array.vectors(), "Output in-place");
 }
 
 template <std::floating_point F>
