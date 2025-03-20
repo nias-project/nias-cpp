@@ -81,6 +81,11 @@ class ConstVectorArrayView : public VectorArrayInterface<F>
         return vec_array_.vector(indices_ ? indices_->get(i, vec_array_.size()) : i);
     }
 
+    [[nodiscard]] VectorInterface<F>& vector(ssize_t /*i*/) override
+    {
+        throw NotImplementedError("ConstVectorArrayView: no mutable access to vectors, use VectorArrayView.");
+    }
+
     [[nodiscard]] F get(ssize_t i, ssize_t j) const override
     {
         return vec_array_.get(indices_ ? indices_->get(i, vec_array_.size()) : i, j);
@@ -169,6 +174,11 @@ class VectorArrayView : public ConstVectorArrayView<F>
     void set(ssize_t i, ssize_t j, F value) override
     {
         vec_array_.set(this->indices_ ? this->indices_->get(i, vec_array_.size()) : i, j, value);
+    }
+
+    [[nodiscard]] VectorInterface<F>& vector(ssize_t i) override
+    {
+        return vec_array_.vector(this->indices_ ? this->indices_->get(i, vec_array_.size()) : i);
     }
 
    private:
@@ -366,6 +376,17 @@ class VectorArrayInterface
      * e.g., the NumpyVectorArray does not. In this case, the method will throw a NotImplementedError.
      */
     [[nodiscard]] virtual const VectorInterface<F>& vector(ssize_t /*i*/) const
+    {
+        throw nias::NotImplementedError("No access to underlying vectors.");
+    }
+
+    /**
+     * \brief Returns a mutable reference to the i-th vector
+     *
+     * \note Not all vector array implementations give access to the underlying vectors,
+     * e.g., the NumpyVectorArray does not. In this case, the method will throw a NotImplementedError.
+     */
+    [[nodiscard]] virtual VectorInterface<F>& vector(ssize_t /*i*/)
     {
         throw nias::NotImplementedError("No access to underlying vectors.");
     }

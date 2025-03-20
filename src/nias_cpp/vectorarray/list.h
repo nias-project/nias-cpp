@@ -89,6 +89,11 @@ class ListVectorArray : public VectorArrayInterface<F>
         return *vectors_.at(as_size_t(i));
     }
 
+    [[nodiscard]] VectorInterface<F>& vector(ssize_t i) override
+    {
+        return *vectors_.at(as_size_t(i));
+    }
+
     [[nodiscard]] F get(ssize_t i, ssize_t j) const override
     {
         this->check_indices(i, j);
