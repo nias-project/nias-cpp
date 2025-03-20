@@ -34,8 +34,7 @@ namespace nias
 template <floating_point_or_complex F>
 std::shared_ptr<ListVectorArray<F>> gram_schmidt(
     const std::shared_ptr<ListVectorArray<F>>& vec_array,
-    const std::shared_ptr<InnerProductInterface<F>>& inner_product =
-        std::make_shared<EuclideanInnerProduct<F>>())
+    const InnerProductInterface<F>& inner_product = EuclideanInnerProduct<F>())
 {
     ensure_interpreter_and_venv_are_active();
 
@@ -47,7 +46,7 @@ std::shared_ptr<ListVectorArray<F>> gram_schmidt(
     const py::module_ nias_cpp_vectorarray = py::module::import("nias.bindings.nias_cpp.vectorarray");
     auto NiasVecArrayImpl = nias_cpp_vectorarray.attr("NiasCppVectorArrayImpl");
     auto NiasVecArray = nias_cpp_vectorarray.attr("NiasCppVectorArray");
-    auto NiasCppInnerProduct =
+    auto NiasInnerProductWrapper =
         py::module::import("nias.bindings.nias_cpp.product").attr("NiasCppInnerProduct");
     auto NiasGramSchmidt = py::module::import("nias.linalg.gram_schmidt").attr("gram_schmidt");
 
@@ -56,8 +55,9 @@ std::shared_ptr<ListVectorArray<F>> gram_schmidt(
     auto nias_vec_array = NiasVecArray("impl"_a = NiasVecArrayImpl(vec_array));
 
     // execute the Python gram_schmidt function
+    const auto py_inner_product = py::cast(inner_product, py::return_value_policy::reference);
     const py::object result =
-        NiasGramSchmidt(nias_vec_array, NiasCppInnerProduct(inner_product), "copy"_a = true);
+        NiasGramSchmidt(nias_vec_array, NiasInnerProductWrapper(py_inner_product), "copy"_a = true);
 
     auto ret = result.attr("impl").attr("impl").cast<std::shared_ptr<ListVectorArray<F>>>();
     return ret;
@@ -72,8 +72,7 @@ std::shared_ptr<ListVectorArray<F>> gram_schmidt(
  */
 template <floating_point_or_complex F>
 void gram_schmidt_in_place(const std::shared_ptr<ListVectorArray<F>>& vec_array,
-                           const std::shared_ptr<InnerProductInterface<F>>& inner_product =
-                               std::make_shared<EuclideanInnerProduct<F>>())
+                           const InnerProductInterface<F>& inner_product = EuclideanInnerProduct<F>())
 {
     ensure_interpreter_and_venv_are_active();
 
@@ -94,7 +93,8 @@ void gram_schmidt_in_place(const std::shared_ptr<ListVectorArray<F>>& vec_array,
     auto nias_vec_array = NiasVecArray("impl"_a = NiasVecArrayImpl(vec_array));
 
     // execute the Python gram_schmidt function
-    NiasGramSchmidt(nias_vec_array, NiasCppInnerProduct(inner_product), "copy"_a = false);
+    const auto py_inner_product = py::cast(inner_product, py::return_value_policy::reference);
+    NiasGramSchmidt(nias_vec_array, NiasCppInnerProduct(py_inner_product), "copy"_a = false);
 }
 
 /**
@@ -102,8 +102,7 @@ void gram_schmidt_in_place(const std::shared_ptr<ListVectorArray<F>>& vec_array,
  */
 template <floating_point_or_complex F>
 void gram_schmidt_cpp(VectorArrayInterface<F>& vec_array,
-                      const std::shared_ptr<InnerProductInterface<F>>& inner_product =
-                          std::make_shared<EuclideanInnerProduct<F>>())
+                      const InnerProductInterface<F>& inner_product = EuclideanInnerProduct<F>())
 {
     constexpr F atol = std::numeric_limits<F>::epsilon() * F(10);
     std::vector<bool> remove(as_size_t(vec_array.size()), false);
@@ -115,11 +114,11 @@ void gram_schmidt_cpp(VectorArrayInterface<F>& vec_array,
             {
                 continue;
             }
-            F projection = inner_product->apply_pairwise(vec_array, vec_array, {i}, {j}).at(0) /
-                           inner_product->apply_pairwise(vec_array, vec_array, {j}, {j}).at(0);
+            F projection = inner_product.apply_pairwise(vec_array, vec_array, {i}, {j}).at(0) /
+                           inner_product.apply_pairwise(vec_array, vec_array, {j}, {j}).at(0);
             vec_array.axpy(-projection, vec_array, {i}, {j});
         }
-        const auto norm2 = inner_product->apply_pairwise(vec_array, vec_array, {i}, {i}).at(0);
+        const auto norm2 = inner_product.apply_pairwise(vec_array, vec_array, {i}, {i}).at(0);
         if (norm2 < atol)
         {
             remove[as_size_t(i)] = true;

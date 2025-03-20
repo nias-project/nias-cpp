@@ -101,9 +101,8 @@ void test_gram_schmidt()
         }
         return ret;
     };
-    const auto inner_product = std::make_shared<VectorFunctionBasedInnerProduct<F>>(vector_inner_product);
-    auto orthonormalized_vectorarray_2 =
-        nias::gram_schmidt(vec_array, static_cast<std::shared_ptr<InnerProductInterface<F>>>(inner_product));
+    const auto inner_product = VectorFunctionBasedInnerProduct<F>(vector_inner_product);
+    auto orthonormalized_vectorarray_2 = nias::gram_schmidt(vec_array, inner_product);
     print(orthonormalized_vectorarray_2->vectors(), "Output with custom inner product");
 
     // in-place

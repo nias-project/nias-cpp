@@ -411,7 +411,7 @@ auto bind_function_based_inner_product(pybind11::module& m, const std::string& f
     using VectorFunctionBasedInnerProd = VectorFunctionBasedInnerProduct<F>;
     py::class_<VectorFunctionBasedInnerProd, InnerProdInterface,
                std::shared_ptr<VectorFunctionBasedInnerProd>>(
-        m, (field_type_name + "FunctionBasedInnerProduct").c_str())
+        m, (field_type_name + "VectorFunctionBasedInnerProduct").c_str())
         .def("apply",
              [](const VectorFunctionBasedInnerProd& self, const VectorArrayInterface<F>& left,
                 const VectorArrayInterface<F>& right, bool pairwise,
