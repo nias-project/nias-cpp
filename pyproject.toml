@@ -8,7 +8,7 @@ build-backend = "scikit_build_core.build"
 
 [project]
 name = "nias_cpp"
-version = "0.1.0"
+version = "0.1.1"
 description = "C++ bindings for NIAS - Numerics in Abstract Spaces"
 readme = "README.md"
 requires-python = ">=3.10"
