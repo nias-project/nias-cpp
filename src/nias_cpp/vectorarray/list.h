@@ -2,6 +2,7 @@
 #define NIAS_CPP_VECTORARRAY_LIST_H
 
 #include <algorithm>
+#include <concepts>
 #include <functional>
 #include <memory>
 #include <optional>
@@ -88,6 +89,21 @@ class ListVectorArray : public VectorArrayInterface<F>
         return *vectors_.at(as_size_t(i));
     }
 
+    template <class VectorType>
+        requires std::derived_from<VectorType, VectorInterfaceType>
+    [[nodiscard]] const VectorType& vector_as(ssize_t i) const
+    {
+        try
+        {
+            return dynamic_cast<const VectorType&>(*vectors_.at(as_size_t(i)));
+        }
+        catch (std::bad_cast&)
+        {
+            throw InvalidArgumentError("ListVectorArray: vector_as: vector at index " + std::to_string(i) +
+                                       " is not of type " + typeid(VectorType).name());
+        }
+    }
+
     [[nodiscard]] F get(ssize_t i, ssize_t j) const override
     {
         this->check_indices(i, j);
@@ -98,12 +114,6 @@ class ListVectorArray : public VectorArrayInterface<F>
     {
         this->check_indices(i, j);
         vectors_[as_size_t(i)]->get(j) = value;
-    }
-
-    [[nodiscard]] const VectorInterfaceType& get(ssize_t i) const
-    {
-        this->check_first_index(i);
-        return *vectors_[as_size_t(i)];
     }
 
     [[nodiscard]] const std::vector<std::shared_ptr<VectorInterfaceType>>& vectors() const
@@ -160,6 +170,13 @@ class ListVectorArray : public VectorArrayInterface<F>
         {
             vectors_.push_back(vec->copy());
         }
+    }
+
+    template <class VectorType, typename... Args>
+        requires std::derived_from<VectorType, VectorInterfaceType>
+    void emplace_back(Args&&... args)
+    {
+        vectors_.emplace_back(std::make_shared<VectorType>(std::forward<Args>(args)...));
     }
 
     void delete_vectors(const std::optional<Indices>& indices) override

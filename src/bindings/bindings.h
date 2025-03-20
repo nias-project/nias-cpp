@@ -241,6 +241,7 @@ auto bind_nias_listvectorarray(pybind11::module& m, const std::string& field_typ
              })
         .def_property_readonly("dim", &VecArrayInterface::dim)
         .def("scalar_zero", &VecArrayInterface::scalar_zero)
+        .def("vector", &VecArrayInterface::vector, py::return_value_policy::reference_internal)
         .def("copy", &VecArrayInterface::copy)
         .def("append", &VecArrayInterface::append)
         // .def("delete", &VecArrayInterface::delete)
@@ -264,8 +265,7 @@ auto bind_nias_listvectorarray(pybind11::module& m, const std::string& field_typ
                      return v.size();
                  })
             .def_property_readonly("dim", &ListVecArray::dim)
-            .def("get", py::overload_cast<ssize_t>(&ListVecArray::get, py::const_),
-                 py::return_value_policy::reference)
+            .def("vector", &ListVecArray::vector, py::return_value_policy::reference_internal)
             .def("copy", &ListVecArray::copy, py::arg("indices") = py::none())
             .def("append",
                  py::overload_cast<VecArrayInterface&, bool, const std::optional<Indices>&>(
