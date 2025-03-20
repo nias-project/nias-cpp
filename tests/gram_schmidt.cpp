@@ -92,7 +92,8 @@ void test_gram_schmidt()
         {
             if constexpr (complex<F>)
             {
-                ret += std::conj(lhs.get(i)) * F(i + 1) * rhs.get(i);
+                using R = typename F::value_type;
+                ret += std::conj(lhs.get(i)) * F(R(i + 1), R(0)) * rhs.get(i);
             }
             else
             {
