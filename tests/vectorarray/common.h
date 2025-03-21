@@ -32,6 +32,87 @@ using namespace boost::ut;
 
 // NOLINTEND(google-global-names-in-headers)
 
+// Comparison operators for Vectors
+template <floating_point_or_complex F>
+struct ExactlyEqualOpVec
+{
+    ExactlyEqualOpVec(const VectorInterface<F>& lhs, const VectorInterface<F>& rhs)
+        : lhs_(lhs)
+        , rhs_(rhs)
+    {
+    }
+
+    [[nodiscard]] explicit operator bool() const
+    {
+        if (lhs_.dim() != rhs_.dim())
+        {
+            return false;
+        }
+        for (ssize_t i = 0; i < lhs_.dim(); ++i)
+        {
+            if (lhs_.get(i) != rhs_.get(i))
+            {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    friend std::ostream& operator<<(std::ostream& os, const ExactlyEqualOpVec& eq)
+    {
+        return (os << "\n" << eq.lhs_ << " == " << "\n" << eq.rhs_);
+    }
+
+    const VectorInterface<F>& lhs_;
+    const VectorInterface<F>& rhs_;
+};
+
+template <floating_point_or_complex F>
+auto exactly_equal(const VectorInterface<F>& lhs, const VectorInterface<F>& rhs)
+{
+    return ExactlyEqualOpVec<F>(lhs, rhs);
+}
+
+template <floating_point_or_complex F>
+struct ApproxEqualOpVec
+{
+    ApproxEqualOpVec(const VectorInterface<F>& lhs, const VectorInterface<F>& rhs)
+        : lhs_(lhs)
+        , rhs_(rhs)
+    {
+    }
+
+    [[nodiscard]] explicit operator bool() const
+    {
+        if (lhs_.dim() != rhs_.dim())
+        {
+            return false;
+        }
+        for (ssize_t i = 0; i < lhs_.dim(); ++i)
+        {
+            if (!approx_equal((lhs_.get(i), rhs_.get(i))))
+            {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    friend std::ostream& operator<<(std::ostream& os, const ApproxEqualOpVec& eq)
+    {
+        return (os << "\n" << eq.lhs_ << " == " << "\n" << eq.rhs_);
+    }
+
+    const VectorInterface<F>& lhs_;
+    const VectorInterface<F>& rhs_;
+};
+
+template <floating_point_or_complex F>
+auto approx_equal(const VectorInterface<F>& lhs, const VectorInterface<F>& rhs)
+{
+    return ApproxEqualOpVec<F>(lhs, rhs);
+}
+
 // Comparison operators for VectorArrays
 template <floating_point_or_complex F>
 struct ExactlyEqualOpVecArray
@@ -799,5 +880,6 @@ void check_axpy(const VectorArrayInterface<typename VectorArray::ScalarType>& v,
         // TODO: tests including x_indices
     };
 }
+
 
 #endif  // NIAS_CPP_TEST_VECTORARRAY_COMMON_H

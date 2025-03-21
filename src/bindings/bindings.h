@@ -264,8 +264,6 @@ auto bind_nias_listvectorarray(pybind11::module& m, const std::string& field_typ
                      return v.size();
                  })
             .def_property_readonly("dim", &ListVecArray::dim)
-            .def("get", py::overload_cast<ssize_t>(&ListVecArray::get, py::const_),
-                 py::return_value_policy::reference)
             .def("copy", &ListVecArray::copy, py::arg("indices") = py::none())
             .def("append",
                  py::overload_cast<VecArrayInterface&, bool, const std::optional<Indices>&>(
@@ -408,11 +406,12 @@ auto bind_function_based_inner_product(pybind11::module& m, const std::string& f
                  return py_apply_inner_product<F>(self, left, right, pairwise, left_indices, right_indices);
              });
 
-    using FunctionBasedInnerProd = FunctionBasedInnerProduct<F>;
-    py::class_<FunctionBasedInnerProd, InnerProdInterface, std::shared_ptr<FunctionBasedInnerProd>>(
-        m, (field_type_name + "FunctionBasedInnerProduct").c_str())
+    using VectorFunctionBasedInnerProd = VectorFunctionBasedInnerProduct<F>;
+    py::class_<VectorFunctionBasedInnerProd, InnerProdInterface,
+               std::shared_ptr<VectorFunctionBasedInnerProd>>(
+        m, (field_type_name + "VectorFunctionBasedInnerProduct").c_str())
         .def("apply",
-             [](const FunctionBasedInnerProd& self, const VectorArrayInterface<F>& left,
+             [](const VectorFunctionBasedInnerProd& self, const VectorArrayInterface<F>& left,
                 const VectorArrayInterface<F>& right, bool pairwise,
                 const std::optional<Indices>& left_indices, const std::optional<Indices>& right_indices)
              {
@@ -421,7 +420,7 @@ auto bind_function_based_inner_product(pybind11::module& m, const std::string& f
 
     using EuclideanInnerProd = EuclideanInnerProduct<F>;
     auto ret =
-        py::class_<EuclideanInnerProd, FunctionBasedInnerProd, std::shared_ptr<EuclideanInnerProd>>(
+        py::class_<EuclideanInnerProd, InnerProdInterface, std::shared_ptr<EuclideanInnerProd>>(
             m, (field_type_name + "EuclideanInnerProduct").c_str())
             .def("apply",
                  [](const EuclideanInnerProd& self, const VectorArrayInterface<F>& left,

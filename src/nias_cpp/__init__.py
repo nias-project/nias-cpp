@@ -7,7 +7,7 @@ from pathlib import Path
 # import python bindings for C++ code
 from .nias_cpp_bindings import *  # noqa F403
 
-__version__ = "0.1.0"
+__version__ = "0.1.1"
 
 
 def include_dir() -> str:

@@ -12,6 +12,7 @@
 #include <nias_cpp/concepts.h>
 #include <nias_cpp/exceptions.h>
 #include <nias_cpp/indices.h>
+#include <nias_cpp/interfaces/vector.h>
 #include <nias_cpp/type_traits.h>
 #include <sys/types.h>
 
@@ -73,6 +74,16 @@ class ConstVectorArrayView : public VectorArrayInterface<F>
               const std::optional<Indices>& /*x_indices*/ = std::nullopt) override
     {
         throw NotImplementedError("ConstVectorArrayView: axpy is not implemented, use VectorArrayView.");
+    }
+
+    [[nodiscard]] const VectorInterface<F>& vector(ssize_t i) const override
+    {
+        return vec_array_.vector(indices_ ? indices_->get(i, vec_array_.size()) : i);
+    }
+
+    [[nodiscard]] VectorInterface<F>& vector(ssize_t /*i*/) override
+    {
+        throw NotImplementedError("ConstVectorArrayView: no mutable access to vectors, use VectorArrayView.");
     }
 
     [[nodiscard]] F get(ssize_t i, ssize_t j) const override
@@ -163,6 +174,11 @@ class VectorArrayView : public ConstVectorArrayView<F>
     void set(ssize_t i, ssize_t j, F value) override
     {
         vec_array_.set(this->indices_ ? this->indices_->get(i, vec_array_.size()) : i, j, value);
+    }
+
+    [[nodiscard]] VectorInterface<F>& vector(ssize_t i) override
+    {
+        return vec_array_.vector(this->indices_ ? this->indices_->get(i, vec_array_.size()) : i);
     }
 
    private:
@@ -351,6 +367,71 @@ class VectorArrayInterface
                       const std::optional<Indices>& x_indices = std::nullopt)
     {
         axpy(std::vector<F>{alpha}, x, indices, x_indices);
+    }
+
+    /**
+     * \brief Returns a const reference to the i-th vector
+     *
+     * \note Not all vector array implementations give access to the underlying vectors,
+     * e.g., the NumpyVectorArray does not. In this case, the method will throw a NotImplementedError.
+     */
+    [[nodiscard]] virtual const VectorInterface<F>& vector(ssize_t /*i*/) const
+    {
+        throw nias::NotImplementedError("No access to underlying vectors.");
+    }
+
+    /**
+     * \brief Returns a mutable reference to the i-th vector
+     *
+     * \note Not all vector array implementations give access to the underlying vectors,
+     * e.g., the NumpyVectorArray does not. In this case, the method will throw a NotImplementedError.
+     */
+    [[nodiscard]] virtual VectorInterface<F>& vector(ssize_t /*i*/)
+    {
+        throw nias::NotImplementedError("No access to underlying vectors.");
+    }
+
+    /**
+     * \brief Returns a const reference to the vector at index \c i cast to the specified type \c VectorType.
+     *
+     * \tparam VectorType The type to which the vector should be cast. Must derive from VectorInterface<F>.
+     * \param i The index of the vector to retrieve.
+     * \throws InvalidArgumentError if the vector cannot be cast to \c VectorType.
+     * \throws NotImplementedError if the vector array implementation does not provide random vector access
+     * \sa vector(ssize_t)
+     */
+    template <class VectorType>
+        requires std::derived_from<VectorType, VectorInterface<F>>
+    [[nodiscard]] const VectorType& vector_as(ssize_t i) const
+    {
+        try
+        {
+            return dynamic_cast<const VectorType&>(vector(i));
+        }
+        catch (std::bad_cast&)
+        {
+            throw InvalidArgumentError("vector at index " + std::to_string(i) + " is not of type " +
+                                       typeid(VectorType).name());
+        }
+    }
+
+    /**
+     * \brief Returns a mutable reference to the vector at index \c i cast to the specified type \c VectorType.
+     * \sa vector_as(ssize_t) const
+     */
+    template <class VectorType>
+        requires std::derived_from<VectorType, VectorInterface<F>>
+    [[nodiscard]] VectorType& vector_as(ssize_t i)
+    {
+        try
+        {
+            return dynamic_cast<VectorType&>(vector(i));
+        }
+        catch (std::bad_cast&)
+        {
+            throw InvalidArgumentError("vector at index " + std::to_string(i) + " is not of type " +
+                                       typeid(VectorType).name());
+        }
     }
 
     /**
