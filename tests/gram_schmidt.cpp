@@ -17,6 +17,7 @@
 #include <nias_cpp/type_traits.h>
 #include <nias_cpp/vectorarray/list.h>
 #include <nias_cpp/vectorarray/numpy.h>
+#include <pybind11/cast.h>
 #include <pybind11/numpy.h>
 
 #include "boost_ext_ut_no_module.h"
@@ -105,6 +106,11 @@ void test_gram_schmidt()
     const auto inner_product = VectorFunctionBasedInnerProduct<F>(vector_inner_product);
     auto orthonormalized_vectorarray_2 = nias::gram_schmidt(vec_array, inner_product);
     print(orthonormalized_vectorarray_2->vectors(), "Output with custom inner product");
+
+    using namespace pybind11::literals;  // for the _a literal
+    auto orthonormalized_vectorarray_3 =
+        nias::gram_schmidt(vec_array, inner_product, "offset"_a = 1, "check"_a = false);
+    print(orthonormalized_vectorarray_3->vectors(), "Output with offset");
 
     // in-place
     nias::gram_schmidt_in_place(vec_array);

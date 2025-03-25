@@ -31,10 +31,11 @@ namespace nias
  *
  * \returns A new ListVectorArray containing the orthogonalized vectors.
  */
-template <floating_point_or_complex F>
+template <floating_point_or_complex F, class... Args>
 std::shared_ptr<ListVectorArray<F>> gram_schmidt(
     const ListVectorArray<F>& vec_array,
-    const InnerProductInterface<F>& inner_product = EuclideanInnerProduct<F>())
+    const InnerProductInterface<F>& inner_product = EuclideanInnerProduct<F>(),
+    Args&&... additional_python_args)
 {
     ensure_interpreter_and_venv_are_active();
 
@@ -57,8 +58,8 @@ std::shared_ptr<ListVectorArray<F>> gram_schmidt(
 
     // execute the Python gram_schmidt function
     const auto py_inner_product = py::cast(inner_product, py::return_value_policy::reference);
-    const py::object result =
-        NiasGramSchmidt(nias_vec_array, NiasInnerProductWrapper(py_inner_product), "copy"_a = true);
+    const py::object result = NiasGramSchmidt(nias_vec_array, NiasInnerProductWrapper(py_inner_product),
+                                              "copy"_a = true, std::forward<Args>(additional_python_args)...);
 
     auto ret = result.attr("impl").attr("impl").cast<std::shared_ptr<ListVectorArray<F>>>();
     return ret;
