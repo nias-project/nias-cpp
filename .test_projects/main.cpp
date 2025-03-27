@@ -17,7 +17,7 @@ int main()
         std::shared_ptr<VectorInterface<double>>(new DynamicVector{7., 8., 9.})};
 
     // Perform Gram-Schmidt orthogonalization
-    auto vec_array = std::make_shared<ListVectorArray<double>>(vectors, 3);
+    auto vec_array = ListVectorArray<double>(vectors, 3);
     [[maybe_unused]] auto orthonormalized_vectorarray = gram_schmidt(vec_array);
 
     return 0;

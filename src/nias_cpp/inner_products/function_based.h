@@ -19,16 +19,15 @@ namespace nias
 
 
 template <floating_point_or_complex F>
-class FunctionBasedInnerProduct : public InnerProductInterface<F>
+class VectorFunctionBasedInnerProduct : public InnerProductInterface<F>
 {
    public:
     using InterfaceType = InnerProductInterface<F>;
-    using ThisType = FunctionBasedInnerProduct<F>;
+    using ThisType = VectorFunctionBasedInnerProduct<F>;
     using typename InterfaceType::ScalarType;
 
-    explicit FunctionBasedInnerProduct(
-        std::function<ScalarType(const VectorArrayInterface<ScalarType>&,
-                                 const VectorArrayInterface<ScalarType>&, ssize_t i, ssize_t j)>
+    explicit VectorFunctionBasedInnerProduct(
+        std::function<ScalarType(const VectorInterface<ScalarType>&, const VectorInterface<ScalarType>&)>
             inner_product_function)
         : inner_product_function_(std::move(inner_product_function))
     {
@@ -48,7 +47,7 @@ class FunctionBasedInnerProduct : public InnerProductInterface<F>
         {
             for (ssize_t j = 0; j < right.size(); ++j)
             {
-                ret[as_size_t(i)][as_size_t(j)] = inner_product_function_(left, right, i, j);
+                ret[as_size_t(i)][as_size_t(j)] = inner_product_function_(left.vector(i), right.vector(j));
             }
         }
         return ret;
@@ -70,14 +69,13 @@ class FunctionBasedInnerProduct : public InnerProductInterface<F>
         std::vector<F> ret(as_size_t(left.size()));
         for (ssize_t i = 0; i < left.size(); ++i)
         {
-            ret[as_size_t(i)] = inner_product_function_(left, right, i, i);
+            ret[as_size_t(i)] = inner_product_function_(left.vector(i), right.vector(i));
         }
         return ret;
     }
 
    private:
-    std::function<ScalarType(const VectorArrayInterface<ScalarType>&, const VectorArrayInterface<ScalarType>&,
-                             ssize_t, ssize_t)>
+    std::function<ScalarType(const VectorInterface<ScalarType>&, const VectorInterface<ScalarType>&)>
         inner_product_function_;
 };
 
