@@ -78,7 +78,7 @@ if(DEFINED ENV{VIRTUAL_ENV})
 else()
     # if no virtualenv is active, we set up our own virtual environment to install our python dependencies
     find_package(
-        Python
+        Python 3.10
         COMPONENTS Interpreter
         REQUIRED)
     set(NIAS_CPP_VENV_DIR ${CMAKE_CURRENT_BINARY_DIR}/nias_cpp_venv/$<CONFIG>)
