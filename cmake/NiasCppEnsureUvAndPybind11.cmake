@@ -52,7 +52,7 @@ macro(ENSURE_UV_AND_PYBIND11_ARE_AVAILABLE)
         # add pybind11
         include(FetchContent)
         find_package(
-            Python
+            Python 3.10
             COMPONENTS Interpreter Development
             REQUIRED)
         set(PYBIND11_FINDPYTHON ON)

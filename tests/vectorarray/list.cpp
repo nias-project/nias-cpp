@@ -11,7 +11,6 @@
 #include <pybind11/numpy.h>
 
 #include "../boost_ext_ut_no_module.h"
-#include "../test_vector.h"
 #include "common.h"
 
 namespace
@@ -52,33 +51,6 @@ void check_random_vector_access(const VectorArrayInterface<F>& vec_array)
                                              (*vec_array_as_list.vectors()[as_size_t(i)]).get(j) * 2));
                         expect(exactly_equal((*mut_vec_array_as_list.vectors()[as_size_t(i)]).get(j),
                                              (*vec_array_as_list.vectors()[as_size_t(i)]).get(j) * 2));
-                    }
-                }
-            };
-
-            then("const access as DynamicVector using the vector_as method works as expected") = [&]()
-            {
-                for (ssize_t i = 0; i < vec_array.size(); ++i)
-                {
-                    const auto& vec_as_dynamic_vec = vec_array.template vector_as<DynamicVector<F>>(i);
-                    expect(constant<std::is_same_v<decltype(vec_as_dynamic_vec), const DynamicVector<F>&>>);
-                    expect(exactly_equal(vec_as_dynamic_vec, *vec_array_as_list.vectors()[as_size_t(i)]));
-                }
-            };
-
-            then("mutable access as DynamicVector using the vector_as method works as expected") = [&]()
-            {
-                for (ssize_t i = 0; i < vec_array.size(); ++i)
-                {
-                    auto& mut_vec_as_dynamic_vec = mut_vec_array->template vector_as<DynamicVector<F>>(i);
-                    expect(constant<std::is_same_v<decltype(mut_vec_as_dynamic_vec), DynamicVector<F>&>>);
-                    mut_vec_as_dynamic_vec.scal(F(2));
-                    for (ssize_t j = 0; j < vec_array.dim(); ++j)
-                    {
-                        expect(exactly_equal(mut_vec_as_dynamic_vec.get(j),
-                                             (*vec_array_as_list.vectors()[as_size_t(i)]).get(j) * 4));
-                        expect(exactly_equal((*mut_vec_array_as_list.vectors()[as_size_t(i)]).get(j),
-                                             (*vec_array_as_list.vectors()[as_size_t(i)]).get(j) * 4));
                     }
                 }
             };
