@@ -1,0 +1,18 @@
+---
+name: Release new version on merge to main
+
+on:
+  push:
+    branches:
+    - main
+
+jobs:
+  create_release:
+    name: Release
+    uses: ./.github/workflows/create_release.yml
+    with:
+      # let the version be computed
+      version: unset
+      branch: main
+    secrets:
+      REPO_ACCESS_PAT: ${{ secrets.OASYS_REPO_SCOPE_GITHUB_PAT }}
