@@ -392,49 +392,6 @@ class VectorArrayInterface
     }
 
     /**
-     * \brief Returns a const reference to the vector at index \c i cast to the specified type \c VectorType.
-     *
-     * \tparam VectorType The type to which the vector should be cast. Must derive from VectorInterface<F>.
-     * \param i The index of the vector to retrieve.
-     * \throws InvalidArgumentError if the vector cannot be cast to \c VectorType.
-     * \throws NotImplementedError if the vector array implementation does not provide random vector access
-     * \sa vector(ssize_t)
-     */
-    template <class VectorType>
-        requires std::derived_from<VectorType, VectorInterface<F>>
-    [[nodiscard]] const VectorType& vector_as(ssize_t i) const
-    {
-        try
-        {
-            return dynamic_cast<const VectorType&>(vector(i));
-        }
-        catch (std::bad_cast&)
-        {
-            throw InvalidArgumentError("vector at index " + std::to_string(i) + " is not of type " +
-                                       typeid(VectorType).name());
-        }
-    }
-
-    /**
-     * \brief Returns a mutable reference to the vector at index \c i cast to the specified type \c VectorType.
-     * \sa vector_as(ssize_t) const
-     */
-    template <class VectorType>
-        requires std::derived_from<VectorType, VectorInterface<F>>
-    [[nodiscard]] VectorType& vector_as(ssize_t i)
-    {
-        try
-        {
-            return dynamic_cast<VectorType&>(vector(i));
-        }
-        catch (std::bad_cast&)
-        {
-            throw InvalidArgumentError("vector at index " + std::to_string(i) + " is not of type " +
-                                       typeid(VectorType).name());
-        }
-    }
-
-    /**
      * \brief Returns the j-th entry of the i-th vector
      */
     [[nodiscard]] virtual F get(ssize_t i, ssize_t j) const = 0;

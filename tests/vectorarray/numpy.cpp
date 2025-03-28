@@ -10,7 +10,6 @@
 #include <pybind11/numpy.h>
 
 #include "../boost_ext_ut_no_module.h"
-#include "../test_vector.h"
 #include "common.h"
 
 namespace
@@ -40,18 +39,6 @@ void check_random_vector_access(const VectorArrayInterface<F>& v)
                         [&]()
                         {
                             v_mut->vector(i).scal(F(42));
-                        })));
-
-                    expect(fatal(throws<NotImplementedError>(
-                        [&]()
-                        {
-                            static_cast<void>(v.template vector_as<DynamicVector<F>>(i));
-                        })));
-
-                    expect(fatal(throws<NotImplementedError>(
-                        [&]()
-                        {
-                            v_mut->template vector_as<DynamicVector<F>>(i).scal(F(42));
                         })));
                 };
                 then("v remains unchanged") = [&]()

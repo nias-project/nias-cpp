@@ -59,6 +59,44 @@ class VectorInterface
             this->get(i) += alpha * x.get(i);
         }
     }
+
+    /**
+     * \brief Returns a const reference to this cast to the specified type \c VectorType.
+     *
+     * \tparam VectorType The type to which the vector should be cast. Must derive from VectorInterface<F>.
+     * \throws InvalidArgumentError if the vector cannot be cast to \c VectorType.
+     */
+    template <class DerivedType>
+        requires std::derived_from<DerivedType, VectorInterface>
+    [[nodiscard]] const DerivedType& _as() const
+    {
+        try
+        {
+            return dynamic_cast<const DerivedType&>(*this);
+        }
+        catch (std::bad_cast&)
+        {
+            throw InvalidArgumentError(std::format("vector is not of type {}", typeid(DerivedType).name()));
+        }
+    }
+
+    /**
+     * \brief Returns a mutable reference to this cast to the specified type \c VectorType.
+     * \sa _as() const
+     */
+    template <class DerivedType>
+        requires std::derived_from<DerivedType, VectorInterface>
+    [[nodiscard]] DerivedType& _as()
+    {
+        try
+        {
+            return dynamic_cast<DerivedType&>(*this);
+        }
+        catch (std::bad_cast&)
+        {
+            throw InvalidArgumentError(std::format("vector is not of type {}", typeid(DerivedType).name()));
+        }
+    }
 };
 
 template <floating_point_or_complex F>
