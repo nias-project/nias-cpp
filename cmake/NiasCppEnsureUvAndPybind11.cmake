@@ -26,6 +26,11 @@ macro(ENSURE_UV_AND_PYBIND11_ARE_AVAILABLE)
         HINTS ${uv_BINARY_DIR} REQUIRED)
 
     # pybind11
+    find_package(
+        Python
+        COMPONENTS Interpreter Development
+        REQUIRED)
+    set(PYBIND11_FINDPYTHON ON)
     find_package(pybind11 CONFIG QUIET)
     if(NOT pybind11_FOUND)
         # parse pyproject.toml to get pybind11 version
@@ -51,11 +56,6 @@ macro(ENSURE_UV_AND_PYBIND11_ARE_AVAILABLE)
 
         # add pybind11
         include(FetchContent)
-        find_package(
-            Python
-            COMPONENTS Interpreter Development
-            REQUIRED)
-        set(PYBIND11_FINDPYTHON ON)
         FetchContent_Declare(
             pybind11
             GIT_REPOSITORY https://github.com/pybind/pybind11
