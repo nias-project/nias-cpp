@@ -23,9 +23,9 @@ void check_random_vector_access(const VectorArrayInterface<F>& vec_array)
 
     given("A ListVectorArray v containing DynamicVectors") = [&]()
     {
-        const auto& vec_array_as_list = dynamic_cast<const ListVectorArray<F>&>(vec_array);
+        const auto& vec_array_as_list = dynamic_cast<const ListVectorArray<DynamicVector<F>, F>&>(vec_array);
         auto mut_vec_array = vec_array.copy();
-        auto& mut_vec_array_as_list = dynamic_cast<ListVectorArray<F>&>(*mut_vec_array);
+        auto& mut_vec_array_as_list = dynamic_cast<ListVectorArray<DynamicVector<F>, F>&>(*mut_vec_array);
 
         when("Accessing vectors by index") = [&]()
         {
@@ -35,7 +35,7 @@ void check_random_vector_access(const VectorArrayInterface<F>& vec_array)
                 {
                     const auto& vec = vec_array.vector(i);
                     expect(constant<std::is_same_v<decltype(vec), const VectorInterface<F>&>>);
-                    expect(exactly_equal(vec, *vec_array_as_list.vectors()[as_size_t(i)]));
+                    expect(exactly_equal(vec, vec_array_as_list.vectors()[as_size_t(i)]));
                 }
             };
 
@@ -48,10 +48,9 @@ void check_random_vector_access(const VectorArrayInterface<F>& vec_array)
                     mut_vec.scal(F(2));
                     for (ssize_t j = 0; j < vec_array.dim(); ++j)
                     {
-                        expect(exactly_equal(mut_vec.get(j),
-                                             (*vec_array_as_list.vectors()[as_size_t(i)]).get(j) * 2));
-                        expect(exactly_equal((*mut_vec_array_as_list.vectors()[as_size_t(i)]).get(j),
-                                             (*vec_array_as_list.vectors()[as_size_t(i)]).get(j) * 2));
+                        expect(exactly_equal(mut_vec[j], vec_array_as_list.vectors()[as_size_t(i)][j] * 2));
+                        expect(exactly_equal(mut_vec_array_as_list.vectors()[as_size_t(i)][j],
+                                             vec_array_as_list.vectors()[as_size_t(i)][j] * 2));
                     }
                 }
             };
@@ -62,7 +61,7 @@ void check_random_vector_access(const VectorArrayInterface<F>& vec_array)
                 {
                     const auto& vec_as_dynamic_vec = vec_array.template vector_as<DynamicVector<F>>(i);
                     expect(constant<std::is_same_v<decltype(vec_as_dynamic_vec), const DynamicVector<F>&>>);
-                    expect(exactly_equal(vec_as_dynamic_vec, *vec_array_as_list.vectors()[as_size_t(i)]));
+                    expect(exactly_equal(vec_as_dynamic_vec, vec_array_as_list.vectors()[as_size_t(i)]));
                 }
             };
 
@@ -75,10 +74,10 @@ void check_random_vector_access(const VectorArrayInterface<F>& vec_array)
                     mut_vec_as_dynamic_vec.scal(F(2));
                     for (ssize_t j = 0; j < vec_array.dim(); ++j)
                     {
-                        expect(exactly_equal(mut_vec_as_dynamic_vec.get(j),
-                                             (*vec_array_as_list.vectors()[as_size_t(i)]).get(j) * 4));
-                        expect(exactly_equal((*mut_vec_array_as_list.vectors()[as_size_t(i)]).get(j),
-                                             (*vec_array_as_list.vectors()[as_size_t(i)]).get(j) * 4));
+                        expect(exactly_equal(mut_vec_as_dynamic_vec[j],
+                                             vec_array_as_list.vectors()[as_size_t(i)][j] * 4));
+                        expect(exactly_equal(mut_vec_array_as_list.vectors()[as_size_t(i)][j],
+                                             vec_array_as_list.vectors()[as_size_t(i)][j] * 4));
                     }
                 }
             };
@@ -96,7 +95,7 @@ int main()
 
     "ListVectorArray"_test = []<std::floating_point F>()
     {
-        using VecArray = ListVectorArray<F>;
+        using VecArray = ListVectorArray<DynamicVector<F>, F>;
         using VecArrayFactory = TestVectorArrayFactory<VecArray>;
 
         for (ssize_t size : {0, 1, 3, 4})

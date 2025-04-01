@@ -1,7 +1,6 @@
 #include <complex>
 #include <concepts>
 #include <iostream>
-#include <memory>
 #include <string_view>
 #include <tuple>
 #include <vector>
@@ -25,14 +24,14 @@
 
 namespace
 {
-template <class F>
-void print(const std::vector<std::shared_ptr<nias::VectorInterface<F>>>& vecs, std::string_view name)
+template <class VectorType>
+void print(const std::vector<VectorType>& vecs, std::string_view name)
 {
     std::cout << "======== " << name << " ========" << '\n';
     int i = 0;
     for (auto& vec : vecs)
     {
-        std::cout << "vec" << i++ << ": " << *vec << '\n';
+        std::cout << "vec" << i++ << ": " << vec << '\n';
     }
 
     // print result
@@ -41,7 +40,7 @@ void print(const std::vector<std::shared_ptr<nias::VectorInterface<F>>>& vecs, s
     {
         for (auto&& vec2 : vecs)
         {
-            std::cout << nias::dot_product(*vec1, *vec2) << " ";
+            std::cout << nias::dot_product(vec1, vec2) << " ";
         }
         std::cout << '\n';
     }
@@ -67,17 +66,16 @@ template <class F>
 void test_gram_schmidt()
 {
     using namespace nias;
+    using VectorType = DynamicVector<F>;
 
     // Create some input vectors and print them
-    const std::vector<std::shared_ptr<VectorInterface<F>>> vectors{
-        std::shared_ptr<VectorInterface<F>>(new DynamicVector{F(1.), F(2.), F(3.)}),
-        std::shared_ptr<VectorInterface<F>>(new DynamicVector{F(4.), F(5.), F(6.)}),
-        std::shared_ptr<VectorInterface<F>>(new DynamicVector{F(7.), F(8.), F(9.)})};
+    const std::vector<VectorType> vectors{VectorType{F(1.), F(2.), F(3.)}, VectorType{F(4.), F(5.), F(6.)},
+                                          VectorType{F(7.), F(8.), F(9.)}};
     print(vectors, "Input");
     std::cout << "\n";
 
     // Perform Gram-Schmidt orthogonalization and print result
-    auto vec_array = ListVectorArray<F>(vectors, 3);
+    auto vec_array = ListVectorArray<VectorType, F>(vectors, 3);
     auto orthonormalized_vectorarray = nias::gram_schmidt(vec_array);
     print(orthonormalized_vectorarray->vectors(), "Output");
 
@@ -94,11 +92,11 @@ void test_gram_schmidt()
             if constexpr (complex<F>)
             {
                 using R = typename F::value_type;
-                ret += std::conj(lhs.get(i)) * F(R(i + 1), R(0)) * rhs.get(i);
+                ret += std::conj(lhs[i]) * F(R(i + 1), R(0)) * rhs[i];
             }
             else
             {
-                ret += lhs.get(i) * F(i + 1) * rhs.get(i);
+                ret += lhs[i] * F(i + 1) * rhs[i];
             }
         }
         return ret;

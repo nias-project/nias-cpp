@@ -9,6 +9,7 @@
 #include <nias_cpp/checked_integer_cast.h>
 #include <nias_cpp/interfaces/vector.h>
 #include <nias_cpp/type_traits.h>
+#include <nias_cpp/vectorarray/list.h>
 
 // Example Vector class for testing
 template <class F>
@@ -90,12 +91,12 @@ class DynamicVector : public nias::VectorInterface<F>
     }
 
     // DynamicVector accessors
-    F& get(ssize_t i) override
+    F& operator[](ssize_t i) override
     {
         return data_[nias::as_size_t(i)];
     }
 
-    [[nodiscard]] const F& get(ssize_t i) const override
+    [[nodiscard]] const F& operator[](ssize_t i) const override
     {
         return data_[nias::as_size_t(i)];
     }
@@ -124,12 +125,26 @@ class DynamicVector : public nias::VectorInterface<F>
     {
         for (ssize_t i = 0; i < dim(); ++i)
         {
-            data_[nias::as_size_t(i)] += alpha * x.get(i);
+            data_[nias::as_size_t(i)] += alpha * x[i];
         }
     }
 
    private:
     std::vector<F> data_;
+};
+
+template <class F>
+struct nias::VectorTraits<DynamicVector<F>>
+{
+    using VectorType = DynamicVector<F>;
+    static constexpr auto dim_ = [](const VectorType& vec)
+    {
+        return vec.dim();
+    };
+    static constexpr auto copy_ = [](const VectorType& vec) -> VectorType
+    {
+        return vec;
+    };
 };
 
 

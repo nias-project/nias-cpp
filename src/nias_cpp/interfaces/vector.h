@@ -28,8 +28,8 @@ class VectorInterface
     VectorInterface& operator=(VectorInterface&&) = default;
 
     // accessors
-    virtual F& get(ssize_t i) = 0;
-    [[nodiscard]] virtual const F& get(ssize_t i) const = 0;
+    [[nodiscard]] virtual const F& operator[](ssize_t i) const = 0;
+    [[nodiscard]] virtual F& operator[](ssize_t i) = 0;
 
     // return the dimension (length) of the vector
     [[nodiscard]] virtual ssize_t dim() const = 0;
@@ -42,7 +42,7 @@ class VectorInterface
     {
         for (ssize_t i = 0; i < this->dim(); ++i)
         {
-            this->get(i) *= alpha;
+            (*this)[i] *= alpha;
         }
     }
 
@@ -56,7 +56,7 @@ class VectorInterface
         }
         for (ssize_t i = 0; i < this->dim(); ++i)
         {
-            this->get(i) += alpha * x.get(i);
+            (*this)[i] += alpha * x[i];
         }
     }
 };
@@ -67,7 +67,7 @@ std::ostream& operator<<(std::ostream& os, const VectorInterface<F>& vec)
     os << "[";
     for (ssize_t i = 0; i < vec.dim(); ++i)
     {
-        os << vec.get(i);
+        os << vec[i];
         if (i < vec.dim() - 1)
         {
             os << ", ";

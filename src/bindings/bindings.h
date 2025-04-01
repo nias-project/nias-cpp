@@ -75,22 +75,22 @@ auto bind_nias_vectorinterface(pybind11::module& m, const std::string& name = "V
                               alpha, x);
         }
 
-        F& get(ssize_t i) override
+        F& operator[](ssize_t i) override
         {
             PYBIND11_OVERRIDE_PURE_NAME(F&,            /* Return type */
                                         VecInterface,  /* Parent class */
                                         "__setitem__", /* Name of function in Python */
-                                        get,           /* Name of function in C++ */
+                                        operator[],    /* Name of function in C++ */
                                         i              /* Argument(s) */
             );
         }
 
-        [[nodiscard]] const F& get(ssize_t i) const override
+        [[nodiscard]] const F& operator[](ssize_t i) const override
         {
             PYBIND11_OVERRIDE_PURE_NAME(const F&,      /* Return type */
                                         VecInterface,  /* Parent class */
                                         "__getitem__", /* Name of function in Python */
-                                        get,           /* Name of function in C++ */
+                                        operator[],    /* Name of function in C++ */
                                         i              /* Argument(s) */
             );
         }
@@ -107,7 +107,8 @@ auto bind_nias_vectorinterface(pybind11::module& m, const std::string& name = "V
                    .def("copy", &VecInterface::copy)
                    .def("scal", &VecInterface::scal)
                    .def("axpy", &VecInterface::axpy)
-                   .def("get", py::overload_cast<ssize_t>(&VecInterface::get, py::const_));
+                   .def("__getitem__", py::overload_cast<ssize_t>(&VecInterface::operator[], py::const_));
+
     return ret;
 }
 
@@ -229,66 +230,43 @@ auto bind_nias_listvectorarray(pybind11::module& m, const std::string& field_typ
                               print              /* Name of function in C++ (must match Python name) */
             );
         }
+
+        void delete_vectors(const std::optional<Indices>& indices) override
+        {
+            PYBIND11_OVERRIDE_PURE_NAME(void,              /* Return type */
+                                        VecArrayInterface, /* Parent class */
+                                        "delete",          /* Name of function in Python */
+                                        delete_vectors,    /* Name of function in C++ */
+                                        indices            /* Argument(s) */
+            );
+        }
     };
 
     using VecArrayInterface = VectorArrayInterface<F>;
-    py::class_<VecArrayInterface, PyVecArrayInterface, std::shared_ptr<VecArrayInterface>>(
-        m, (field_type_name + "VectorArrayInterface").c_str())
-        .def("__len__",
-             [](const VecArrayInterface& v)
-             {
-                 return v.size();
-             })
-        .def_property_readonly("dim", &VecArrayInterface::dim)
-        .def("scalar_zero", &VecArrayInterface::scalar_zero)
-        .def("copy", &VecArrayInterface::copy)
-        .def("append", &VecArrayInterface::append)
-        // .def("delete", &VecArrayInterface::delete)
-        .def("scal", py::overload_cast<F, const std::optional<Indices>&>(&VecArrayInterface::scal))
-        .def("scal", py::overload_cast<const std::vector<F>&, const std::optional<Indices>&>(
-                         &VecArrayInterface::scal))
-        .def("axpy", py::overload_cast<F, const nias::VectorArrayInterface<F>&, const std::optional<Indices>&,
-                                       const std::optional<Indices>&>(&VecArrayInterface::axpy))
-        .def("axpy", py::overload_cast<const std::vector<F>&, const nias::VectorArrayInterface<F>&,
-                                       const std::optional<Indices>&, const std::optional<Indices>&>(
-                         &VecArrayInterface::axpy))
-        .def("is_compatible_array", &VecArrayInterface::is_compatible_array);
-
-    using ListVecArray = ListVectorArray<F>;
     auto ret =
-        py::class_<ListVecArray, VecArrayInterface, std::shared_ptr<ListVecArray>>(
-            m, (field_type_name + "ListVectorArray").c_str())
+        py::class_<VecArrayInterface, PyVecArrayInterface, std::shared_ptr<VecArrayInterface>>(
+            m, (field_type_name + "VectorArrayInterface").c_str())
             .def("__len__",
-                 [](const ListVecArray& v)
+                 [](const VecArrayInterface& v)
                  {
                      return v.size();
                  })
-            .def_property_readonly("dim", &ListVecArray::dim)
-            .def("copy", &ListVecArray::copy, py::arg("indices") = py::none())
-            .def("append",
-                 py::overload_cast<VecArrayInterface&, bool, const std::optional<Indices>&>(
-                     &ListVecArray::append),
-                 py::arg("other"), py::arg("remove_from_other") = false,
-                 py::arg("other_indices") = py::none())
-            .def("delete", &ListVecArray::delete_vectors, py::arg("indices"))
-            // .def("scal", py::overload_cast<F, const std::optional<Indices>&>(&ListVecArray::scal),
-            //      py::arg("alpha"), py::arg("indices") = py::none())
-            // .def("scal",
-            //      py::overload_cast<const std::vector<F>&, const std::optional<Indices>&>(&ListVecArray::scal),
-            //      py::arg("alpha"), py::arg("indices") = py::none())
-            // .def("axpy",
-            //      py::overload_cast<F, const VecArrayInterface&, const std::optional<Indices>&,
-            //                        const std::optional<Indices>&>(&ListVecArray::axpy),
-            //      py::arg("alpha"), py::arg("x"), py::arg("indices") = py::none(),
-            //      py::arg("x_indices") = py::none())
-            // .def("axpy",
-            //      py::overload_cast<const std::vector<F>&, const VecArrayInterface&,
-            //                        const std::optional<Indices>&, const std::optional<Indices>&>(
-            //          &ListVecArray::axpy),
-            //      py::arg("alpha"), py::arg("x"), py::arg("indices") = py::none(),
-            //      py::arg("x_indices") = py::none())
-            .def("is_compatible_array", &ListVecArray::is_compatible_array)
-            .def("print", &ListVecArray::print);
+            .def_property_readonly("dim", &VecArrayInterface::dim)
+            .def("scalar_zero", &VecArrayInterface::scalar_zero)
+            .def("copy", &VecArrayInterface::copy)
+            .def("append", &VecArrayInterface::append)
+            .def("scal", py::overload_cast<F, const std::optional<Indices>&>(&VecArrayInterface::scal))
+            .def("scal", py::overload_cast<const std::vector<F>&, const std::optional<Indices>&>(
+                             &VecArrayInterface::scal))
+            .def("axpy",
+                 py::overload_cast<F, const nias::VectorArrayInterface<F>&, const std::optional<Indices>&,
+                                   const std::optional<Indices>&>(&VecArrayInterface::axpy))
+            .def("axpy", py::overload_cast<const std::vector<F>&, const nias::VectorArrayInterface<F>&,
+                                           const std::optional<Indices>&, const std::optional<Indices>&>(
+                             &VecArrayInterface::axpy))
+            .def("is_compatible_array", &VecArrayInterface::is_compatible_array)
+            .def("delete", &VecArrayInterface::delete_vectors, py::arg("indices"));
+
     return ret;
 }
 

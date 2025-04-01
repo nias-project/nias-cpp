@@ -31,9 +31,9 @@ namespace nias
  *
  * \returns A new ListVectorArray containing the orthogonalized vectors.
  */
-template <floating_point_or_complex F, class... Args>
-std::shared_ptr<ListVectorArray<F>> gram_schmidt(
-    const ListVectorArray<F>& vec_array,
+template <class VectorType, floating_point_or_complex F, class... Args>
+std::shared_ptr<ListVectorArray<VectorType, F>> gram_schmidt(
+    const ListVectorArray<VectorType, F>& vec_array,
     const InnerProductInterface<F>& inner_product = EuclideanInnerProduct<F>(),
     Args&&... additional_python_args)
 {
@@ -53,7 +53,8 @@ std::shared_ptr<ListVectorArray<F>> gram_schmidt(
 
     // create a Python VectorArray
     using namespace pybind11::literals;  // for the _a literal
-    const auto py_vec_array = py::cast(vec_array, py::return_value_policy::reference);
+    const VectorArrayInterface<F>& vec_array_ref = vec_array;
+    const auto py_vec_array = py::cast(vec_array_ref, py::return_value_policy::reference);
     auto nias_vec_array = NiasVecArray("impl"_a = NiasVecArrayImpl(py_vec_array));
 
     // execute the Python gram_schmidt function
@@ -61,8 +62,8 @@ std::shared_ptr<ListVectorArray<F>> gram_schmidt(
     const py::object result = NiasGramSchmidt(nias_vec_array, NiasInnerProductWrapper(py_inner_product),
                                               "copy"_a = true, std::forward<Args>(additional_python_args)...);
 
-    auto ret = result.attr("impl").attr("impl").cast<std::shared_ptr<ListVectorArray<F>>>();
-    return ret;
+    auto ret = result.attr("impl").attr("impl").cast<std::shared_ptr<VectorArrayInterface<F>>>();
+    return std::dynamic_pointer_cast<ListVectorArray<VectorType, F>>(ret);
 }
 
 /**
@@ -72,8 +73,8 @@ std::shared_ptr<ListVectorArray<F>> gram_schmidt(
  * Gram-Schmidt orthogonalization algorithm from the NiAS Python module. Directly
  * modifies the input ListVectorArray in-place.
  */
-template <floating_point_or_complex F, class... Args>
-void gram_schmidt_in_place(ListVectorArray<F>& vec_array,
+template <class VectorType, floating_point_or_complex F, class... Args>
+void gram_schmidt_in_place(ListVectorArray<VectorType, F>& vec_array,
                            const InnerProductInterface<F>& inner_product = EuclideanInnerProduct<F>(),
                            Args&&... additional_python_args)
 {
@@ -93,7 +94,8 @@ void gram_schmidt_in_place(ListVectorArray<F>& vec_array,
 
     // create a Python VectorArray
     using namespace pybind11::literals;  // for the _a literal
-    const auto py_vec_array = py::cast(vec_array, py::return_value_policy::reference);
+    VectorArrayInterface<F>& vec_array_ref = vec_array;
+    const auto py_vec_array = py::cast(vec_array_ref, py::return_value_policy::reference);
     auto nias_vec_array = NiasVecArray("impl"_a = NiasVecArrayImpl(py_vec_array));
 
     // execute the Python gram_schmidt function

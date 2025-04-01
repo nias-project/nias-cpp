@@ -50,7 +50,7 @@ struct ExactlyEqualOpVec
         }
         for (ssize_t i = 0; i < lhs_.dim(); ++i)
         {
-            if (lhs_.get(i) != rhs_.get(i))
+            if (lhs_[i] != rhs_[i])
             {
                 return false;
             }
@@ -90,7 +90,7 @@ struct ApproxEqualOpVec
         }
         for (ssize_t i = 0; i < lhs_.dim(); ++i)
         {
-            if (!approx_equal((lhs_.get(i), rhs_.get(i))))
+            if (!approx_equal((lhs_[i], rhs_[i])))
             {
                 return false;
             }
@@ -212,19 +212,19 @@ struct TestVectorArrayFactory
     static std::shared_ptr<VectorArrayInterface<F>> iota(ssize_t /*size*/, ssize_t /*dim*/, F /*start*/) {}
 };
 
-template <floating_point_or_complex F>
-struct TestVectorArrayFactory<ListVectorArray<F>>
+template <class VectorType, floating_point_or_complex F>
+struct TestVectorArrayFactory<ListVectorArray<VectorType, F>>
 {
     static std::shared_ptr<VectorArrayInterface<F>> iota(ssize_t size, ssize_t dim, F start = F(1))
     {
-        auto vec_array = std::make_shared<ListVectorArray<F>>(dim);
+        auto vec_array = std::make_shared<ListVectorArray<VectorType, F>>(dim);
         auto current_number = start;
         for (ssize_t i = 0; i < size; ++i)
         {
-            const std::shared_ptr<VectorInterface<F>> new_vec = std::make_shared<DynamicVector<F>>(dim);
+            DynamicVector<F> new_vec(dim);
             for (ssize_t j = 0; j < dim; ++j)
             {
-                new_vec->get(j) = current_number;
+                new_vec[j] = current_number;
                 current_number += F(1);
             }
             vec_array->append(new_vec);

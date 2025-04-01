@@ -31,11 +31,11 @@ F dot_product(const VectorInterface<F>& lhs, const VectorInterface<F>& rhs)
     {
         if constexpr (complex<F>)
         {
-            ret += std::conj(lhs.get(i)) * rhs.get(i);
+            ret += std::conj(lhs[i] * rhs[i]);
         }
         else
         {
-            ret += lhs.get(i) * rhs.get(i);
+            ret += lhs[i] * rhs[i];
         }
     }
     return ret;
