@@ -6,11 +6,11 @@
 #include <nias_cpp/interfaces/vectorarray.h>
 #include <nias_cpp/interpreter.h>
 #include <nias_cpp/type_traits.h>
+#include <nias_cpp/vector/dynamic.h>
 #include <nias_cpp/vectorarray/numpy.h>
 #include <pybind11/numpy.h>
 
 #include "../boost_ext_ut_no_module.h"
-#include "../test_vector.h"
 #include "common.h"
 
 namespace
@@ -73,7 +73,7 @@ int main()
     using namespace boost::ut::bdd;
     ensure_interpreter_and_venv_are_active();
 
-    "NumpyVectorArray"_test = []<std::floating_point F>()
+    "NumpyVectorArray"_test = []<floating_point_or_complex F>()
     {
         using VecArray = NumpyVectorArray<F>;
         using VecArrayFactory = TestVectorArrayFactory<VecArray>;
@@ -134,7 +134,7 @@ int main()
                 };
             }
         }
-    } | std::tuple<float, double>{};
+    } | std::tuple<float, double, std::complex<float>, std::complex<double>>{};
 
     return 0;
 }

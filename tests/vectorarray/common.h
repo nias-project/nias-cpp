@@ -18,13 +18,13 @@
 #include <nias_cpp/interfaces/vector.h>
 #include <nias_cpp/interfaces/vectorarray.h>
 #include <nias_cpp/type_traits.h>
+#include <nias_cpp/vector/dynamic.h>
 #include <nias_cpp/vectorarray/list.h>
 #include <nias_cpp/vectorarray/numpy.h>
 #include <pybind11/numpy.h>
 
 #include "../boost_ext_ut_no_module.h"
 #include "../common.h"
-#include "../test_vector.h"
 
 // NOLINTBEGIN(google-global-names-in-headers)
 using namespace nias;
@@ -243,7 +243,7 @@ struct TestVectorArrayFactory<NumpyVectorArray<F>>
         {
             for (ssize_t j = 0; j < dim; ++j)
             {
-                array->set(i, j, start + (i * dim) + j);
+                array->set(i, j, start + F((i * dim) + j));
             }
         }
         return array;
@@ -257,7 +257,13 @@ struct TestVectorArrayFactory<pybind11::array_t<F>>
     {
         auto array = std::make_shared<pybind11::array_t<F>>(std::vector{size, dim});
         // NOLINTNEXTLINE(cppcoreguidelines-pro-bounds-pointer-arithmetic)
-        std::iota(array->mutable_data(), array->mutable_data() + (size * dim), start);
+        std::generate(array->mutable_data(), array->mutable_data() + (size * dim),
+                      [&start]()
+                      {
+                          const auto ret = start;
+                          start += F(1);
+                          return ret;
+                      });
         return array;
     }
 };

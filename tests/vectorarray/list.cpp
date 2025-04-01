@@ -7,11 +7,11 @@
 #include <nias_cpp/interfaces/vectorarray.h>
 #include <nias_cpp/interpreter.h>
 #include <nias_cpp/type_traits.h>
+#include <nias_cpp/vector/dynamic.h>
 #include <nias_cpp/vectorarray/list.h>
 #include <pybind11/numpy.h>
 
 #include "../boost_ext_ut_no_module.h"
-#include "../test_vector.h"
 #include "common.h"
 
 namespace
@@ -49,9 +49,9 @@ void check_random_vector_access(const VectorArrayInterface<F>& vec_array)
                     for (ssize_t j = 0; j < vec_array.dim(); ++j)
                     {
                         expect(exactly_equal(mut_vec.get(j),
-                                             (*vec_array_as_list.vectors()[as_size_t(i)]).get(j) * 2));
+                                             (*vec_array_as_list.vectors()[as_size_t(i)]).get(j) * F(2)));
                         expect(exactly_equal((*mut_vec_array_as_list.vectors()[as_size_t(i)]).get(j),
-                                             (*vec_array_as_list.vectors()[as_size_t(i)]).get(j) * 2));
+                                             (*vec_array_as_list.vectors()[as_size_t(i)]).get(j) * F(2)));
                     }
                 }
             };
@@ -76,9 +76,9 @@ void check_random_vector_access(const VectorArrayInterface<F>& vec_array)
                     for (ssize_t j = 0; j < vec_array.dim(); ++j)
                     {
                         expect(exactly_equal(mut_vec_as_dynamic_vec.get(j),
-                                             (*vec_array_as_list.vectors()[as_size_t(i)]).get(j) * 4));
+                                             (*vec_array_as_list.vectors()[as_size_t(i)]).get(j) * F(4)));
                         expect(exactly_equal((*mut_vec_array_as_list.vectors()[as_size_t(i)]).get(j),
-                                             (*vec_array_as_list.vectors()[as_size_t(i)]).get(j) * 4));
+                                             (*vec_array_as_list.vectors()[as_size_t(i)]).get(j) * F(4)));
                     }
                 }
             };
@@ -94,7 +94,7 @@ int main()
     using namespace boost::ut::bdd;
     ensure_interpreter_and_venv_are_active();
 
-    "ListVectorArray"_test = []<std::floating_point F>()
+    "ListVectorArray"_test = []<floating_point_or_complex F>()
     {
         using VecArray = ListVectorArray<F>;
         using VecArrayFactory = TestVectorArrayFactory<VecArray>;
@@ -142,7 +142,7 @@ int main()
                 };
             }
         }
-    } | std::tuple<float, double>{};
+    } | std::tuple<float, double, std::complex<float>, std::complex<double>>{};
 
     return 0;
 }

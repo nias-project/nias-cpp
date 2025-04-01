@@ -3,9 +3,8 @@
 
 #include <nias_cpp/algorithms/gram_schmidt.h>
 #include <nias_cpp/interfaces/vector.h>
+#include <nias_cpp/vector/dynamic.h>
 #include <nias_cpp/vectorarray/list.h>
-
-#include "test_vector.h"
 
 int main()
 {

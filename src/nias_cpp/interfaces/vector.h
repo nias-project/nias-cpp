@@ -34,6 +34,11 @@ class VectorInterface
     // return the dimension (length) of the vector
     [[nodiscard]] virtual ssize_t dim() const = 0;
 
+    [[nodiscard]] virtual ssize_t size() const
+    {
+        return dim();
+    }
+
     // copy the Vector to a new Vector
     [[nodiscard]] virtual std::shared_ptr<VectorInterface> copy() const = 0;
 

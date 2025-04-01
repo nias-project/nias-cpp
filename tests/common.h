@@ -7,6 +7,7 @@
 #include <ostream>
 
 #include <nias_cpp/concepts.h>
+#include <nias_cpp/type_traits.h>
 #include <pybind11/numpy.h>
 
 // NOLINTNEXTLINE(google-global-names-in-headers)
@@ -46,6 +47,8 @@ auto exactly_equal(const Lhs& lhs, const Rhs& rhs)
 template <floating_point_or_complex F>
 struct FloatingPointApproxEqualOp
 {
+    using RealType = real_t<F>;
+
     FloatingPointApproxEqualOp(F lhs, F rhs)
         : lhs_(lhs)
         , rhs_(rhs)
@@ -54,8 +57,8 @@ struct FloatingPointApproxEqualOp
 
     [[nodiscard]] constexpr explicit operator bool() const
     {
-        constexpr F abs_tol = std::numeric_limits<F>::epsilon() * 10;
-        constexpr F rel_tol = abs_tol;
+        constexpr RealType abs_tol = std::numeric_limits<RealType>::epsilon() * 10;
+        constexpr RealType rel_tol = abs_tol;
         return std::abs(lhs_ - rhs_) < abs_tol + std::max(std::abs(lhs_), std::abs(lhs_)) * rel_tol;
     }
 

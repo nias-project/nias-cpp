@@ -15,13 +15,13 @@
 #include <nias_cpp/interfaces/vectorarray.h>
 #include <nias_cpp/interpreter.h>
 #include <nias_cpp/type_traits.h>
+#include <nias_cpp/vector/dynamic.h>
 #include <nias_cpp/vectorarray/list.h>
 #include <nias_cpp/vectorarray/numpy.h>
 #include <pybind11/cast.h>
 #include <pybind11/numpy.h>
 
 #include "boost_ext_ut_no_module.h"
-#include "test_vector.h"
 
 namespace
 {

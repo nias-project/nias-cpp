@@ -17,11 +17,13 @@
 #include <nias_cpp/type_traits.h>
 #include <pybind11/numpy.h>
 
+#include "nias_cpp/concepts.h"
+
 namespace nias
 {
 
 
-template <std::floating_point F>
+template <floating_point_or_complex F>
 class NumpyVectorArray : public VectorArrayInterface<F>
 {
     using ThisType = NumpyVectorArray;
