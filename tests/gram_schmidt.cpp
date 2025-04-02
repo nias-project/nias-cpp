@@ -113,9 +113,14 @@ void test_gram_schmidt()
     print(orthonormalized_vectorarray_3->vectors(), "Output with offset");
 
     // in-place
+    auto vec_array_copy = vec_array.copy();
     nias::gram_schmidt_in_place(vec_array);
     std::cout << "\n";
     print(vec_array.vectors(), "Output in-place");
+
+    auto& vec_array_copy_as_list = dynamic_cast<ListVectorArray<F>&>(*vec_array_copy);
+    nias::gram_schmidt_in_place(vec_array_copy_as_list, inner_product, "offset"_a = 1, "check"_a = false);
+    print(vec_array_copy_as_list.vectors(), "Output in-place with custom inner product and offset");
 }
 
 template <std::floating_point F>

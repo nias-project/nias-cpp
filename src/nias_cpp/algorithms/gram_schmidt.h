@@ -72,9 +72,10 @@ std::shared_ptr<ListVectorArray<F>> gram_schmidt(
  * Gram-Schmidt orthogonalization algorithm from the NiAS Python module. Directly
  * modifies the input ListVectorArray in-place.
  */
-template <floating_point_or_complex F>
+template <floating_point_or_complex F, class... Args>
 void gram_schmidt_in_place(ListVectorArray<F>& vec_array,
-                           const InnerProductInterface<F>& inner_product = EuclideanInnerProduct<F>())
+                           const InnerProductInterface<F>& inner_product = EuclideanInnerProduct<F>(),
+                           Args&&... additional_python_args)
 {
     ensure_interpreter_and_venv_are_active();
 
@@ -97,7 +98,8 @@ void gram_schmidt_in_place(ListVectorArray<F>& vec_array,
 
     // execute the Python gram_schmidt function
     const auto py_inner_product = py::cast(inner_product, py::return_value_policy::reference);
-    NiasGramSchmidt(nias_vec_array, NiasCppInnerProduct(py_inner_product), "copy"_a = false);
+    NiasGramSchmidt(nias_vec_array, NiasCppInnerProduct(py_inner_product), "copy"_a = false,
+                    std::forward<Args>(additional_python_args)...);
 }
 
 /**
