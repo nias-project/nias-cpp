@@ -14,16 +14,54 @@
 #include <nias_cpp/interfaces/vectorarray.h>
 #include <nias_cpp/interpreter.h>
 #include <nias_cpp/type_traits.h>
+#include <nias_cpp/vector/stl.h>
+#include <nias_cpp/vector/traits.h>
 #include <nias_cpp/vectorarray/list.h>
 #include <nias_cpp/vectorarray/numpy.h>
 #include <pybind11/cast.h>
 #include <pybind11/numpy.h>
 
 #include "boost_ext_ut_no_module.h"
-#include "test_vector.h"
 
 namespace
 {
+
+template <nias::floating_point_or_complex F>
+std::string print_scalar(const F& scalar)
+{
+    if constexpr (nias::complex<F>)
+    {
+        return std::format("({:.2f}, {:.2f})", scalar.real(), scalar.imag());
+    }
+    else
+    {
+        return std::format("{:.2f}", scalar);
+    }
+}
+
+template <nias::floating_point_or_complex F>
+std::string print_vec(const nias::VectorInterface<F>& vec)
+{
+    std::string ret = "[";
+    for (ssize_t i = 0; i < vec.dim(); ++i)
+    {
+        ret += print_scalar(vec[i]);
+        if (i != vec.dim() - 1)
+        {
+            ret += ", ";
+        }
+    }
+    ret += "]";
+    return ret;
+}
+
+template <class VectorType>
+    requires nias::has_vector_traits<VectorType> && (!nias::derived_from_vector_interface<VectorType>)
+std::string print_vec(const VectorType& vec)
+{
+    return print_vec(nias::VectorWrapper<VectorType>(vec));
+}
+
 template <class VectorType>
 void print(const std::vector<VectorType>& vecs, std::string_view name)
 {
@@ -31,7 +69,7 @@ void print(const std::vector<VectorType>& vecs, std::string_view name)
     int i = 0;
     for (auto& vec : vecs)
     {
-        std::cout << "vec" << i++ << ": " << vec << '\n';
+        std::cout << "vec" << i++ << ": " << print_vec(vec) << '\n';
     }
 
     // print result
@@ -66,7 +104,7 @@ template <class F>
 void test_gram_schmidt()
 {
     using namespace nias;
-    using VectorType = DynamicVector<F>;
+    using VectorType = std::vector<F>;
 
     // Create some input vectors and print them
     const std::vector<VectorType> vectors{VectorType{F(1.), F(2.), F(3.)}, VectorType{F(4.), F(5.), F(6.)},
@@ -75,7 +113,7 @@ void test_gram_schmidt()
     std::cout << "\n";
 
     // Perform Gram-Schmidt orthogonalization and print result
-    auto vec_array = ListVectorArray<VectorType, F>(vectors, 3);
+    auto vec_array = ListVectorArray<VectorType>(vectors, 3);
     auto orthonormalized_vectorarray = nias::gram_schmidt(vec_array);
     print(orthonormalized_vectorarray->vectors(), "Output");
 

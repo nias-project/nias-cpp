@@ -23,13 +23,14 @@ namespace nias
 {
 
 
-template <class VectorType, floating_point_or_complex F>
-class ListVectorArray : public VectorArrayInterface<F>
+template <class VectorType>
+class ListVectorArray : public VectorArrayInterface<typename VectorTraits<VectorType>::ScalarType>
 {
     using ThisType = ListVectorArray;
+    using F = typename VectorTraits<VectorType>::ScalarType;
     using VectorInterfaceType = VectorInterface<F>;
     using InterfaceType = VectorArrayInterface<F>;
-    using VectorWrapperType = VectorWrapper<VectorType, F>;
+    using VectorWrapperType = VectorWrapper<VectorType>;
     using VectorTraitsType = VectorTraits<VectorType>;
 
    public:
@@ -96,12 +97,12 @@ class ListVectorArray : public VectorArrayInterface<F>
 
     [[nodiscard]] const VectorInterface<F>& vector(ssize_t i) const override
     {
-        return vectors_.at(as_size_t(i)).backend();
+        return vectors_.at(as_size_t(i));
     }
 
     [[nodiscard]] VectorInterface<F>& vector(ssize_t i) override
     {
-        return vectors_.at(as_size_t(i)).backend();
+        return vectors_.at(as_size_t(i));
     }
 
     [[nodiscard]] F get(ssize_t i, ssize_t j) const override

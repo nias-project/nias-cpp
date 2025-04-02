@@ -28,7 +28,7 @@ namespace nias
 
 template <class F>
     requires std::floating_point<F> || std::is_same_v<F, std::complex<typename F::value_type>>
-auto bind_nias_vectorinterface(pybind11::module& m, const std::string& name = "VectorInterface")
+auto bind_vector_interface(pybind11::module& m, const std::string& name = "VectorInterface")
 {
     namespace py = pybind11;
 
@@ -114,7 +114,7 @@ auto bind_nias_vectorinterface(pybind11::module& m, const std::string& name = "V
 
 template <class F>
     requires std::floating_point<F> || std::is_same_v<F, std::complex<typename F::value_type>>
-auto bind_nias_listvectorarray(pybind11::module& m, const std::string& field_type_name)
+auto bind_vectorarray_interface(pybind11::module& m, const std::string& field_type_name)
 {
     namespace py = pybind11;
 

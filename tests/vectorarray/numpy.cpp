@@ -6,16 +6,16 @@
 #include <nias_cpp/interfaces/vectorarray.h>
 #include <nias_cpp/interpreter.h>
 #include <nias_cpp/type_traits.h>
+#include <nias_cpp/vector/stl.h>
 #include <nias_cpp/vectorarray/numpy.h>
 #include <pybind11/numpy.h>
 
 #include "../boost_ext_ut_no_module.h"
-#include "../test_vector.h"
 #include "common.h"
 
 namespace
 {
-template <floating_point_or_complex F>
+template <class VectorType, floating_point_or_complex F>
 void check_random_vector_access(const VectorArrayInterface<F>& v)
 {
     using namespace boost::ut::bdd;
@@ -45,13 +45,13 @@ void check_random_vector_access(const VectorArrayInterface<F>& v)
                     expect(fatal(throws<NotImplementedError>(
                         [&]()
                         {
-                            static_cast<void>(v.template vector_as<DynamicVector<F>>(i));
+                            static_cast<void>(v.template unwrapped_vector<VectorType>(i));
                         })));
 
                     expect(fatal(throws<NotImplementedError>(
                         [&]()
                         {
-                            v_mut->template vector_as<DynamicVector<F>>(i).scal(F(42));
+                            v_mut->template unwrapped_vector<VectorType>(i).resize(1);
                         })));
                 };
                 then("v remains unchanged") = [&]()
@@ -75,6 +75,7 @@ int main()
 
     "NumpyVectorArray"_test = []<std::floating_point F>()
     {
+        using VectorType = std::vector<F>;
         using VecArray = NumpyVectorArray<F>;
         using VecArrayFactory = TestVectorArrayFactory<VecArray>;
         using PyArrayFactory = TestVectorArrayFactory<pybind11::array_t<F>>;
@@ -129,7 +130,7 @@ int main()
                     };
                     scenario("random vector access") = [&]()
                     {
-                        check_random_vector_access(*v);
+                        check_random_vector_access<VectorType>(*v);
                     };
                 };
             }

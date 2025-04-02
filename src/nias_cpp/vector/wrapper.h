@@ -10,29 +10,18 @@
 #include <nias_cpp/interfaces/vector.h>
 #include <nias_cpp/interfaces/vectorarray.h>
 #include <nias_cpp/type_traits.h>
+#include <nias_cpp/vector/traits.h>
 
 namespace nias
 {
 
-
-template <class V>
-struct VectorTraits
-{
-    using VectorType = V;
-    static constexpr auto dim_ = [](const VectorType& vec)
-    {
-        return vec.dim();
-    }();
-    static constexpr auto copy_ = [](const VectorType& vec) -> VectorType
-    {
-        return vec;
-    }();
-};
-
-template <class VectorType, floating_point_or_complex F>
-class VectorWrapper : public VectorInterface<F>
+template <class VectorType>
+    requires has_vector_traits<VectorType>
+class VectorWrapper : public VectorInterface<typename VectorTraits<VectorType>::ScalarType>
 {
    public:
+    using F = typename VectorTraits<VectorType>::ScalarType;
+
     explicit VectorWrapper(const VectorType& vector)
         : vector_(VectorTraits<VectorType>::copy_(vector))
     {
@@ -45,12 +34,12 @@ class VectorWrapper : public VectorInterface<F>
 
     [[nodiscard]] F& operator[](ssize_t i) override
     {
-        return vector_[i];
+        return VectorTraits<VectorType>::get_(vector_, i);
     }
 
     [[nodiscard]] const F& operator[](ssize_t i) const override
     {
-        return vector_[i];
+        return VectorTraits<VectorType>::const_get_(vector_, i);
     }
 
     VectorType& backend()
@@ -65,7 +54,7 @@ class VectorWrapper : public VectorInterface<F>
 
     [[nodiscard]] std::shared_ptr<VectorInterface<F>> copy() const override
     {
-        return std::make_shared<VectorType>(VectorTraits<VectorType>::copy_(vector_));
+        return std::make_shared<VectorWrapper>(VectorTraits<VectorType>::copy_(vector_));
     }
 
    private:
