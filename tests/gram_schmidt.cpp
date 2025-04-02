@@ -1,7 +1,7 @@
 #include <complex>
 #include <concepts>
 #include <iostream>
-#include <memory>
+#include <string>
 #include <string_view>
 #include <tuple>
 #include <vector>
@@ -15,24 +15,63 @@
 #include <nias_cpp/interfaces/vectorarray.h>
 #include <nias_cpp/interpreter.h>
 #include <nias_cpp/type_traits.h>
+#include <nias_cpp/vector/dynamic.h>
+#include <nias_cpp/vector/stl.h>
+#include <nias_cpp/vector/traits.h>
 #include <nias_cpp/vectorarray/list.h>
 #include <nias_cpp/vectorarray/numpy.h>
 #include <pybind11/cast.h>
 #include <pybind11/numpy.h>
 
 #include "boost_ext_ut_no_module.h"
-#include "test_vector.h"
 
 namespace
 {
-template <class F>
-void print(const std::vector<std::shared_ptr<nias::VectorInterface<F>>>& vecs, std::string_view name)
+
+template <nias::floating_point_or_complex F>
+std::string print_scalar(const F& scalar)
+{
+    if constexpr (nias::complex<F>)
+    {
+        return std::format("({:.2f}, {:.2f})", scalar.real(), scalar.imag());
+    }
+    else
+    {
+        return std::format("{:.2f}", scalar);
+    }
+}
+
+template <nias::floating_point_or_complex F>
+std::string print_vec(const nias::VectorInterface<F>& vec)
+{
+    std::string ret = "[";
+    for (ssize_t i = 0; i < vec.dim(); ++i)
+    {
+        ret += print_scalar(vec[i]);
+        if (i != vec.dim() - 1)
+        {
+            ret += ", ";
+        }
+    }
+    ret += "]";
+    return ret;
+}
+
+template <class VectorType>
+    requires nias::has_vector_traits<VectorType> && (!nias::derived_from_vector_interface<VectorType>)
+std::string print_vec(const VectorType& vec)
+{
+    return print_vec(nias::VectorWrapper<VectorType>(vec));
+}
+
+template <class VectorType>
+void print(const std::vector<VectorType>& vecs, std::string_view name)
 {
     std::cout << "======== " << name << " ========" << '\n';
     int i = 0;
     for (auto& vec : vecs)
     {
-        std::cout << "vec" << i++ << ": " << *vec << '\n';
+        std::cout << "vec" << i++ << ": " << print_vec(vec) << '\n';
     }
 
     // print result
@@ -41,7 +80,7 @@ void print(const std::vector<std::shared_ptr<nias::VectorInterface<F>>>& vecs, s
     {
         for (auto&& vec2 : vecs)
         {
-            std::cout << nias::dot_product(*vec1, *vec2) << " ";
+            std::cout << nias::dot_product(vec1, vec2) << " ";
         }
         std::cout << '\n';
     }
@@ -63,21 +102,20 @@ void print(const nias::VectorArrayInterface<F>& vec_array, std::string_view name
     }
 }
 
-template <class F>
+template <class VectorType>
 void test_gram_schmidt()
 {
     using namespace nias;
+    using F = typename VectorTraits<VectorType>::ScalarType;
 
     // Create some input vectors and print them
-    const std::vector<std::shared_ptr<VectorInterface<F>>> vectors{
-        std::shared_ptr<VectorInterface<F>>(new DynamicVector{F(1.), F(2.), F(3.)}),
-        std::shared_ptr<VectorInterface<F>>(new DynamicVector{F(4.), F(5.), F(6.)}),
-        std::shared_ptr<VectorInterface<F>>(new DynamicVector{F(7.), F(8.), F(9.)})};
+    const std::vector<VectorType> vectors{VectorType{F(1.), F(2.), F(3.)}, VectorType{F(4.), F(5.), F(6.)},
+                                          VectorType{F(7.), F(8.), F(9.)}};
     print(vectors, "Input");
     std::cout << "\n";
 
     // Perform Gram-Schmidt orthogonalization and print result
-    auto vec_array = ListVectorArray<F>(vectors, 3);
+    auto vec_array = ListVectorArray<VectorType>(vectors, 3);
     auto orthonormalized_vectorarray = nias::gram_schmidt(vec_array);
     print(orthonormalized_vectorarray->vectors(), "Output");
 
@@ -94,11 +132,11 @@ void test_gram_schmidt()
             if constexpr (complex<F>)
             {
                 using R = typename F::value_type;
-                ret += std::conj(lhs.get(i)) * F(R(i + 1), R(0)) * rhs.get(i);
+                ret += std::conj(lhs[i]) * F(R(i + 1), R(0)) * rhs[i];
             }
             else
             {
-                ret += lhs.get(i) * F(i + 1) * rhs.get(i);
+                ret += lhs[i] * F(i + 1) * rhs[i];
             }
         }
         return ret;
@@ -118,7 +156,7 @@ void test_gram_schmidt()
     std::cout << "\n";
     print(vec_array.vectors(), "Output in-place");
 
-    auto& vec_array_copy_as_list = dynamic_cast<ListVectorArray<F>&>(*vec_array_copy);
+    auto& vec_array_copy_as_list = dynamic_cast<ListVectorArray<VectorType>&>(*vec_array_copy);
     nias::gram_schmidt_in_place(vec_array_copy_as_list, inner_product, "offset"_a = 1, "check"_a = false);
     print(vec_array_copy_as_list.vectors(), "Output in-place with custom inner product and offset");
 }
@@ -160,14 +198,17 @@ int main()
         std::cout << "\n";
     } | std::tuple<float, double>{};
 
-    "gram_schmidt"_test = []<floating_point_or_complex F>
+    "F ="_test = []<floating_point_or_complex F>
     {
-        std::cout << "=============================================================================\n";
-        std::cout << "Running Gram-Schmidt (Python implementations) for type: " << reflection::type_name<F>()
-                  << "\n";
-        std::cout << "=============================================================================\n\n";
-        test_gram_schmidt<F>();
-        std::cout << "\n";
+        "V ="_test = []<class VectorType>
+        {
+            std::cout << "=============================================================================\n";
+            std::cout << "Running Gram-Schmidt (Python implementations) for type: "
+                      << reflection::type_name<VectorType>() << "\n";
+            std::cout << "=============================================================================\n\n";
+            test_gram_schmidt<VectorType>();
+            std::cout << "\n";
+        } | std::tuple<std::vector<F>, DynamicVector<F>>{};
     } | std::tuple<float, double, std::complex<float>, std::complex<double>>{};
     return 0;
 }

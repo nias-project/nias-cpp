@@ -14,6 +14,7 @@
 #include <nias_cpp/indices.h>
 #include <nias_cpp/interfaces/vector.h>
 #include <nias_cpp/type_traits.h>
+#include <nias_cpp/vector/traits.h>
 #include <sys/types.h>
 
 namespace nias
@@ -184,6 +185,11 @@ class VectorArrayView : public ConstVectorArrayView<F>
    private:
     VectorArrayInterface<F>& vec_array_;
 };
+
+// forward to be able to use VectorWrapper in the unwrapped_vector method
+template <class VectorType>
+    requires has_vector_traits<VectorType>
+class VectorWrapper;
 
 template <floating_point_or_complex F>
 class VectorArrayInterface
@@ -392,44 +398,50 @@ class VectorArrayInterface
     }
 
     /**
-     * \brief Returns a const reference to the vector at index \c i cast to the specified type \c VectorType.
-     *
-     * \tparam VectorType The type to which the vector should be cast. Must derive from VectorInterface<F>.
-     * \param i The index of the vector to retrieve.
-     * \throws InvalidArgumentError if the vector cannot be cast to \c VectorType.
-     * \throws NotImplementedError if the vector array implementation does not provide random vector access
-     * \sa vector(ssize_t)
-     */
+    * \brief Returns a const reference to the vector at index \c i cast to the specified type \c VectorType.
+    *
+    * In the ListVectorArray, the vectors are stored as VectorWrappers, so vector(i) will give a
+    * VectorWrapper object. VectorWrapper is derived from VectorInterface, so we can use dynamic_cast
+    * to get a VectorWrapper reference, and then call the backend() method of VectorWrapper which returns
+    * a reference to the underlying vector.
+    *
+    * \tparam VectorType The type to which the vector should be cast.
+    * \param i The index of the vector to retrieve.
+    * \throws InvalidArgumentError if the vector cannot be cast to \c VectorWrapper<VectorType>
+    * \throws NotImplementedError if the vector array implementation does not provide random vector access
+    * \sa vector(ssize_t)
+    */
     template <class VectorType>
-        requires std::derived_from<VectorType, VectorInterface<F>>
-    [[nodiscard]] const VectorType& vector_as(ssize_t i) const
+        requires has_vector_traits<VectorType>
+    [[nodiscard]] const VectorType& unwrapped_vector(ssize_t i) const
     {
         try
         {
-            return dynamic_cast<const VectorType&>(vector(i));
+            return dynamic_cast<const VectorWrapper<VectorType>&>(vector(i)).backend();
         }
         catch (std::bad_cast&)
         {
-            throw InvalidArgumentError("vector at index " + std::to_string(i) + " is not of type " +
+            throw InvalidArgumentError("vector at index " + std::to_string(i) + " is not a wrapped " +
                                        typeid(VectorType).name());
         }
     }
 
     /**
-     * \brief Returns a mutable reference to the vector at index \c i cast to the specified type \c VectorType.
-     * \sa vector_as(ssize_t) const
+     * \brief Returns a reference to the vector at index \c i cast to the specified type \c VectorType.
+     *
+     * \sa unwrapped_vector(i) const
      */
     template <class VectorType>
-        requires std::derived_from<VectorType, VectorInterface<F>>
-    [[nodiscard]] VectorType& vector_as(ssize_t i)
+        requires has_vector_traits<VectorType>
+    [[nodiscard]] VectorType& unwrapped_vector(ssize_t i)
     {
         try
         {
-            return dynamic_cast<VectorType&>(vector(i));
+            return dynamic_cast<VectorWrapper<VectorType>&>(vector(i)).backend();
         }
         catch (std::bad_cast&)
         {
-            throw InvalidArgumentError("vector at index " + std::to_string(i) + " is not of type " +
+            throw InvalidArgumentError("vector at index " + std::to_string(i) + " is not a wrapped " +
                                        typeid(VectorType).name());
         }
     }

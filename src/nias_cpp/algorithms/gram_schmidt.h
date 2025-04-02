@@ -12,6 +12,7 @@
 #include <nias_cpp/interfaces/vectorarray.h>
 #include <nias_cpp/interpreter.h>
 #include <nias_cpp/type_traits.h>
+#include <nias_cpp/vector/traits.h>
 #include <nias_cpp/vectorarray/list.h>
 #include <pybind11/cast.h>
 #include <pybind11/pybind11.h>
@@ -31,10 +32,12 @@ namespace nias
  *
  * \returns A new ListVectorArray containing the orthogonalized vectors.
  */
-template <floating_point_or_complex F, class... Args>
-std::shared_ptr<ListVectorArray<F>> gram_schmidt(
-    const ListVectorArray<F>& vec_array,
-    const InnerProductInterface<F>& inner_product = EuclideanInnerProduct<F>(),
+template <class VectorType, class... Args>
+    requires nias::has_vector_traits<VectorType>
+std::shared_ptr<ListVectorArray<VectorType>> gram_schmidt(
+    const ListVectorArray<VectorType>& vec_array,
+    const InnerProductInterface<typename VectorTraits<VectorType>::ScalarType>& inner_product =
+        EuclideanInnerProduct<typename VectorTraits<VectorType>::ScalarType>(),
     Args&&... additional_python_args)
 {
     ensure_interpreter_and_venv_are_active();
@@ -53,7 +56,9 @@ std::shared_ptr<ListVectorArray<F>> gram_schmidt(
 
     // create a Python VectorArray
     using namespace pybind11::literals;  // for the _a literal
-    const auto py_vec_array = py::cast(vec_array, py::return_value_policy::reference);
+    using F = typename VectorTraits<VectorType>::ScalarType;
+    const VectorArrayInterface<F>& vec_array_ref = vec_array;
+    const auto py_vec_array = py::cast(vec_array_ref, py::return_value_policy::reference);
     auto nias_vec_array = NiasVecArray("impl"_a = NiasVecArrayImpl(py_vec_array));
 
     // execute the Python gram_schmidt function
@@ -61,8 +66,8 @@ std::shared_ptr<ListVectorArray<F>> gram_schmidt(
     const py::object result = NiasGramSchmidt(nias_vec_array, NiasInnerProductWrapper(py_inner_product),
                                               "copy"_a = true, std::forward<Args>(additional_python_args)...);
 
-    auto ret = result.attr("impl").attr("impl").cast<std::shared_ptr<ListVectorArray<F>>>();
-    return ret;
+    auto ret = result.attr("impl").attr("impl").cast<std::shared_ptr<VectorArrayInterface<F>>>();
+    return std::dynamic_pointer_cast<ListVectorArray<VectorType>>(ret);
 }
 
 /**
@@ -72,10 +77,13 @@ std::shared_ptr<ListVectorArray<F>> gram_schmidt(
  * Gram-Schmidt orthogonalization algorithm from the NiAS Python module. Directly
  * modifies the input ListVectorArray in-place.
  */
-template <floating_point_or_complex F, class... Args>
-void gram_schmidt_in_place(ListVectorArray<F>& vec_array,
-                           const InnerProductInterface<F>& inner_product = EuclideanInnerProduct<F>(),
-                           Args&&... additional_python_args)
+template <class VectorType, class... Args>
+    requires nias::has_vector_traits<VectorType>
+void gram_schmidt_in_place(
+    ListVectorArray<VectorType>& vec_array,
+    const InnerProductInterface<typename VectorTraits<VectorType>::ScalarType>& inner_product =
+        EuclideanInnerProduct<typename VectorTraits<VectorType>::ScalarType>(),
+    Args&&... additional_python_args)
 {
     ensure_interpreter_and_venv_are_active();
 
@@ -93,7 +101,13 @@ void gram_schmidt_in_place(ListVectorArray<F>& vec_array,
 
     // create a Python VectorArray
     using namespace pybind11::literals;  // for the _a literal
-    const auto py_vec_array = py::cast(vec_array, py::return_value_policy::reference);
+    using F = typename VectorTraits<VectorType>::ScalarType;
+    // vec_array_ref and py_vec_array can be declared as const on the C++ side but that is misleading
+    // because the array will be modified on the Python side, so we just silence the clang-tidy complaint here
+    // NOLINTBEGIN(misc-const-correctness)
+    VectorArrayInterface<F>& vec_array_ref = vec_array;
+    auto py_vec_array = py::cast(vec_array_ref, py::return_value_policy::reference);
+    // NOLINTEND(misc-const-correctness)
     auto nias_vec_array = NiasVecArray("impl"_a = NiasVecArrayImpl(py_vec_array));
 
     // execute the Python gram_schmidt function

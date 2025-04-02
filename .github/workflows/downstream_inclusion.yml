@@ -48,7 +48,6 @@ jobs:
       run: |
         mkdir "${TEST_PROJECT_DIR}"
         cp nias-cpp/.test_projects/main.cpp "${TEST_PROJECT_DIR}/"
-        cp nias-cpp/tests/test_vector.h "${TEST_PROJECT_DIR}/"
         cp nias-cpp/.test_projects/CMakeLists.txt.Submodule "${TEST_PROJECT_DIR}/CMakeLists.txt"
 
     - name: Checkout nias_cpp as submodule
@@ -94,7 +93,6 @@ jobs:
       run: |
         mkdir "${TEST_PROJECT_DIR}"
         cp nias-cpp/.test_projects/main.cpp "${TEST_PROJECT_DIR}/"
-        cp nias-cpp/tests/test_vector.h "${TEST_PROJECT_DIR}/"
         cp nias-cpp/.test_projects/CMakeLists.txt.FetchContent "${TEST_PROJECT_DIR}/CMakeLists.txt"
         sed -i 's/<GIT_TAG_PLACEHOLDER>/${{ github.event.pull_request.head.sha }}/' "${TEST_PROJECT_DIR}/CMakeLists.txt"
 
@@ -141,7 +139,6 @@ jobs:
       run: |
         mkdir "${TEST_PROJECT_DIR}"
         cp nias-cpp/.test_projects/main.cpp "${TEST_PROJECT_DIR}/"
-        cp nias-cpp/tests/test_vector.h "${TEST_PROJECT_DIR}/"
         cp nias-cpp/.test_projects/CMakeLists.txt.VirtualEnv "${TEST_PROJECT_DIR}/CMakeLists.txt"
 
     - name: Configure and build test project
