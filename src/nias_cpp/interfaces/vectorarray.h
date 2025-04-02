@@ -439,7 +439,7 @@ class VectorArrayInterface
         {
             return dynamic_cast<VectorWrapper<VectorType>&>(vector(i)).backend();
         }
-        catch (std::bad_cast& e)
+        catch (std::bad_cast&)
         {
             throw InvalidArgumentError("vector at index " + std::to_string(i) + " is not a wrapped " +
                                        typeid(VectorType).name());
