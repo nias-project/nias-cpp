@@ -42,12 +42,12 @@ class VectorWrapper : public VectorInterface<typename VectorTraits<VectorType>::
         return VectorTraits<VectorType>::const_get_(vector_, i);
     }
 
-    VectorType& backend()
+    [[nodiscard]] VectorType& backend()
     {
         return vector_;
     }
 
-    const VectorType& backend() const
+    [[nodiscard]] const VectorType& backend() const
     {
         return vector_;
     }

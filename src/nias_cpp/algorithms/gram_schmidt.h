@@ -12,6 +12,7 @@
 #include <nias_cpp/interfaces/vectorarray.h>
 #include <nias_cpp/interpreter.h>
 #include <nias_cpp/type_traits.h>
+#include <nias_cpp/vector/traits.h>
 #include <nias_cpp/vectorarray/list.h>
 #include <pybind11/cast.h>
 #include <pybind11/pybind11.h>
@@ -32,6 +33,7 @@ namespace nias
  * \returns A new ListVectorArray containing the orthogonalized vectors.
  */
 template <class VectorType, class... Args>
+    requires nias::has_vector_traits<VectorType>
 std::shared_ptr<ListVectorArray<VectorType>> gram_schmidt(
     const ListVectorArray<VectorType>& vec_array,
     const InnerProductInterface<typename VectorTraits<VectorType>::ScalarType>& inner_product =
@@ -76,6 +78,7 @@ std::shared_ptr<ListVectorArray<VectorType>> gram_schmidt(
  * modifies the input ListVectorArray in-place.
  */
 template <class VectorType, class... Args>
+    requires nias::has_vector_traits<VectorType>
 void gram_schmidt_in_place(
     ListVectorArray<VectorType>& vec_array,
     const InnerProductInterface<typename VectorTraits<VectorType>::ScalarType>& inner_product =
@@ -99,8 +102,12 @@ void gram_schmidt_in_place(
     // create a Python VectorArray
     using namespace pybind11::literals;  // for the _a literal
     using F = typename VectorTraits<VectorType>::ScalarType;
+    // vec_array_ref and py_vec_array can be declared as const on the C++ side but that is misleading
+    // because the array will be modified on the Python side, so we just silence the clang-tidy complaint here
+    // NOLINTBEGIN(misc-const-correctness)
     VectorArrayInterface<F>& vec_array_ref = vec_array;
-    const auto py_vec_array = py::cast(vec_array_ref, py::return_value_policy::reference);
+    auto py_vec_array = py::cast(vec_array_ref, py::return_value_policy::reference);
+    // NOLINTEND(misc-const-correctness)
     auto nias_vec_array = NiasVecArray("impl"_a = NiasVecArrayImpl(py_vec_array));
 
     // execute the Python gram_schmidt function

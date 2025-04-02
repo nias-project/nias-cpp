@@ -1,5 +1,6 @@
 #include <concepts>
 #include <tuple>
+#include <vector>
 
 #include <nias_cpp/concepts.h>
 #include <nias_cpp/exceptions.h>

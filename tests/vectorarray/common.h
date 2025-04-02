@@ -18,14 +18,15 @@
 #include <nias_cpp/interfaces/vector.h>
 #include <nias_cpp/interfaces/vectorarray.h>
 #include <nias_cpp/type_traits.h>
+#include <nias_cpp/vector/dynamic.h>
 #include <nias_cpp/vector/stl.h>
+#include <nias_cpp/vector/wrapper.h>
 #include <nias_cpp/vectorarray/list.h>
 #include <nias_cpp/vectorarray/numpy.h>
 #include <pybind11/numpy.h>
 
 #include "../boost_ext_ut_no_module.h"
 #include "../common.h"
-#include "nias_cpp/vector/wrapper.h"
 
 // NOLINTBEGIN(google-global-names-in-headers)
 using namespace nias;
@@ -271,10 +272,10 @@ struct TestVectorArrayFactory
     static std::shared_ptr<VectorArrayInterface<F>> iota(ssize_t /*size*/, ssize_t /*dim*/, F /*start*/) {}
 };
 
-template <class VectorType>
-struct TestVectorArrayFactory<ListVectorArray<VectorType>>
+template <floating_point_or_complex F>
+struct TestVectorArrayFactory<ListVectorArray<std::vector<F>>>
 {
-    using F = typename VectorTraits<VectorType>::ScalarType;
+    using VectorType = std::vector<F>;
 
     static std::shared_ptr<VectorArrayInterface<F>> iota(ssize_t size, ssize_t dim, F start = F(1))
     {
@@ -286,6 +287,29 @@ struct TestVectorArrayFactory<ListVectorArray<VectorType>>
             for (ssize_t j = 0; j < dim; ++j)
             {
                 new_vec[as_size_t(j)] = current_number;
+                current_number += F(1);
+            }
+            vec_array->append(new_vec);
+        }
+        return vec_array;
+    }
+};
+
+template <floating_point_or_complex F>
+struct TestVectorArrayFactory<ListVectorArray<DynamicVector<F>>>
+{
+    using VectorType = DynamicVector<F>;
+
+    static std::shared_ptr<VectorArrayInterface<F>> iota(ssize_t size, ssize_t dim, F start = F(1))
+    {
+        auto vec_array = std::make_shared<ListVectorArray<VectorType>>(dim);
+        auto current_number = start;
+        for (ssize_t i = 0; i < size; ++i)
+        {
+            VectorType new_vec(dim);
+            for (ssize_t j = 0; j < dim; ++j)
+            {
+                new_vec[j] = current_number;
                 current_number += F(1);
             }
             vec_array->append(new_vec);

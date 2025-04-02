@@ -136,6 +136,6 @@ Checks: >
 FormatStyle: file
 
 CheckOptions:
-  - { key: misc-include-cleaner.IgnoreHeaders, value: pybind11/detail/.* }
+  - { key: misc-include-cleaner.IgnoreHeaders, value: pybind11/detail/.*;nias_cpp/vector/stl.h }
   # See https://clang.llvm.org/extra/clang-tidy/checks/readability/identifier-naming.html for a list of possible options
   - { key: readability-identifier-naming.NamespaceCase,          value: lower_case }

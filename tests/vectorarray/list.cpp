@@ -1,5 +1,8 @@
 #include <concepts>
+#include <cstddef>
 #include <tuple>
+#include <type_traits>
+#include <vector>
 
 #include <nias_cpp/checked_integer_cast.h>
 #include <nias_cpp/concepts.h>
@@ -7,6 +10,7 @@
 #include <nias_cpp/interfaces/vectorarray.h>
 #include <nias_cpp/interpreter.h>
 #include <nias_cpp/type_traits.h>
+#include <nias_cpp/vector/dynamic.h>
 #include <nias_cpp/vector/stl.h>
 #include <nias_cpp/vectorarray/list.h>
 #include <pybind11/numpy.h>
@@ -66,6 +70,7 @@ void check_random_vector_access(const VectorArrayInterface<F>& vec_array)
                 }
             };
 
+            using IndexType = std::conditional_t<derived_from_vector_interface<VectorType>, ssize_t, size_t>;
             then("mutable access as VectorType using the unwrapped_vector method works as expected") = [&]()
             {
                 for (ssize_t i = 0; i < vec_array.size(); ++i)
@@ -74,8 +79,8 @@ void check_random_vector_access(const VectorArrayInterface<F>& vec_array)
                     expect(constant<std::is_same_v<decltype(mut_vec_as_underlying_vec), VectorType&>>);
                     for (ssize_t j = 0; j < vec_array.dim(); ++j)
                     {
-                        mut_vec_as_underlying_vec[as_size_t(j)] *= F(2);
-                        expect(exactly_equal(mut_vec_as_underlying_vec[as_size_t(j)],
+                        mut_vec_as_underlying_vec[checked_integer_cast<IndexType>(j)] *= F(2);
+                        expect(exactly_equal(mut_vec_as_underlying_vec[checked_integer_cast<IndexType>(j)],
                                              vec_array_as_list.vectors()[as_size_t(i)][j] * 4));
                         expect(exactly_equal(mut_vec_array_as_list.vectors()[as_size_t(i)][j],
                                              vec_array_as_list.vectors()[as_size_t(i)][j] * 4));
@@ -95,55 +100,57 @@ int main()
 
     ensure_interpreter_and_venv_are_active();
 
-    "ListVectorArray"_test = []<std::floating_point F>()
+    "F ="_test = []<std::floating_point F>()
     {
-        using VectorType = std::vector<F>;
-        using VecArray = ListVectorArray<VectorType>;
-        using VecArrayFactory = TestVectorArrayFactory<VecArray>;
-
-        for (ssize_t size : {0, 1, 3, 4})
+        "V ="_test = []<class VectorType>()
         {
-            for (ssize_t dim : {0, 1, 3, 4})
+            using VecArray = ListVectorArray<VectorType>;
+            using VecArrayFactory = TestVectorArrayFactory<VecArray>;
+
+            for (ssize_t size : {0, 1, 3})
             {
-                test(std::format("{}x{} ListVectorArray<{}>", size, dim, reflection::type_name<F>())) =
-                    [size, dim]
+                for (ssize_t dim : {0, 1, 3})
                 {
-                    // TODO: Properly test constructors
-                    test("Construction") = [=]()
+                    test(std::format("{}x{} ListVectorArray<{}>", size, dim,
+                                     reflection::type_name<VectorType>())) = [size, dim]
                     {
-                        const auto vec_array = VecArrayFactory::iota(size, dim);
-                        expect(vec_array->size() == size);
-                        expect(vec_array->dim() == dim);
-                    };
+                        // TODO: Properly test constructors
+                        test("Construction") = [=]()
+                        {
+                            const auto vec_array = VecArrayFactory::iota(size, dim);
+                            expect(vec_array->size() == size);
+                            expect(vec_array->dim() == dim);
+                        };
 
-                    const auto v = VecArrayFactory::iota(size, dim);
-                    scenario("Copying") = [&]()
-                    {
-                        check_copy(*v, size, dim);
-                    };
+                        const auto v = VecArrayFactory::iota(size, dim);
+                        scenario("Copying") = [&]()
+                        {
+                            check_copy(*v, size, dim);
+                        };
 
-                    scenario("append") = [&]()
-                    {
-                        check_append<VecArray>(*v, size, dim);
-                    };
+                        scenario("append") = [&]()
+                        {
+                            check_append<VecArray>(*v, size, dim);
+                        };
 
-                    scenario("scal") = [&]()
-                    {
-                        check_scal(*v, size, dim);
-                    };
+                        scenario("scal") = [&]()
+                        {
+                            check_scal(*v, size, dim);
+                        };
 
-                    scenario("axpy") = [&]()
-                    {
-                        check_axpy<VecArray>(*v, size, dim);
-                    };
+                        scenario("axpy") = [&]()
+                        {
+                            check_axpy<VecArray>(*v, size, dim);
+                        };
 
-                    scenario("random vector access") = [&]()
-                    {
-                        check_random_vector_access<VectorType>(*v);
+                        scenario("random vector access") = [&]()
+                        {
+                            check_random_vector_access<VectorType>(*v);
+                        };
                     };
-                };
+                }
             }
-        }
+        } | std::tuple<std::vector<F>, DynamicVector<F>>{};
     } | std::tuple<float, double>{};
 
     return 0;

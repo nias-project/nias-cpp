@@ -1,6 +1,8 @@
 #ifndef NIAS_CPP_VECTOR_TRAITS_H
 #define NIAS_CPP_VECTOR_TRAITS_H
 
+#include <concepts>
+
 #include <nias_cpp/type_traits.h>
 
 namespace nias
@@ -30,7 +32,7 @@ template <class VectorType>
 concept has_vector_traits = requires(VectorType vec) {
     typename VectorTraits<VectorType>::VectorType;
     typename VectorTraits<VectorType>::ScalarType;
-    { VectorTraits<VectorType>::dim_(vec) } -> std::convertible_to<ssize_t>;
+    { VectorTraits<VectorType>::dim_(vec) } -> std::same_as<ssize_t>;
     { VectorTraits<VectorType>::copy_(vec) } -> std::same_as<VectorType>;
     {
         VectorTraits<VectorType>::get_(vec, 0)

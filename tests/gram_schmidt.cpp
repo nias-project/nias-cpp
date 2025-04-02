@@ -1,6 +1,7 @@
 #include <complex>
 #include <concepts>
 #include <iostream>
+#include <string>
 #include <string_view>
 #include <tuple>
 #include <vector>
@@ -14,6 +15,7 @@
 #include <nias_cpp/interfaces/vectorarray.h>
 #include <nias_cpp/interpreter.h>
 #include <nias_cpp/type_traits.h>
+#include <nias_cpp/vector/dynamic.h>
 #include <nias_cpp/vector/stl.h>
 #include <nias_cpp/vector/traits.h>
 #include <nias_cpp/vectorarray/list.h>
@@ -100,11 +102,11 @@ void print(const nias::VectorArrayInterface<F>& vec_array, std::string_view name
     }
 }
 
-template <class F>
+template <class VectorType>
 void test_gram_schmidt()
 {
     using namespace nias;
-    using VectorType = std::vector<F>;
+    using F = typename VectorTraits<VectorType>::ScalarType;
 
     // Create some input vectors and print them
     const std::vector<VectorType> vectors{VectorType{F(1.), F(2.), F(3.)}, VectorType{F(4.), F(5.), F(6.)},
@@ -154,7 +156,7 @@ void test_gram_schmidt()
     std::cout << "\n";
     print(vec_array.vectors(), "Output in-place");
 
-    auto& vec_array_copy_as_list = dynamic_cast<ListVectorArray<F>&>(*vec_array_copy);
+    auto& vec_array_copy_as_list = dynamic_cast<ListVectorArray<VectorType>&>(*vec_array_copy);
     nias::gram_schmidt_in_place(vec_array_copy_as_list, inner_product, "offset"_a = 1, "check"_a = false);
     print(vec_array_copy_as_list.vectors(), "Output in-place with custom inner product and offset");
 }
@@ -196,14 +198,17 @@ int main()
         std::cout << "\n";
     } | std::tuple<float, double>{};
 
-    "gram_schmidt"_test = []<floating_point_or_complex F>
+    "F ="_test = []<floating_point_or_complex F>
     {
-        std::cout << "=============================================================================\n";
-        std::cout << "Running Gram-Schmidt (Python implementations) for type: " << reflection::type_name<F>()
-                  << "\n";
-        std::cout << "=============================================================================\n\n";
-        test_gram_schmidt<F>();
-        std::cout << "\n";
+        "V ="_test = []<class VectorType>
+        {
+            std::cout << "=============================================================================\n";
+            std::cout << "Running Gram-Schmidt (Python implementations) for type: "
+                      << reflection::type_name<VectorType>() << "\n";
+            std::cout << "=============================================================================\n\n";
+            test_gram_schmidt<VectorType>();
+            std::cout << "\n";
+        } | std::tuple<std::vector<F>, DynamicVector<F>>{};
     } | std::tuple<float, double, std::complex<float>, std::complex<double>>{};
     return 0;
 }
