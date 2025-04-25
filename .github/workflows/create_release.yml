@@ -1,0 +1,170 @@
+---
+name: Create Release
+
+on:
+  workflow_call:
+    inputs:
+      version:
+        description: Version to release
+        type: string
+        required: true
+      # we do not allow a git SHA here and branches will be filtered in the job
+      # this way we guarantee to only release from a commit that has been tested
+      branch:
+        description: Which Git branch to base the release on
+        required: false
+        type: string
+        default: main
+      increment_patch_for_computed_version:
+        description: |
+          Whether to increment the patch version for the computed version.
+          If false, the minor version will be incremented.
+        required: false
+        type: boolean
+        default: false
+    secrets:
+      REPO_ACCESS_PAT:
+        description: Use with tagging so workflows will run on the pushed tag
+        required: true
+    outputs:
+      tag:
+        description: The tag that was created
+        value: ${{ jobs.release.outputs.tag }}
+      sha:
+        description: The SHA that was tagged
+        value: ${{ jobs.release.outputs.sha }}
+
+concurrency:
+  group: ${{ github.repository }}
+
+jobs:
+  release:
+    name: Prepare Release
+    runs-on: ubuntu-24.04
+    outputs:
+      tag: ${{ steps.computed_version.outputs.tag }}
+      sha: ${{ steps.computed_version.outputs.sha }}
+    steps:
+    - name: Setup Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: '3.11'
+    - name: Install Python dependencies
+      run: |
+        python -m pip install pygithub==1.59.0 packaging
+    - name: Compute version
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      id: computed_version
+      shell: python {0}
+      run: |
+        import bisect
+        import os
+        from pathlib import Path
+
+        from github import Github
+        from packaging.version import InvalidVersion, Version, parse
+
+        class IncorrectVersionError(RuntimeError):
+            pass
+
+        REPONAME = os.environ["GITHUB_REPOSITORY"]
+        REPO = Github(os.environ["GITHUB_TOKEN"]).get_repo(REPONAME)
+
+        def github_output(tag, sha):
+            try:
+                Path(os.environ['GITHUB_OUTPUT']).open('at').write(f"tag={tag}\nsha={sha}\n")
+            except KeyError:
+                print(f"ERROR github output not found to write:\n``\ntag={tag}\nsha={sha}\n```")
+
+        def get_version_tags() -> list[Version]:
+            all_tags = REPO.get_tags()
+
+            version_tags = []
+            for tag in all_tags:
+                try:
+                    bisect.insort(version_tags, parse(tag.name))
+                except InvalidVersion:
+                    continue
+            return sorted(version_tags)
+
+        def assert_plausible_version(version_str: str):
+            version_tags = get_version_tags()
+
+            if not version_str.startswith('v'):
+                raise IncorrectVersionError(f"Version does not start with 'v', rejecting {version_str}!")
+            parts = version_str.split('.')
+            if len(parts) != 3:  # noqa: PLR2004
+                raise IncorrectVersionError(f"Version does not have 3 parts, rejecting {version_str}!")
+            version = parse(version_str)
+            if version in version_tags:
+                raise IncorrectVersionError(f"Version is already tagged, rejecting {version_str}!")
+            # https://packaging.pypa.io/en/stable/version.html
+            last_release_version = version_tags[-1]
+            # We are currently using 0.MINOR.PATCH as a versioning scheme.
+            # Thus, there are only two types of releases:
+            # - bugfix releases, which increment the micro (PATCH) for any given release
+            # - releases, which use an ever incrementing minor and 0 as the major
+            #   and set the micro to 0
+            if version.micro == 0:
+                # This is a new release.
+                # it cannot jump more than one minor version
+                if version.minor != last_release_version.minor + 1:
+                    raise IncorrectVersionError(
+                        f"New releases need to increment the MINOR version of the previous one ({last_release_version}) by exactly one, rejecting {version_str}!"
+                    )
+            else:
+                # This is a bugfix release
+                release_to_be_fixed = parse(f"{version.major}.{version.minor}.{version.micro - 1}")
+                if not any([tag == release_to_be_fixed for tag in version_tags]):
+                    raise IncorrectVersionError(
+                        f"Bugfix releases are only allowed for existing releases, and need to increment by one, rejecting {version_str}!"
+                    )
+
+        def _next_version(patch: bool) -> str:
+            version_tags = get_version_tags()
+            last_release_version = version_tags[-1]
+            # Version objects are immutable
+            if patch:
+                version = parse(f"{last_release_version.major}.{last_release_version.minor}.{last_release_version.micro+1}")
+            else:
+                version = parse(f"{last_release_version.major}.{last_release_version.minor+1}.0")
+            return f"v{version}"
+
+        def compute_version(version_str: str) -> str:
+            try:
+                version = parse(version_str)
+            except InvalidVersion:
+                patch = '${{inputs.increment_patch_for_computed_version}}'.lower() == 'true'
+                version = _next_version(patch)
+            return version
+
+        def compute_sha(branch):
+            return REPO.get_branch(branch).commit.sha
+
+        branch = "${{ inputs.branch }}"
+        version = compute_version("${{ inputs.version }}")
+        sha = compute_sha(branch)
+        assert_plausible_version(version)
+        github_output(version, sha)
+
+    - name: Bump version and push tag
+      uses: mathieudutour/github-tag-action@v6.2
+      with:
+        github_token: ${{ secrets.REPO_ACCESS_PAT }}
+        custom_tag: ${{ steps.computed_version.outputs.tag }}
+        commit_sha: ${{ steps.computed_version.outputs.sha }}
+        create_annotated_tag: true
+        # our tag already has a 'v' prefix
+        tag_prefix: ''
+    - name: Create Github Release
+      uses: softprops/action-gh-release@v2
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        tag_name: ${{ steps.computed_version.outputs.tag }}
+        # only toggle this once the artifacts got added
+        draft: true
+        prerelease: false
+        generate_release_notes: true
+        token: ${{ secrets.REPO_ACCESS_PAT }}
