@@ -25,7 +25,7 @@ template <class LhsVectorType, class RhsVectorType>
              !derived_from_vector_interface<LhsVectorType> && !derived_from_vector_interface<RhsVectorType>)
 auto dot_product(const LhsVectorType& lhs, const RhsVectorType& rhs)
 {
-    return dot_product(VectorWrapper<LhsVectorType>(lhs), VectorWrapper<RhsVectorType>(rhs));
+    return dot_product(VectorWrapper<LhsVectorType>(lhs, false), VectorWrapper<RhsVectorType>(rhs, false));
 }
 
 template <floating_point_or_complex F>

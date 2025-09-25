@@ -61,7 +61,7 @@ template <class VectorType>
     requires nias::has_vector_traits<VectorType> && (!nias::derived_from_vector_interface<VectorType>)
 std::string print_vec(const VectorType& vec)
 {
-    return print_vec(nias::VectorWrapper<VectorType>(vec));
+    return print_vec(nias::VectorWrapper<VectorType>(vec, false));
 }
 
 template <class VectorType>
@@ -115,7 +115,7 @@ void test_gram_schmidt()
     std::cout << "\n";
 
     // Perform Gram-Schmidt orthogonalization and print result
-    auto vec_array = ListVectorArray<VectorType>(vectors, 3);
+    auto vec_array = ListVectorArray<VectorType>(vectors, 3, true);
     auto orthonormalized_vectorarray = nias::gram_schmidt(vec_array);
     print(orthonormalized_vectorarray->vectors(), "Output");
 

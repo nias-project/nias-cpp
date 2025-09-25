@@ -17,6 +17,7 @@
 #include <nias_cpp/interfaces/vector.h>
 #include <nias_cpp/interfaces/vectorarray.h>
 #include <nias_cpp/type_traits.h>
+#include <nias_cpp/vector/traits.h>
 #include <nias_cpp/vector/wrapper.h>
 
 namespace nias
@@ -40,38 +41,28 @@ class ListVectorArray : public VectorArrayInterface<typename VectorTraits<Vector
     {
     }
 
-    // TODO: Can we figure out dim from the vectors here? If so, we could remove the dim parameter or at least make it optional.
-    // TODO: Accept arbitrary ranges of vectors (not just std::vector)
-    // TODO: Avoid copies if possible
-    //   - Store lvalue vectors by reference (maybe add a boolean parameter to enforce a copy)
-    //   - Store rvalue vectors by moving them
-    ListVectorArray(const std::vector<VectorType>& vectors, ssize_t dim)
+    template <std::ranges::range R>
+        requires has_vector_traits<typename R::value_type>
+    explicit ListVectorArray(const R& vectors, ssize_t dim, bool copy = true)
         : vectors_()
         , dim_(dim)
     {
-        // std::cout << "VectorArray constructor" << std::endl;
-        vectors_.reserve(vectors.size());
+        vectors_.reserve(std::ranges::size(vectors));
         for (const auto& vector : vectors)
         {
-            vectors_.push_back(VectorWrapperType(vector));
+            vectors_.push_back(VectorWrapperType(vector, copy));
         }
         check_vec_dimensions();
     }
 
-    ListVectorArray(const std::vector<VectorWrapperType>& vectors, ssize_t dim)
-        : vectors_(vectors)
-        , dim_(dim)
-    {
-        check_vec_dimensions();
-    }
-
-    // NOLINTNEXTLINE(cppcoreguidelines-rvalue-reference-param-not-moved)
-    ListVectorArray(std::vector<VectorType>&& vectors, ssize_t dim)
+    template <std::ranges::range R>
+        requires has_vector_traits<typename R::value_type>
+    explicit ListVectorArray(R&& vectors, ssize_t dim)
         : vectors_()
         , dim_(dim)
     {
         vectors_.reserve(vectors.size());
-        for (auto&& vector : vectors)
+        for (auto&& vector : std::forward<R>(vectors))
         {
             vectors_.emplace_back(VectorWrapperType(std::move(vector)));
         }
@@ -130,7 +121,6 @@ class ListVectorArray : public VectorArrayInterface<typename VectorTraits<Vector
     [[nodiscard]] std::shared_ptr<InterfaceType> copy(
         const std::optional<Indices>& indices = std::nullopt) const override
     {
-        // std::cout << "Copy called in VecArray!" << std::endl;
         if (!indices)
         {
             return std::make_shared<ThisType>(vectors_, dim_);
@@ -158,7 +148,7 @@ class ListVectorArray : public VectorArrayInterface<typename VectorTraits<Vector
     // TODO: Think about append signatures
     void append(const VectorType& new_vector)
     {
-        vectors_.push_back(VectorWrapperType(VectorTraitsType::copy_(new_vector)));
+        vectors_.push_back(VectorWrapperType(VectorTraitsType::copy(new_vector)));
     }
 
     void append(const std::vector<VectorType>& new_vectors)
@@ -166,7 +156,7 @@ class ListVectorArray : public VectorArrayInterface<typename VectorTraits<Vector
         vectors_.reserve(vectors_.size() + new_vectors.size());
         for (const auto& vec : new_vectors)
         {
-            vectors_.push_back(VectorWrapperType(VectorTraitsType::copy_(vec)));
+            vectors_.push_back(VectorWrapperType(VectorTraitsType::copy(vec)));
         }
     }
 

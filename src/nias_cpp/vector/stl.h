@@ -14,19 +14,19 @@ struct nias::VectorTraits<std::vector<F>>
 {
     using VectorType = std::vector<F>;
     using ScalarType = F;
-    static constexpr auto dim_ = [](const VectorType& vec) -> ssize_t
+    static constexpr auto dim = [](const VectorType& vec) -> ssize_t
     {
         return as_ssize_t(vec.size());
     };
-    static constexpr auto copy_ = [](const VectorType& vec) -> VectorType
+    static constexpr auto copy = [](const VectorType& vec) -> VectorType
     {
         return vec;
     };
-    static constexpr auto get_ = [](VectorType& vec, ssize_t i) -> F&
+    static constexpr auto get = [](VectorType& vec, ssize_t i) -> F&
     {
         return vec[as_size_t(i)];
     };
-    static constexpr auto const_get_ = [](const VectorType& vec, ssize_t i) -> const F&
+    static constexpr auto const_get = [](const VectorType& vec, ssize_t i) -> const F&
     {
         return vec[as_size_t(i)];
     };

@@ -32,14 +32,16 @@ template <class VectorType>
 concept has_vector_traits = requires(VectorType vec) {
     typename VectorTraits<VectorType>::VectorType;
     typename VectorTraits<VectorType>::ScalarType;
-    { VectorTraits<VectorType>::dim_(vec) } -> std::same_as<ssize_t>;
-    { VectorTraits<VectorType>::copy_(vec) } -> std::same_as<VectorType>;
+    { VectorTraits<VectorType>::dim(vec) } -> std::same_as<ssize_t>;
+    { VectorTraits<VectorType>::copy(vec) } -> std::same_as<VectorType>;
     {
-        VectorTraits<VectorType>::get_(vec, 0)
-    } -> std::same_as<typename VectorTraits<VectorType>::ScalarType&>;
+        VectorTraits<VectorType>::get(vec, 0)
+    }
+    -> any_of<typename VectorTraits<VectorType>::ScalarType&, typename VectorTraits<VectorType>::ScalarType>;
     {
-        VectorTraits<VectorType>::const_get_(vec, 0)
-    } -> std::same_as<const typename VectorTraits<VectorType>::ScalarType&>;
+        VectorTraits<VectorType>::const_get(vec, 0)
+    } -> any_of<const typename VectorTraits<VectorType>::ScalarType&,
+                typename VectorTraits<VectorType>::ScalarType>;
 };
 
 

@@ -120,7 +120,8 @@ template <class VectorType>
 struct ExactlyEqualOpVec
 {
     ExactlyEqualOpVec(const VectorType& lhs, const VectorType& rhs)
-        : exactly_equal_op_vec_interface_(VectorWrapper<VectorType>(lhs), VectorWrapper<VectorType>(rhs))
+        : exactly_equal_op_vec_interface_(VectorWrapper<VectorType>(lhs, false),
+                                          VectorWrapper<VectorType>(rhs, false))
     {
     }
 
