@@ -222,6 +222,7 @@ class NumpyVectorArray : public VectorArrayInterface<F>
                 throw InvalidStateError("indices_to_keep has wrong size");
             }
         }
+        // numpy arrays have a fixed size so we cannot modify the array in place
         auto new_array = pybind11::array_t<F>({new_size, dim()});
         for (ssize_t i = 0; i < std::ssize(indices_to_keep); ++i)
         {

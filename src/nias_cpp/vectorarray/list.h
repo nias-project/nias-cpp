@@ -40,6 +40,11 @@ class ListVectorArray : public VectorArrayInterface<typename VectorTraits<Vector
     {
     }
 
+    // TODO: Can we figure out dim from the vectors here? If so, we could remove the dim parameter or at least make it optional.
+    // TODO: Accept arbitrary ranges of vectors (not just std::vector)
+    // TODO: Avoid copies if possible
+    //   - Store lvalue vectors by reference (maybe add a boolean parameter to enforce a copy)
+    //   - Store rvalue vectors by moving them
     ListVectorArray(const std::vector<VectorType>& vectors, ssize_t dim)
         : vectors_()
         , dim_(dim)
