@@ -1,9 +1,11 @@
 #ifndef NIAS_CPP_INTERFACES_VECTOR_H
 #define NIAS_CPP_INTERFACES_VECTOR_H
 
+#include <concepts>
 #include <format>
 #include <memory>
 #include <ostream>
+#include <type_traits>
 
 #include <nias_cpp/concepts.h>
 #include <nias_cpp/exceptions.h>
@@ -97,20 +99,20 @@ template <class V>
 struct VectorTraits<V>
 {
     using VectorType = V;
-    using ScalarType = std::decay_t<decltype(std::declval<VectorType>()[0])>;
-    static constexpr auto dim_ = [](const VectorType& vec) -> ssize_t
+    using ScalarType = std::remove_cvref_t<decltype(std::declval<VectorType>()[0])>;
+    static constexpr auto dim = [](const VectorType& vec) -> ssize_t
     {
         return vec.dim();
     };
-    static constexpr auto copy_ = [](const VectorType& vec) -> VectorType
+    static constexpr auto copy = [](const VectorType& vec) -> VectorType
     {
         return *std::dynamic_pointer_cast<VectorType>(vec.copy());
     };
-    static constexpr auto get_ = [](VectorType& vec, ssize_t i) -> ScalarType&
+    static constexpr auto get = [](VectorType& vec, ssize_t i) -> ScalarType&
     {
         return vec[i];
     };
-    static constexpr auto const_get_ = [](const VectorType& vec, ssize_t i) -> const ScalarType&
+    static constexpr auto const_get = [](const VectorType& vec, ssize_t i) -> const ScalarType&
     {
         return vec[i];
     };
