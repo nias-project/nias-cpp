@@ -17,7 +17,7 @@ authors = [
   {name = "Tobias Leibner", email = "tobias.leibner@arup.com"}
 ]
 dependencies = [
-  "pybind11==2.13.6",
+  "pybind11==3.0.1",
   "nias@git+https://github.com/nias-project/nias@add_cpp_vectorarray"
 ]
 
