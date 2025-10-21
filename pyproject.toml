@@ -3,15 +3,15 @@
 # License: BSD 2-Clause License (https://opensource.org/licenses/BSD-2-Clause)
 
 [build-system]
-requires = ["scikit-build-core>=0.3.3", "pybind11==2.13.6"]
+requires = ["scikit-build-core>=0.3.3"]
 build-backend = "scikit_build_core.build"
 
 [project]
 name = "nias_cpp"
-version = "0.1.1"
+version = "0.1.2"
 description = "C++ bindings for NIAS - Numerics in Abstract Spaces"
 readme = "README.md"
-requires-python = ">=3.10"
+requires-python = ">=3.11"
 authors = [
   {name = "Felix Schindler", email = "felix.schindler@uni-muenster.de"},
   {name = "Tobias Leibner", email = "tobias.leibner@arup.com"}
