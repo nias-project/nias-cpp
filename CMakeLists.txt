@@ -13,7 +13,7 @@ if(SKBUILD)
 else()
     project(
         nias_cpp
-        VERSION 0.1.1
+        VERSION 0.1.2
         LANGUAGES CXX)
 endif()
 set(CMAKE_CXX_STANDARD 23)
@@ -64,10 +64,12 @@ include(GNUInstallDirs)
 set(NIAS_CPP_INCLUDE_INSTALL_DIR ${CMAKE_INSTALL_INCLUDEDIR})
 set(NIAS_CPP_REL_CMAKE_INSTALL_DIR "nias_cpp/cmake")
 
-# ensure that pybind11 and uv are available
+# ensure that uv, python, and pybind11 are available
 list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_LIST_DIR}/cmake")
-include(NiasCppEnsureUvAndPybind11)
-ensure_uv_and_pybind11_are_available()
+include(NiasCppManageDependencies)
+ensure_uv_is_available()
+ensure_python_is_available()
+ensure_pybind11_is_available()
 
 include(NiasCppAddLibrary)
 nias_cpp_add_library()
@@ -77,10 +79,6 @@ if(DEFINED ENV{VIRTUAL_ENV})
     # TODO: check that nias_cpp is installed in the virtual environment
 else()
     # if no virtualenv is active, we set up our own virtual environment to install our python dependencies
-    find_package(
-        Python
-        COMPONENTS Interpreter
-        REQUIRED)
     set(NIAS_CPP_VENV_DIR ${CMAKE_CURRENT_BINARY_DIR}/nias_cpp_venv/$<CONFIG>)
     add_custom_target(create_venv COMMAND ${UV_EXECUTABLE} venv --python ${Python_EXECUTABLE} --quiet
                                           ${NIAS_CPP_VENV_DIR})
