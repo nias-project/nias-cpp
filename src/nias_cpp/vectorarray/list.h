@@ -8,6 +8,7 @@
 #include <set>
 #include <string>
 #include <typeinfo>
+#include <utility>
 #include <vector>
 
 #include <nias_cpp/checked_integer_cast.h>
@@ -48,9 +49,9 @@ class ListVectorArray : public VectorArrayInterface<typename VectorWrapperTraits
         , dim_(dim)
     {
         vectors_.reserve(std::ranges::size(vectors));
-        for (auto&& vector : std::forward<R>(vectors))
+        for (auto&& vector : vectors)
         {
-            vectors_.emplace_back(VectorWrapperType(std::forward<decltype(vector)>(vector), copy));
+            vectors_.emplace_back(VectorWrapperType(std::forward_like<R>(vector), copy));
         }
         check_vec_dimensions();
     }
@@ -135,6 +136,11 @@ class ListVectorArray : public VectorArrayInterface<typename VectorWrapperTraits
     void append(const VectorType& new_vector)
     {
         vectors_.push_back(VectorWrapperType(VectorWrapperTraitsType::copy(new_vector)));
+    }
+
+    void append(VectorType&& new_vector)
+    {
+        vectors_.push_back(VectorWrapperType(std::move(new_vector)));
     }
 
     void append(const std::vector<VectorType>& new_vectors)
