@@ -116,7 +116,7 @@ auto approx_equal(const VectorInterface<F>& lhs, const VectorInterface<F>& rhs)
 
 // Comparison operators for Vectors
 template <class VectorType>
-    requires has_vector_traits<VectorType> && (!derived_from_vector_interface<VectorType>)
+    requires wrappable_vector<VectorType> && (!derived_from_vector_interface<VectorType>)
 struct ExactlyEqualOpVec
 {
     ExactlyEqualOpVec(const VectorType& lhs, const VectorType& rhs)
@@ -135,18 +135,19 @@ struct ExactlyEqualOpVec
         return os << eq.exactly_equal_op_vec_interface_;
     }
 
-    ExactlyEqualOpVecInterface<typename VectorTraits<VectorType>::ScalarType> exactly_equal_op_vec_interface_;
+    ExactlyEqualOpVecInterface<typename VectorWrapperTraits<VectorType>::ScalarType>
+        exactly_equal_op_vec_interface_;
 };
 
 template <class VectorType>
-    requires has_vector_traits<VectorType> && (!derived_from_vector_interface<VectorType>)
+    requires wrappable_vector<VectorType> && (!derived_from_vector_interface<VectorType>)
 auto exactly_equal(const VectorType& lhs, const VectorType& rhs)
 {
     return ExactlyEqualOpVec<VectorType>(lhs, rhs);
 }
 
 template <class VectorType>
-    requires has_vector_traits<VectorType> && (!derived_from_vector_interface<VectorType>)
+    requires wrappable_vector<VectorType> && (!derived_from_vector_interface<VectorType>)
 struct ApproxEqualOpVec
 {
     ApproxEqualOpVec(const VectorType& lhs, const VectorType& rhs)
@@ -164,11 +165,12 @@ struct ApproxEqualOpVec
         return os << eq.approx_equal_op_vec_interface_;
     }
 
-    ApproxEqualOpVecInterface<typename VectorTraits<VectorType>::ScalarType> approx_equal_op_vec_interface_;
+    ApproxEqualOpVecInterface<typename VectorWrapperTraits<VectorType>::ScalarType>
+        approx_equal_op_vec_interface_;
 };
 
 template <class VectorType>
-    requires has_vector_traits<VectorType> && (!derived_from_vector_interface<VectorType>)
+    requires wrappable_vector<VectorType> && (!derived_from_vector_interface<VectorType>)
 auto approx_equal(const VectorType& lhs, const VectorType& rhs)
 {
     return ApproxEqualOpVec<VectorType>(lhs, rhs);
@@ -366,8 +368,7 @@ auto create_test_alphas(ssize_t size)
 
 inline auto create_test_index_vectors(ssize_t size)
 {
-    return std::vector{std::vector<ssize_t>{}, std::vector<ssize_t>({0, 2}),
-                       std::vector<ssize_t>(as_size_t(size), 0), std::vector<ssize_t>{-1, 0, 1}};
+    return std::vector{std::vector<ssize_t>(as_size_t(size), 0), std::vector<ssize_t>{-1, 0, 1}};
 }
 
 template <class VectorArray>

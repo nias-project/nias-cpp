@@ -33,11 +33,11 @@ namespace nias
  * \returns A new ListVectorArray containing the orthogonalized vectors.
  */
 template <class VectorType, class... Args>
-    requires nias::has_vector_traits<VectorType>
+    requires nias::wrappable_vector<VectorType>
 std::shared_ptr<ListVectorArray<VectorType>> gram_schmidt(
     const ListVectorArray<VectorType>& vec_array,
-    const InnerProductInterface<typename VectorTraits<VectorType>::ScalarType>& inner_product =
-        EuclideanInnerProduct<typename VectorTraits<VectorType>::ScalarType>(),
+    const InnerProductInterface<typename VectorWrapperTraits<VectorType>::ScalarType>& inner_product =
+        EuclideanInnerProduct<typename VectorWrapperTraits<VectorType>::ScalarType>(),
     Args&&... additional_python_args)
 {
     ensure_interpreter_and_venv_are_active();
@@ -56,7 +56,7 @@ std::shared_ptr<ListVectorArray<VectorType>> gram_schmidt(
 
     // create a Python VectorArray
     using namespace pybind11::literals;  // for the _a literal
-    using F = typename VectorTraits<VectorType>::ScalarType;
+    using F = typename VectorWrapperTraits<VectorType>::ScalarType;
     const VectorArrayInterface<F>& vec_array_ref = vec_array;
     const auto py_vec_array = py::cast(vec_array_ref, py::return_value_policy::reference);
     auto nias_vec_array = NiasVecArray("impl"_a = NiasVecArrayImpl(py_vec_array));
@@ -78,11 +78,11 @@ std::shared_ptr<ListVectorArray<VectorType>> gram_schmidt(
  * modifies the input ListVectorArray in-place.
  */
 template <class VectorType, class... Args>
-    requires nias::has_vector_traits<VectorType>
+    requires nias::wrappable_vector<VectorType>
 void gram_schmidt_in_place(
     ListVectorArray<VectorType>& vec_array,
-    const InnerProductInterface<typename VectorTraits<VectorType>::ScalarType>& inner_product =
-        EuclideanInnerProduct<typename VectorTraits<VectorType>::ScalarType>(),
+    const InnerProductInterface<typename VectorWrapperTraits<VectorType>::ScalarType>& inner_product =
+        EuclideanInnerProduct<typename VectorWrapperTraits<VectorType>::ScalarType>(),
     Args&&... additional_python_args)
 {
     ensure_interpreter_and_venv_are_active();
@@ -101,7 +101,7 @@ void gram_schmidt_in_place(
 
     // create a Python VectorArray
     using namespace pybind11::literals;  // for the _a literal
-    using F = typename VectorTraits<VectorType>::ScalarType;
+    using F = typename VectorWrapperTraits<VectorType>::ScalarType;
     // vec_array_ref and py_vec_array can be declared as const on the C++ side but that is misleading
     // because the array will be modified on the Python side, so we just silence the clang-tidy complaint here
     // NOLINTBEGIN(misc-const-correctness)

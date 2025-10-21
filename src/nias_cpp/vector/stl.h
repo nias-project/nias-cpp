@@ -10,7 +10,7 @@
 #include <nias_cpp/vectorarray/list.h>
 
 template <nias::floating_point_or_complex F>
-struct nias::VectorTraits<std::vector<F>>
+struct nias::VectorWrapperTraits<std::vector<F>>
 {
     using VectorType = std::vector<F>;
     using ScalarType = F;

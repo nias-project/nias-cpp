@@ -21,27 +21,27 @@ namespace nias
  * - \c get_: A callable that takes a \c VectorType object and an index and returns a reference to the entry at that index
  * - \c const_get_: A callable that takes a \c VectorType object and an index and returns a const reference to the entry at that index
  *
- * See the \c has_vector_traits concept below for the exact list of requirements that the specialization has to fulfill.
+ * See the \c wrappable_vector concept below for the exact list of requirements that the specialization has to fulfill.
  * See also the existing specializations for \c std::vector and vectors derived from \c VectorInterface in
  * nias_cpp/vector/stl.h and nias_cpp/interfaces/vector.h, respectively.
  */
 template <class V>
-struct VectorTraits;
+struct VectorWrapperTraits;
 
 template <class VectorType>
-concept has_vector_traits = requires(VectorType vec) {
-    typename VectorTraits<VectorType>::VectorType;
-    typename VectorTraits<VectorType>::ScalarType;
-    { VectorTraits<VectorType>::dim(vec) } -> std::same_as<ssize_t>;
-    { VectorTraits<VectorType>::copy(vec) } -> std::same_as<VectorType>;
+concept wrappable_vector = requires(VectorType vec) {
+    typename VectorWrapperTraits<VectorType>::VectorType;
+    typename VectorWrapperTraits<VectorType>::ScalarType;
+    { VectorWrapperTraits<VectorType>::dim(vec) } -> std::same_as<ssize_t>;
+    { VectorWrapperTraits<VectorType>::copy(vec) } -> std::same_as<VectorType>;
     {
-        VectorTraits<VectorType>::get(vec, 0)
-    }
-    -> any_of<typename VectorTraits<VectorType>::ScalarType&, typename VectorTraits<VectorType>::ScalarType>;
+        VectorWrapperTraits<VectorType>::get(vec, 0)
+    } -> any_of<typename VectorWrapperTraits<VectorType>::ScalarType&,
+                typename VectorWrapperTraits<VectorType>::ScalarType>;
     {
-        VectorTraits<VectorType>::const_get(vec, 0)
-    } -> any_of<const typename VectorTraits<VectorType>::ScalarType&,
-                typename VectorTraits<VectorType>::ScalarType>;
+        VectorWrapperTraits<VectorType>::const_get(vec, 0)
+    } -> any_of<const typename VectorWrapperTraits<VectorType>::ScalarType&,
+                typename VectorWrapperTraits<VectorType>::ScalarType>;
 };
 
 

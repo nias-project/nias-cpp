@@ -29,27 +29,31 @@ struct overloads : Ts...
 }  // namespace internal
 
 template <class VectorType>
-    requires has_vector_traits<VectorType>
-class VectorWrapper : public VectorInterface<typename VectorTraits<VectorType>::ScalarType>
+    requires wrappable_vector<VectorType>
+class VectorWrapper : public VectorInterface<typename VectorWrapperTraits<VectorType>::ScalarType>
 {
    public:
-    using F = typename VectorTraits<VectorType>::ScalarType;
+    using F = typename VectorWrapperTraits<VectorType>::ScalarType;
 
     explicit VectorWrapper(const VectorType& vector, bool copy)
         : vector_(&vector)
     {
         if (copy)
         {
-            vector_ = VectorTraits<VectorType>::copy(vector);
+            vector_ = VectorWrapperTraits<VectorType>::copy(vector);
         }
     }
 
-    explicit VectorWrapper(VectorType& vector)
+    explicit VectorWrapper(VectorType& vector, bool copy = false)
         : vector_(&vector)
     {
+        if (copy)
+        {
+            vector_ = VectorWrapperTraits<VectorType>::copy(vector);
+        }
     }
 
-    explicit VectorWrapper(VectorType&& vector)
+    explicit VectorWrapper(VectorType&& vector, bool /*copy*/ = false)
         : vector_(std::move(vector))
     {
     }
@@ -59,36 +63,40 @@ class VectorWrapper : public VectorInterface<typename VectorTraits<VectorType>::
     {
         if (copy)
         {
-            vector_ = VectorTraits<VectorType>::copy(other.get_vector());
+            vector_ = VectorWrapperTraits<VectorType>::copy(other.get_vector());
         }
+    }
+
+    VectorWrapper(VectorWrapper&& other, bool /*copy*/ = false) noexcept
+        : vector_(std::move(other.vector_))
+    {
     }
 
     VectorWrapper& operator=(const VectorWrapper& other)
     {
         if (this != &other)
         {
-            vector_ = VectorTraits<VectorType>::copy(other.get_vector());
+            vector_ = VectorWrapperTraits<VectorType>::copy(other.get_vector());
         }
         return *this;
     }
 
-    VectorWrapper(VectorWrapper&& other) noexcept = default;
     VectorWrapper& operator=(VectorWrapper&& other) noexcept = default;
     ~VectorWrapper() override = default;
 
     [[nodiscard]] ssize_t dim() const override
     {
-        return VectorTraits<VectorType>::dim(get_vector());
+        return VectorWrapperTraits<VectorType>::dim(get_vector());
     }
 
     [[nodiscard]] F& operator[](ssize_t i) override
     {
-        return VectorTraits<VectorType>::get(get_vector(), i);
+        return VectorWrapperTraits<VectorType>::get(get_vector(), i);
     }
 
     [[nodiscard]] const F& operator[](ssize_t i) const override
     {
-        return VectorTraits<VectorType>::const_get(get_vector(), i);
+        return VectorWrapperTraits<VectorType>::const_get(get_vector(), i);
     }
 
     [[nodiscard]] VectorType& backend()
@@ -103,7 +111,7 @@ class VectorWrapper : public VectorInterface<typename VectorTraits<VectorType>::
 
     [[nodiscard]] std::shared_ptr<VectorInterface<F>> copy() const override
     {
-        return std::make_shared<VectorWrapper>(VectorTraits<VectorType>::copy(get_vector()));
+        return std::make_shared<VectorWrapper>(VectorWrapperTraits<VectorType>::copy(get_vector()));
     }
 
    private:

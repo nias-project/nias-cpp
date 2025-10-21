@@ -96,7 +96,7 @@ concept derived_from_vector_interface = requires(V vec) {
 
 template <class V>
     requires derived_from_vector_interface<V>
-struct VectorTraits<V>
+struct VectorWrapperTraits<V>
 {
     using VectorType = V;
     using ScalarType = std::remove_cvref_t<decltype(std::declval<VectorType>()[0])>;

@@ -188,7 +188,7 @@ class VectorArrayView : public ConstVectorArrayView<F>
 
 // forward to be able to use VectorWrapper in the unwrapped_vector method
 template <class VectorType>
-    requires has_vector_traits<VectorType>
+    requires wrappable_vector<VectorType>
 class VectorWrapper;
 
 template <floating_point_or_complex F>
@@ -412,7 +412,7 @@ class VectorArrayInterface
     * \sa vector(ssize_t)
     */
     template <class VectorType>
-        requires has_vector_traits<VectorType>
+        requires wrappable_vector<VectorType>
     [[nodiscard]] const VectorType& unwrapped_vector(ssize_t i) const
     {
         try
@@ -432,7 +432,7 @@ class VectorArrayInterface
      * \sa unwrapped_vector(i) const
      */
     template <class VectorType>
-        requires has_vector_traits<VectorType>
+        requires wrappable_vector<VectorType>
     [[nodiscard]] VectorType& unwrapped_vector(ssize_t i)
     {
         try

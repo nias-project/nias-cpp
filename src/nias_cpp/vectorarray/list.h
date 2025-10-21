@@ -25,14 +25,14 @@ namespace nias
 
 
 template <class VectorType>
-class ListVectorArray : public VectorArrayInterface<typename VectorTraits<VectorType>::ScalarType>
+class ListVectorArray : public VectorArrayInterface<typename VectorWrapperTraits<VectorType>::ScalarType>
 {
     using ThisType = ListVectorArray;
-    using F = typename VectorTraits<VectorType>::ScalarType;
+    using F = typename VectorWrapperTraits<VectorType>::ScalarType;
     using VectorInterfaceType = VectorInterface<F>;
     using InterfaceType = VectorArrayInterface<F>;
     using VectorWrapperType = VectorWrapper<VectorType>;
-    using VectorTraitsType = VectorTraits<VectorType>;
+    using VectorWrapperTraitsType = VectorWrapperTraits<VectorType>;
 
    public:
     // Create an empty ListVectorArray with the given dimension
@@ -42,29 +42,15 @@ class ListVectorArray : public VectorArrayInterface<typename VectorTraits<Vector
     }
 
     template <std::ranges::range R>
-        requires has_vector_traits<typename R::value_type>
-    explicit ListVectorArray(const R& vectors, ssize_t dim, bool copy = true)
+        requires wrappable_vector<typename std::remove_cvref_t<R>::value_type>
+    explicit ListVectorArray(R&& vectors, ssize_t dim, bool copy)
         : vectors_()
         , dim_(dim)
     {
         vectors_.reserve(std::ranges::size(vectors));
-        for (const auto& vector : vectors)
-        {
-            vectors_.push_back(VectorWrapperType(vector, copy));
-        }
-        check_vec_dimensions();
-    }
-
-    template <std::ranges::range R>
-        requires has_vector_traits<typename R::value_type>
-    explicit ListVectorArray(R&& vectors, ssize_t dim)
-        : vectors_()
-        , dim_(dim)
-    {
-        vectors_.reserve(vectors.size());
         for (auto&& vector : std::forward<R>(vectors))
         {
-            vectors_.emplace_back(VectorWrapperType(std::move(vector)));
+            vectors_.emplace_back(VectorWrapperType(std::forward<decltype(vector)>(vector), copy));
         }
         check_vec_dimensions();
     }
@@ -123,7 +109,7 @@ class ListVectorArray : public VectorArrayInterface<typename VectorTraits<Vector
     {
         if (!indices)
         {
-            return std::make_shared<ThisType>(vectors_, dim_);
+            return std::make_shared<ThisType>(vectors_, dim_, true);
         }
         std::vector<VectorWrapperType> copied_vectors;
         indices->check_valid(this->size());
@@ -134,7 +120,7 @@ class ListVectorArray : public VectorArrayInterface<typename VectorTraits<Vector
                 copied_vectors.push_back(vectors_[as_size_t(i)]);
             },
             this->size());
-        return std::make_shared<ThisType>(copied_vectors, dim_);
+        return std::make_shared<ThisType>(std::move(copied_vectors), dim_, false);
     }
 
     void append(InterfaceType& other, bool remove_from_other = false,
@@ -148,7 +134,7 @@ class ListVectorArray : public VectorArrayInterface<typename VectorTraits<Vector
     // TODO: Think about append signatures
     void append(const VectorType& new_vector)
     {
-        vectors_.push_back(VectorWrapperType(VectorTraitsType::copy(new_vector)));
+        vectors_.push_back(VectorWrapperType(VectorWrapperTraitsType::copy(new_vector)));
     }
 
     void append(const std::vector<VectorType>& new_vectors)
@@ -156,7 +142,7 @@ class ListVectorArray : public VectorArrayInterface<typename VectorTraits<Vector
         vectors_.reserve(vectors_.size() + new_vectors.size());
         for (const auto& vec : new_vectors)
         {
-            vectors_.push_back(VectorWrapperType(VectorTraitsType::copy(vec)));
+            vectors_.push_back(VectorWrapperType(VectorWrapperTraitsType::copy(vec)));
         }
     }
 

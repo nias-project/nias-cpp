@@ -58,7 +58,7 @@ std::string print_vec(const nias::VectorInterface<F>& vec)
 }
 
 template <class VectorType>
-    requires nias::has_vector_traits<VectorType> && (!nias::derived_from_vector_interface<VectorType>)
+    requires nias::wrappable_vector<VectorType> && (!nias::derived_from_vector_interface<VectorType>)
 std::string print_vec(const VectorType& vec)
 {
     return print_vec(nias::VectorWrapper<VectorType>(vec, false));
@@ -106,7 +106,7 @@ template <class VectorType>
 void test_gram_schmidt()
 {
     using namespace nias;
-    using F = typename VectorTraits<VectorType>::ScalarType;
+    using F = typename VectorWrapperTraits<VectorType>::ScalarType;
 
     // Create some input vectors and print them
     const std::vector<VectorType> vectors{VectorType{F(1.), F(2.), F(3.)}, VectorType{F(4.), F(5.), F(6.)},

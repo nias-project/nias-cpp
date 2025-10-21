@@ -21,7 +21,7 @@ namespace nias
  * \brief Euclidean dot product of vectors
 */
 template <class LhsVectorType, class RhsVectorType>
-    requires(has_vector_traits<LhsVectorType> && has_vector_traits<RhsVectorType> &&
+    requires(wrappable_vector<LhsVectorType> && wrappable_vector<RhsVectorType> &&
              !derived_from_vector_interface<LhsVectorType> && !derived_from_vector_interface<RhsVectorType>)
 auto dot_product(const LhsVectorType& lhs, const RhsVectorType& rhs)
 {
