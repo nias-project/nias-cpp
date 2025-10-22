@@ -123,15 +123,21 @@ jobs:
     - name: Setup uv
       uses: astral-sh/setup-uv@v7
 
-    - name: Install boost
-      run: choco install boost-msvc-14.3
-
     - name: Checkout
       uses: actions/checkout@v5
 
+    - name: Install boost
+      uses: MarkusJx/install-boost@v2
+      id: install_boost
+      with:
+        boost_version: 1.89.0
+
     - name: Configure with cmake
       run: |
-        cmake -B build -DCMAKE_BUILD_TYPE=${{ matrix.type }}
+        ls "${BOOST_ROOT}"
+        cmake -B build -DCMAKE_BUILD_TYPE=${{ matrix.type }} -DBoost_DIR="${BOOST_ROOT}"
+      env:
+        BOOST_ROOT: ${{ steps.install_boost.outputs.BOOST_ROOT }}
 
     - name: Build with cmake
       run: |
