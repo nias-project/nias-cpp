@@ -134,7 +134,6 @@ jobs:
 
     - name: Configure with cmake
       run: |
-        ls "${BOOST_ROOT}"
         cmake -B build -DCMAKE_BUILD_TYPE=${{ matrix.type }} -DBoost_DIR="${BOOST_ROOT}"
       env:
         BOOST_ROOT: ${{ steps.install_boost.outputs.BOOST_ROOT }}

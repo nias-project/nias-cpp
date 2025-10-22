@@ -4,7 +4,7 @@
 #include <mutex>
 
 #include <boost/dll/runtime_symbol_info.hpp>
-#include <boost/process/environment.hpp>
+#include <boost/process/v2/environment.hpp>
 #include <pybind11/embed.h>
 #include <pybind11/eval.h>
 
@@ -17,16 +17,17 @@ void ensure_interpreter_and_venv_are_active()
 // We have to ensure that we use the same Python interpreter (version) as the one linked to pybind11.
 // See https://github.com/pybind/pybind11/issues/2369
 #ifndef _WIN32
-    static auto pythonHome = boost::dll::symbol_location(Py_Initialize).parent_path().parent_path().string();
+    static auto pythonHome = boost::dll::symbol_location(Py_Initialize).parent_path().parent_path().native();
 #else
-    static auto pythonHome = boost::dll::symbol_location(Py_Initialize).parent_path().string();
+    static auto pythonHome = boost::dll::symbol_location(Py_Initialize).parent_path().native();
 #endif
     // The issue linked above suggests to use Py_SetPythonHome which, however, is deprecated in Python 3.11+.
     // The suggested alternative is PyConfig.home (see https://docs.python.org/3/c-api/init.html#c.Py_SetPythonHome)
     // but using that seems to a bit more involved.
     // TODO: Figure out whether we can/should use PyConfig.home here instead of setting the environment variable.
     // PyConfig might also help us to set up the other paths that we set below using pybind11::exec.
-    boost::this_process::environment()["PYTHONHOME"] = pythonHome;
+    boost::process::v2::environment::set(boost::process::v2::environment::key("PYTHONHOME"),
+                                         pythonHome.data());
     static auto interpreter = pybind11::scoped_interpreter{};
     // For the moment, we simply prepend the virtualenv module path to Python's module search path.
     // This seems to work fine for now but we have to ensure that the python version that is linked to pybind11
