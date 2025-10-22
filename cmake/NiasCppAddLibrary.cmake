@@ -21,12 +21,16 @@ macro(NIAS_CPP_ADD_LIBRARY)
     find_package(pybind11 CONFIG REQUIRED)
     pybind11_add_module(${lib_name}_bindings MODULE ${bindings_sources} ${NIAS_CPP_PYBIND11_NO_EXTRAS})
 
+    # find boost
+    find_package(Boost REQUIRED COMPONENTS headers filesystem)
+
     # specify include directories and link libraries
     target_include_directories(${lib_name} PUBLIC $<BUILD_INTERFACE:${_NIAS_CPP_DIR}/src>
                                                   $<INSTALL_INTERFACE:${NIAS_CPP_INCLUDE_INSTALL_DIR}>)
     target_include_directories(${lib_name} PUBLIC $<BUILD_INTERFACE:${CMAKE_CURRENT_BINARY_DIR}>
                                                   $<INSTALL_INTERFACE:${NIAS_CPP_INCLUDE_INSTALL_DIR}>)
-    target_link_libraries(${lib_name} PUBLIC pybind11::pybind11 pybind11::embed)
+    target_link_libraries(${lib_name} PUBLIC pybind11::pybind11 pybind11::embed Boost::headers
+                                             Boost::filesystem)
     target_link_libraries(${bindings_lib_name} PRIVATE ${lib_name})
 
     # aliases

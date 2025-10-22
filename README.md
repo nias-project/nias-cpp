@@ -10,6 +10,8 @@ as a [scikit-build-core](https://github.com/scikit-build/scikit-build-core)-base
 ### C++ development
 
 To work on NiAS-C++ as a C++ project, you will need git, cmake, ninja and a recent C++ compiler.
+In addition, the Boost libraries (currently we use `filesystem` and the header-only libraries `dll` and `process`)
+have to be available (such that they can be found by the `find_package(Boost ...)` cmake command).
 Our [Build and Test workflow](.github/workflows/build_and_test.yml) give examples how to build and run
 on various platforms. The basic steps are as follows.
 

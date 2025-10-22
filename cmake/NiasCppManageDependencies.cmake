@@ -109,5 +109,4 @@ macro(ENSURE_PYBIND11_IS_AVAILABLE)
             OVERRIDE_FIND_PACKAGE)
         FetchContent_MakeAvailable(pybind11)
     endif()
-
 endmacro()
