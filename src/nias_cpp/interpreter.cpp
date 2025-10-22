@@ -3,7 +3,7 @@
 #include <cstdlib>
 #include <mutex>
 
-#include <boost/dll.hpp>
+#include <boost/dll/runtime_symbol_info.hpp>
 #include <boost/process/environment.hpp>
 #include <pybind11/embed.h>
 #include <pybind11/eval.h>
