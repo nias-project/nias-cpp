@@ -62,19 +62,22 @@ jobs:
     steps:
 
     - name: Setup Python
-      uses: actions/setup-python@v5
+      uses: actions/setup-python@v6
       with:
-        python-version: '3.12'
+        python-version: '3.13'
 
     - name: Setup uv
-      uses: yezz123/setup-uv@v4
+      uses: astral-sh/setup-uv@v7
+
+    - name: Install boost
+      run: sudo apt-get install -y libboost-all-dev
 
     - name: Checkout
-      uses: actions/checkout@v4
+      uses: actions/checkout@v5
 
     - name: Configure with cmake
       run: |
-        cmake -B build -DPython_EXECUTABLE="$(which python3.12)" -DCMAKE_BUILD_TYPE=${{ matrix.type }}
+        cmake -B build -DCMAKE_BUILD_TYPE=${{ matrix.type }}
 
     - name: Build with cmake
       run: |
@@ -113,19 +116,19 @@ jobs:
     steps:
 
     - name: Setup Python
-      uses: actions/setup-python@v5
+      uses: actions/setup-python@v6
       with:
-        python-version: '3.12'
+        python-version: '3.13'
 
     - name: Setup uv
-      uses: yezz123/setup-uv@v4
+      uses: astral-sh/setup-uv@v7
 
     - name: Checkout
-      uses: actions/checkout@v4
+      uses: actions/checkout@v5
 
     - name: Configure with cmake
       run: |
-        cmake -B build -DPython_EXECUTABLE="$(which python3.12)" -DCMAKE_BUILD_TYPE=${{ matrix.type }}
+        cmake -B build -DCMAKE_BUILD_TYPE=${{ matrix.type }}
 
     - name: Build with cmake
       run: |

@@ -31,16 +31,19 @@ jobs:
     steps:
 
     - name: Setup Python
-      uses: actions/setup-python@v5
+      uses: actions/setup-python@v6
       id: setup_python
       with:
         python-version: ${{ env.PYTHON_VERSION }}
 
     - name: Setup uv
-      uses: astral-sh/setup-uv@v5
+      uses: astral-sh/setup-uv@v7
+
+    - name: Install boost
+      run: sudo apt-get install -y libboost-all-dev
 
     - name: Checkout nias-cpp
-      uses: actions/checkout@v4
+      uses: actions/checkout@v5
       with:
         path: nias-cpp
 
@@ -51,7 +54,7 @@ jobs:
         cp nias-cpp/.test_projects/CMakeLists.txt.Submodule "${TEST_PROJECT_DIR}/CMakeLists.txt"
 
     - name: Checkout nias_cpp as submodule
-      uses: actions/checkout@v4
+      uses: actions/checkout@v5
       with:
         path: ${{ env.TEST_PROJECT_DIR }}/nias-cpp
 
@@ -76,16 +79,19 @@ jobs:
     steps:
 
     - name: Setup Python
-      uses: actions/setup-python@v5
+      uses: actions/setup-python@v6
       id: setup_python
       with:
         python-version: ${{ env.PYTHON_VERSION }}
 
     - name: Setup uv
-      uses: astral-sh/setup-uv@v5
+      uses: astral-sh/setup-uv@v7
+
+    - name: Install boost
+      run: sudo apt-get install -y libboost-all-dev
 
     - name: Checkout nias-cpp
-      uses: actions/checkout@v4
+      uses: actions/checkout@v5
       with:
         path: nias-cpp
 
@@ -117,16 +123,19 @@ jobs:
     steps:
 
     - name: Setup Python
-      uses: actions/setup-python@v5
+      uses: actions/setup-python@v6
       id: setup_python
       with:
         python-version: ${{ env.PYTHON_VERSION }}
 
     - name: Setup uv
-      uses: astral-sh/setup-uv@v5
+      uses: astral-sh/setup-uv@v7
+
+    - name: Install boost
+      run: sudo apt-get install -y libboost-all-dev
 
     - name: Checkout nias-cpp
-      uses: actions/checkout@v4
+      uses: actions/checkout@v5
       with:
         path: nias-cpp
 
