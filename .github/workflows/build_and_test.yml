@@ -127,16 +127,27 @@ jobs:
       uses: actions/checkout@v5
 
     - name: Install boost
-      uses: MarkusJx/install-boost@v2
       id: install_boost
-      with:
-        boost_version: 1.89.0
+      run: |
+        git clone https://github.com/boostorg/boost.git -b boost-1.89.0 boost_1_89_0 --depth 1
+        cd boost_1_89_0
+        git submodule update --depth 1 -q --init tools/boostdep
+        BOOST_LIBS="dll filesystem process"
+        for lib in ${BOOST_LIBS}; do
+          git submodule update --depth 1 -q --init libs/"${lib}"
+          python tools/boostdep/depinst/depinst.py -X test -g "--depth 1" "${lib}"
+        done
+        ./bootstrap.bat
+        ./b2
+        BOOST_ROOT="${{ github.workspace }}/boost"
+        ./b2 install --prefix="${BOOST_ROOT}"
+        echo "boost_dir=${BOOST_ROOT}/lib/cmake/Boost-1.89.0" >> "${GITHUB_OUTPUT}"
 
     - name: Configure with cmake
       run: |
-        cmake -B build -DCMAKE_BUILD_TYPE=${{ matrix.type }} -DBoost_DIR="${BOOST_ROOT}"
+        cmake -B build -DCMAKE_BUILD_TYPE=${{ matrix.type }} -DBoost_DIR="${BOOST_DIR}"
       env:
-        BOOST_ROOT: ${{ steps.install_boost.outputs.BOOST_ROOT }}
+        BOOST_DIR: ${{ steps.install_boost.outputs.boost_dir }}
 
     - name: Build with cmake
       run: |
