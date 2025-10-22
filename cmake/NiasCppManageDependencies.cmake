@@ -65,34 +65,31 @@ endmacro()
 
 macro(ENSURE_PYTHON_IS_AVAILABLE)
     set(NIAS_CPP_PYTHON_DEFAULT_VERSION "3.13")
+    get_version_from_pyproject_toml(Python NIAS_CPP_MIN_PYTHON_VERSION)
+    find_package(Python ${NIAS_CPP_MIN_PYTHON_VERSION} COMPONENTS Interpreter Development)
     if(NOT Python_FOUND)
-        get_version_from_pyproject_toml(Python NIAS_CPP_MIN_PYTHON_VERSION)
-        find_package(Python ${NIAS_CPP_MIN_PYTHON_VERSION} COMPONENTS Interpreter Development)
-        if(NOT Python_FOUND)
-            set(_message "Could not find Python >=${NIAS_CPP_MIN_PYTHON_VERSION}")
-            set(_message "${_message} with components Interpreter Development.")
-            message(STATUS "nias-cpp: ${_message}")
-            message(
-                STATUS
-                    "nias-cpp: Installing default Python version ${NIAS_CPP_PYTHON_DEFAULT_VERSION} using uv")
-            # install Python using uv
-            execute_process(
-                COMMAND ${UV_EXECUTABLE} install python ${NIAS_CPP_PYTHON_DEFAULT_VERSION} --quiet
-                WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
-                RESULT_VARIABLE _python_install_result)
-            set(_message "Installing Python ${NIAS_CPP_PYTHON_DEFAULT_VERSION} using uv failed")
-            set(_message "${_message} with exit code ${_python_install_result}.")
-            if(_python_install_result)
-                message(FATAL_ERROR _message)
-            endif()
-            set(_python_version ${NIAS_CPP_PYTHON_DEFAULT_VERSION})
-            find_package(
-                Python ${_python_version} EXACT
-                COMPONENTS Interpreter Development
-                REQUIRED)
+        set(_message "Could not find Python >=${NIAS_CPP_MIN_PYTHON_VERSION}")
+        set(_message "${_message} with components Interpreter Development.")
+        message(STATUS "nias-cpp: ${_message}")
+        message(
+            STATUS "nias-cpp: Installing default Python version ${NIAS_CPP_PYTHON_DEFAULT_VERSION} using uv")
+        # install Python using uv
+        execute_process(
+            COMMAND ${UV_EXECUTABLE} install python ${NIAS_CPP_PYTHON_DEFAULT_VERSION} --quiet
+            WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
+            RESULT_VARIABLE _python_install_result)
+        set(_message "Installing Python ${NIAS_CPP_PYTHON_DEFAULT_VERSION} using uv failed")
+        set(_message "${_message} with exit code ${_python_install_result}.")
+        if(_python_install_result)
+            message(FATAL_ERROR _message)
         endif()
-        message(STATUS "nias-cpp: Using Python version ${Python_VERSION}")
+        set(_python_version ${NIAS_CPP_PYTHON_DEFAULT_VERSION})
+        find_package(
+            Python ${_python_version} EXACT
+            COMPONENTS Interpreter Development
+            REQUIRED)
     endif()
+    message(STATUS "nias-cpp: Using Python version ${Python_VERSION}")
 endmacro()
 
 macro(ENSURE_PYBIND11_IS_AVAILABLE)
