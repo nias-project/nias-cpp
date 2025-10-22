@@ -13,7 +13,6 @@
 #include <nias_cpp/vector/dynamic.h>
 #include <nias_cpp/vector/stl.h>
 #include <nias_cpp/vectorarray/list.h>
-#include <pybind11/numpy.h>
 
 #include "../boost_ext_ut_no_module.h"
 #include "common.h"

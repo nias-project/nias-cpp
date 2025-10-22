@@ -10,7 +10,6 @@
 #include <nias_cpp/concepts.h>
 #include <nias_cpp/exceptions.h>
 #include <nias_cpp/inner_products/function_based.h>
-#include <nias_cpp/interfaces/inner_products.h>
 #include <nias_cpp/interfaces/vector.h>
 #include <nias_cpp/interfaces/vectorarray.h>
 #include <nias_cpp/interpreter.h>

@@ -115,7 +115,7 @@ class VectorWrapper : public VectorInterface<typename VectorWrapperTraits<Vector
     }
 
    private:
-    const VectorType& get_vector() const
+    [[nodiscard]] const VectorType& get_vector() const
     {
         return std::visit(
             internal::overloads{
@@ -132,7 +132,7 @@ class VectorWrapper : public VectorInterface<typename VectorWrapperTraits<Vector
             vector_);
     }
 
-    VectorType& get_vector()
+    [[nodiscard]] VectorType& get_vector()
     {
         return std::visit(
             internal::overloads{
