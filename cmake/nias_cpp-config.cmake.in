@@ -9,6 +9,7 @@ include(NiasCppManageDependencies)
 ensure_uv_is_available()
 ensure_python_is_available()
 ensure_pybind11_is_available()
+find_package(Boost REQUIRED COMPONENTS headers filesystem)
 
 # set up paths
 get_filename_component(_NIAS_CPP_DIR "${CMAKE_CURRENT_LIST_FILE}" PATH)
