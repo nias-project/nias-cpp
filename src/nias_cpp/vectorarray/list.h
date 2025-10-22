@@ -18,6 +18,7 @@
 #include <nias_cpp/interfaces/vector.h>
 #include <nias_cpp/interfaces/vectorarray.h>
 #include <nias_cpp/type_traits.h>
+#include <nias_cpp/utility.h>
 #include <nias_cpp/vector/traits.h>
 #include <nias_cpp/vector/wrapper.h>
 
@@ -49,9 +50,9 @@ class ListVectorArray : public VectorArrayInterface<typename VectorWrapperTraits
         , dim_(dim)
     {
         vectors_.reserve(std::ranges::size(vectors));
-        for (auto&& vector : vectors)
+        for (auto&& vector : std::forward<R>(vectors))
         {
-            vectors_.emplace_back(VectorWrapperType(std::forward_like<R>(vector), copy));
+            vectors_.emplace_back(VectorWrapperType(nias::forward_like<R>(vector), copy));
         }
         check_vec_dimensions();
     }
