@@ -14,7 +14,7 @@ int main()
     const std::vector<VectorType> vectors{{1., 2., 3.}, {4., 5., 6.}, {7., 8., 9.}};
 
     // Perform Gram-Schmidt orthogonalization
-    auto vec_array = ListVectorArray<VectorType>(vectors, 3);
+    auto vec_array = ListVectorArray<VectorType>(vectors, 3, true);
     [[maybe_unused]] auto orthonormalized_vectorarray = gram_schmidt(vec_array);
 
     return 0;
