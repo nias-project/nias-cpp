@@ -71,9 +71,11 @@ ensure_uv_is_available()
 ensure_python_is_available()
 ensure_pybind11_is_available()
 
+# add the nias_cpp library
 include(NiasCppAddLibrary)
 nias_cpp_add_library()
 
+# setup python virtual environment
 if(DEFINED ENV{VIRTUAL_ENV})
     set(NIAS_CPP_VENV_DIR $ENV{VIRTUAL_ENV})
     # TODO: check that nias_cpp is installed in the virtual environment
