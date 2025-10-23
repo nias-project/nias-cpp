@@ -138,7 +138,7 @@ jobs:
           python tools/boostdep/depinst/depinst.py -X test -g "--depth 1" "${lib}"
         done
         ./bootstrap.bat
-        ./b2
+        ./b2 cxxstd=20 boost.process.fs=std
         BOOST_ROOT="${{ github.workspace }}/boost"
         ./b2 install --prefix="${BOOST_ROOT}"
         echo "boost_dir=${BOOST_ROOT}/lib/cmake/Boost-1.89.0" >> "${GITHUB_OUTPUT}"
