@@ -93,17 +93,16 @@ macro(ENSURE_PYTHON_IS_AVAILABLE)
 endmacro()
 
 macro(ENSURE_PYBIND11_IS_AVAILABLE)
-    get_version_from_pyproject_toml(pybind11 NIAS_CPP_PYBIND11_VERSION)
+    get_version_from_pyproject_toml(pybind11 NIAS_CPP_MIN_PYBIND11_VERSION)
     set(PYBIND11_FINDPYTHON ON)
-    message(STATUS "nias-cpp: Ensuring pybind11 version ${NIAS_CPP_PYBIND11_VERSION} is available")
-    find_package(pybind11 ${NIAS_CPP_PYBIND11_VERSION} CONFIG)
+    find_package(pybind11 ${NIAS_CPP_MIN_PYBIND11_VERSION} CONFIG)
     if(NOT pybind11_FOUND)
         # add pybind11
         include(FetchContent)
         FetchContent_Declare(
             pybind11
             GIT_REPOSITORY https://github.com/pybind/pybind11
-            GIT_TAG "v${NIAS_CPP_PYBIND11_VERSION}"
+            GIT_TAG "v${NIAS_CPP_MIN_PYBIND11_VERSION}"
             OVERRIDE_FIND_PACKAGE)
         FetchContent_MakeAvailable(pybind11)
     endif()

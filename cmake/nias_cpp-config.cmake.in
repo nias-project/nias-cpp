@@ -5,10 +5,9 @@ cmake_path(GET _NIAS_CPP_DIR PARENT_PATH _NIAS_CPP_DIR)
 
 # find dependencies
 list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_LIST_DIR}")
-include(NiasCppManageDependencies)
-ensure_uv_is_available()
-ensure_python_is_available()
-ensure_pybind11_is_available()
+find_program(UV_EXECUTABLE NAMES uv uv.exe REQUIRED)
+find_package(Python "@NIAS_CPP_MIN_PYTHON_VERSION@" COMPONENTS Interpreter Development REQUIRED)
+find_package(pybind11 "@NIAS_CPP_MIN_PYBIND11_VERSION@" CONFIG REQUIRED)
 find_package(Boost COMPONENTS process)
 find_package(Boost REQUIRED COMPONENTS headers filesystem)
 
