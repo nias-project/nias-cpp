@@ -17,10 +17,10 @@ namespace nias
  * your vector type. The specialization has to contain the the following typedefs and methods:
  * - \c VectorType: The type of the vector
  * - \c ScalarType: The type of the entries of the vector
- * - \c dim_: A callable that takes a \c VectorType object and that returns the dimension (length) of that object
- * - \c copy_: A callable that takes a \c VectorType object and returns a copy of that object
- * - \c get_: A callable that takes a \c VectorType object and an index and returns a reference to the entry at that index
- * - \c const_get_: A callable that takes a \c VectorType object and an index and returns a const reference to the entry at that index
+ * - \c dim: A callable that takes a \c VectorType object and that returns the dimension (length) of that object
+ * - \c copy: A callable that takes a \c VectorType object and returns a copy of that object
+ * - \c get: A callable that takes a \c VectorType object and an index and returns a mutable reference to the entry at that index
+ * - \c const_get: A callable that takes a \c VectorType object and an index and the entry at that index (by value or by const reference)
  *
  * See the \c wrappable_vector concept below for the exact list of requirements that the specialization has to fulfill.
  * See also the existing specializations for \c std::vector and vectors derived from \c VectorInterface in
@@ -37,8 +37,7 @@ concept wrappable_vector = requires(VectorType vec) {
     { VectorWrapperTraits<VectorType>::copy(vec) } -> std::same_as<VectorType>;
     {
         VectorWrapperTraits<VectorType>::get(vec, 0)
-    } -> any_of<typename VectorWrapperTraits<VectorType>::ScalarType&,
-                typename VectorWrapperTraits<VectorType>::ScalarType>;
+    } -> std::same_as<typename VectorWrapperTraits<VectorType>::ScalarType&>;
     {
         VectorWrapperTraits<VectorType>::const_get(vec, 0)
     } -> any_of<const typename VectorWrapperTraits<VectorType>::ScalarType&,
