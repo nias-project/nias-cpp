@@ -155,5 +155,5 @@ jobs:
         source .venv/bin/activate
         cd "${TEST_PROJECT_DIR}"
         mkdir build
-        cmake -B build -DPython_EXECUTABLE="$(which python${{ env.PYTHON_VERSION }})" -DCMAKE_BUILD_TYPE=Debug
+        cmake -B build -DCMAKE_BUILD_TYPE=Debug
         cmake --build build
