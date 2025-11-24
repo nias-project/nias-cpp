@@ -68,22 +68,41 @@ macro(ENSURE_PYTHON_IS_AVAILABLE)
     get_version_from_pyproject_toml(Python NIAS_CPP_MIN_PYTHON_VERSION)
     find_package(Python ${NIAS_CPP_MIN_PYTHON_VERSION} COMPONENTS Interpreter Development)
     if(NOT Python_FOUND)
-        set(_message "Could not find Python >=${NIAS_CPP_MIN_PYTHON_VERSION}")
+        set(_python_version ${NIAS_CPP_PYTHON_DEFAULT_VERSION})
+        set(_message "Could not find Python >=${_python_version}.")
         set(_message "${_message} with components Interpreter Development.")
         message(STATUS "nias-cpp: ${_message}")
-        message(
-            STATUS "nias-cpp: Installing default Python version ${NIAS_CPP_PYTHON_DEFAULT_VERSION} using uv")
+        message(STATUS "nias-cpp: Installing default Python version ${_python_version} using uv")
         # install Python using uv
         execute_process(
-            COMMAND ${UV_EXECUTABLE} install python ${NIAS_CPP_PYTHON_DEFAULT_VERSION} --quiet
+            COMMAND ${UV_EXECUTABLE} python install ${_python_version}
             WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
+            OUTPUT_VARIABLE _python_install_output
+            ERROR_VARIABLE _python_install_output
             RESULT_VARIABLE _python_install_result)
-        set(_message "Installing Python ${NIAS_CPP_PYTHON_DEFAULT_VERSION} using uv failed")
-        set(_message "${_message} with exit code ${_python_install_result}.")
         if(_python_install_result)
-            message(FATAL_ERROR _message)
+            set(_message "Installing Python ${_python_version} using uv failed")
+            set(_message "${_message} with output ${_python_install_output}.")
+            message(FATAL_ERROR ${_message})
         endif()
-        set(_python_version ${NIAS_CPP_PYTHON_DEFAULT_VERSION})
+        # get python install location
+        string(REGEX MATCH "\\+[ ]*cpython-[^\n]*" _installed_python_name "${_python_install_output}")
+        string(REGEX REPLACE "\\+[ ]*(cpython-.*)" "\\1" _installed_python_name "${_installed_python_name}")
+        execute_process(
+            COMMAND ${UV_EXECUTABLE} python find ${_installed_python_name}
+            WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
+            OUTPUT_VARIABLE _python_executable_path
+            ERROR_VARIABLE _python_executable_path
+            RESULT_VARIABLE _python_find_result)
+        if(_python_find_result)
+            set(_message "Finding the just installed Python ${_python_version} failed")
+            set(_message "${_message} with output ${_python_executable_path}.")
+            message(FATAL_ERROR ${_message})
+        endif()
+        string(REGEX REPLACE "[\r\n]" "" _python_executable_path "${_python_executable_path}")
+        # cmake-lint: disable=C0103
+        set(Python_EXECUTABLE "${_python_executable_path}")
+        message(WARNING "nias-cpp: Using Python executable at ${Python_EXECUTABLE}")
         find_package(
             Python ${_python_version} EXACT
             COMPONENTS Interpreter Development
