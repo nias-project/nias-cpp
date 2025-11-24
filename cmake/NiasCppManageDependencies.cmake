@@ -85,21 +85,28 @@ macro(ENSURE_PYTHON_IS_AVAILABLE)
             set(_message "${_message} with output ${_python_install_output}.")
             message(FATAL_ERROR ${_message})
         endif()
-        # get python install location
-        string(REGEX MATCH "\\+[ ]*cpython-[^\n]*" _installed_python_name "${_python_install_output}")
-        string(REGEX REPLACE "\\+[ ]*(cpython-.*)" "\\1" _installed_python_name "${_installed_python_name}")
+        # find the just installed Python executable
         execute_process(
-            COMMAND ${UV_EXECUTABLE} python find ${_installed_python_name}
+            COMMAND ${UV_EXECUTABLE} python list --only-installed --python-preference=only-managed
+                    --output-format=json
             WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
-            OUTPUT_VARIABLE _python_executable_path
-            ERROR_VARIABLE _python_executable_path
-            RESULT_VARIABLE _python_find_result)
-        if(_python_find_result)
-            set(_message "Finding the just installed Python ${_python_version} failed")
-            set(_message "${_message} with output ${_python_executable_path}.")
+            OUTPUT_VARIABLE _installed_pythons_json
+            ERROR_VARIABLE _installed_pythons_json)
+        string(JSON _num_json_entries LENGTH "${_installed_pythons_json}")
+        # cmake-lint: disable=E1120
+        foreach(idx RANGE "${_num_json_entries}-1")
+            string(JSON _current_key GET "${_installed_pythons_json}" ${idx} key)
+            if(_current_key MATCHES ".*cpython-${_python_version}.*")
+                string(JSON _python_executable_path GET "${_installed_pythons_json}" ${idx} path)
+                break()
+            endif()
+        endforeach()
+        if(NOT _python_executable_path)
+            set(_message "Finding the just installed Python ${_python_version} failed!\n")
+            set(_message "${_message} Could not find key ${_installed_python_name}")
+            set(_message "in uv python list output ${_installed_pythons_json}")
             message(FATAL_ERROR ${_message})
         endif()
-        string(REGEX REPLACE "[\r\n]" "" _python_executable_path "${_python_executable_path}")
         # cmake-lint: disable=C0103
         set(Python_EXECUTABLE "${_python_executable_path}")
         message(WARNING "nias-cpp: Using Python executable at ${Python_EXECUTABLE}")
