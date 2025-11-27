@@ -4,9 +4,9 @@
 #ifndef NIAS_CPP_EXPORT
 #    ifdef _WIN32
 #        ifdef nias_cpp_EXPORTS
-#            define NIAS_CPP_EXPORT _declspec(dllexport)
+#            define NIAS_CPP_EXPORT
 #        else
-#            define NIAS_CPP_EXPORT _declspec(dllimport)
+#            define NIAS_CPP_EXPORT
 #        endif
 #    else
 #        define NIAS_CPP_EXPORT __attribute__((visibility("default")))
