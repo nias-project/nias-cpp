@@ -1,0 +1,25 @@
+cmake_minimum_required(VERSION 3.27..3.31)
+set(CMAKE_CXX_STANDARD 23)
+
+project(
+    test-project
+    VERSION 0.1.0
+    DESCRIPTION "A very simple test project to ensure that using nias_cpp as a dependency works"
+    LANGUAGES CXX)
+
+find_package(Python REQUIRED COMPONENTS Interpreter Development)
+execute_process(
+    COMMAND "${Python_EXECUTABLE}" -m pybind11 --cmakedir
+    OUTPUT_STRIP_TRAILING_WHITESPACE
+    OUTPUT_VARIABLE PYBIND11_DIR)
+execute_process(
+    COMMAND "${Python_EXECUTABLE}" -m nias_cpp --cmake_dir
+    OUTPUT_STRIP_TRAILING_WHITESPACE
+    OUTPUT_VARIABLE NIAS_CPP_DIR)
+list(APPEND CMAKE_PREFIX_PATH "${NIAS_CPP_DIR}")
+list(APPEND CMAKE_PREFIX_PATH "${PYBIND11_DIR}")
+find_package(nias_cpp CONFIG REQUIRED)
+message(STATUS "found nias_cpp")
+
+add_executable(test-project-main main.cpp)
+target_link_libraries(test-project-main PUBLIC nias_cpp::nias_cpp)

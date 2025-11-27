@@ -17,7 +17,18 @@ void ensure_interpreter_and_venv_are_active()
 // We have to ensure that we use the same Python interpreter (version) as the one linked to pybind11.
 // See https://github.com/pybind/pybind11/issues/2369
 #ifndef _WIN32
-    static auto pythonHome = boost::dll::symbol_location(Py_Initialize).parent_path().parent_path().native();
+    // On Linux, the python library might be in a subfolder of the lib dir (e.g., /lib/x86_64-linux-gnu/libpython3.12.so)
+    // so we cannot just take the parent path of the library location as PYTHONHOME. Instead, we search upwards until we find
+    // the "lib" folder.
+    static auto pythonHome = []()
+    {
+        auto lib_location = boost::dll::symbol_location(Py_Initialize).parent_path();
+        while (lib_location.filename() != "lib" && lib_location.has_parent_path())
+        {
+            lib_location = lib_location.parent_path();
+        }
+        return lib_location.parent_path().native();
+    }();
 #else
     static auto pythonHome = boost::dll::symbol_location(Py_Initialize).parent_path().native();
 #endif
