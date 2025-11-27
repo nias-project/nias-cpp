@@ -7,7 +7,7 @@ project(
     DESCRIPTION "A very simple test project to ensure that using nias_cpp as a dependency works"
     LANGUAGES CXX)
 
-find_package(Python REQUIRED COMPONENTS Interpreter)
+find_package(Python REQUIRED COMPONENTS Interpreter Development)
 execute_process(
     COMMAND "${Python_EXECUTABLE}" -m nias_cpp --cmake_dir
     OUTPUT_STRIP_TRAILING_WHITESPACE

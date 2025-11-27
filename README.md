@@ -110,7 +110,7 @@ We currently have
 - CMake support (currently requires a Python environment with `nias_cpp` installed):
 
     ```cmake
-    find_package(Python REQUIRED COMPONENTS Interpreter)
+    find_package(Python REQUIRED COMPONENTS Interpreter Development)
     execute_process(
         COMMAND "${Python_EXECUTABLE}" -m nias_cpp --cmake_dir
         OUTPUT_STRIP_TRAILING_WHITESPACE
