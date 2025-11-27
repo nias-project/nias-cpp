@@ -131,6 +131,7 @@ jobs:
       id: setup_python
       with:
         python-version: ${{ env.PYTHON_VERSION }}
+        update-environment: false
 
     - name: Setup uv
       uses: astral-sh/setup-uv@v7
@@ -145,8 +146,9 @@ jobs:
 
     - name: Setup virtualenv
       run: |
-        uv venv --python='${{ steps.setup_python.outputs.python-path }}'
-        uv pip install ./nias-cpp
+        '${{ steps.setup_python.outputs.python-path }}' -m venv .venv
+        source .venv/bin/activate
+        pip install ./nias-cpp
 
     - name: Create test project
       run: |
