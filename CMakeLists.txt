@@ -62,8 +62,9 @@ if(MINGW AND CMAKE_CXX_COMPILER_ID MATCHES "Clang")
 endif()
 
 include(GNUInstallDirs)
-set(NIAS_CPP_REL_CMAKE_INSTALL_DIR "nias_cpp/cmake")
-set(NIAS_CPP_REL_SRC_INSTALL_DIR "nias_cpp/src")
+set(NIAS_CPP_INSTALL_DATADIR "nias_cpp")
+set(NIAS_CPP_INSTALL_SRC_DIR "${NIAS_CPP_INSTALL_DATADIR}/src")
+set(NIAS_CPP_INSTALL_CMAKE_DIR "${NIAS_CPP_INSTALL_DATADIR}/cmake")
 
 # installation rules
 cmake_path(GET CMAKE_CURRENT_LIST_FILE PARENT_PATH _NIAS_CPP_DIR)
@@ -73,17 +74,17 @@ set(_NIAS_CPP_DIR
 
 install(
     DIRECTORY src/
-    DESTINATION "${CMAKE_INSTALL_INCLUDEDIR}"
+    DESTINATION "${NIAS_CPP_INSTALL_SRC_DIR}"
     PATTERN "*.py" EXCLUDE)
 
 install(
     DIRECTORY src/
-    DESTINATION "${NIAS_CPP_REL_SRC_INSTALL_DIR}"
+    DESTINATION "${CMAKE_INSTALL_INCLUDEDIR}"
     PATTERN "*.py" EXCLUDE)
 
-install(DIRECTORY cmake/ DESTINATION "${NIAS_CPP_REL_CMAKE_INSTALL_DIR}")
+install(DIRECTORY cmake/ DESTINATION "${NIAS_CPP_INSTALL_CMAKE_DIR}")
 
-install(FILES "${_NIAS_CPP_DIR}/pyproject.toml" DESTINATION nias_cpp)
+install(FILES "${_NIAS_CPP_DIR}/pyproject.toml" DESTINATION "${NIAS_CPP_INSTALL_DATADIR}")
 
 list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_LIST_DIR}/cmake")
 include(NiasCppManageDependencies)
@@ -93,7 +94,7 @@ get_version_from_pyproject_toml(pybind11 NIAS_CPP_MIN_PYBIND11_VERSION)
 configure_file("${_NIAS_CPP_DIR}/cmake/nias_cpp-config.cmake.in"
                "${PROJECT_BINARY_DIR}${CMAKE_FILES_DIRECTORY}/nias_cpp-config.cmake" @ONLY)
 install(FILES "${PROJECT_BINARY_DIR}${CMAKE_FILES_DIRECTORY}/nias_cpp-config.cmake"
-        DESTINATION "${NIAS_CPP_REL_CMAKE_INSTALL_DIR}")
+        DESTINATION "${NIAS_CPP_INSTALL_CMAKE_DIR}")
 
 # return early if the user only wants to install nias-cpp
 if(NIAS_CPP_MASTER_PROJECT AND NOT NIAS_CPP_ENABLE_TESTS)
@@ -109,12 +110,14 @@ include("${PROJECT_BINARY_DIR}${CMAKE_FILES_DIRECTORY}/nias_cpp-config.cmake")
 install(
     TARGETS nias_cpp nias_cpp_bindings
     EXPORT nias_cpp-targets
-    LIBRARY DESTINATION nias_cpp)
+    LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR})
+
+install(TARGETS nias_cpp nias_cpp_bindings LIBRARY DESTINATION ${NIAS_CPP_INSTALL_DATADIR})
 
 install(
     EXPORT nias_cpp-targets
     NAMESPACE nias_cpp::
-    DESTINATION ${NIAS_CPP_REL_CMAKE_INSTALL_DIR})
+    DESTINATION ${NIAS_CPP_INSTALL_CMAKE_DIR})
 
 # enable warnings in debug mode
 if(CMAKE_CXX_COMPILER_ID MATCHES "GNU" OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")

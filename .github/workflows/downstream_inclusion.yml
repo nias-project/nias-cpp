@@ -131,6 +131,8 @@ jobs:
       id: setup_python
       with:
         python-version: ${{ env.PYTHON_VERSION }}
+        # disable setting environment variables, in particular Python_ROOT_DIR which
+        # otherwise makes CMake always find the system Python instead of the virtualenv one
         update-environment: false
 
     - name: Setup uv
