@@ -65,7 +65,6 @@ endmacro()
 
 macro(ENSURE_PYTHON_IS_AVAILABLE)
     set(NIAS_CPP_PYTHON_DEFAULT_VERSION "3.13")
-    get_version_from_pyproject_toml(Python NIAS_CPP_MIN_PYTHON_VERSION)
     find_package(Python ${NIAS_CPP_MIN_PYTHON_VERSION} COMPONENTS Interpreter Development)
     if(NOT Python_FOUND)
         set(_python_version ${NIAS_CPP_PYTHON_DEFAULT_VERSION})
@@ -119,10 +118,13 @@ macro(ENSURE_PYTHON_IS_AVAILABLE)
 endmacro()
 
 macro(ENSURE_PYBIND11_IS_AVAILABLE)
-    get_version_from_pyproject_toml(pybind11 NIAS_CPP_MIN_PYBIND11_VERSION)
     set(PYBIND11_FINDPYTHON ON)
     find_package(pybind11 ${NIAS_CPP_MIN_PYBIND11_VERSION} CONFIG)
     if(NOT pybind11_FOUND)
+        set(_pybind11_version ${NIAS_CPP_MIN_PYBIND11_VERSION})
+        set(_message "Could not find pybind11 >=${_pybind11_version}.")
+        message(STATUS "nias-cpp: ${_message}")
+        message(STATUS "nias-cpp: Installing pybind11 version ${_pybind11_version} from github")
         # add pybind11
         include(FetchContent)
         FetchContent_Declare(

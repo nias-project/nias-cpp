@@ -1,22 +1,93 @@
 include_guard(GLOBAL)
 
-get_filename_component(_NIAS_CPP_DIR "${CMAKE_CURRENT_LIST_FILE}" PATH)
-cmake_path(GET _NIAS_CPP_DIR PARENT_PATH _NIAS_CPP_DIR)
-
-# find dependencies
-list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_LIST_DIR}")
-find_program(UV_EXECUTABLE NAMES uv uv.exe REQUIRED)
-find_package(Python "@NIAS_CPP_MIN_PYTHON_VERSION@" COMPONENTS Interpreter Development REQUIRED)
-find_package(pybind11 "@NIAS_CPP_MIN_PYBIND11_VERSION@" CONFIG REQUIRED)
-find_package(Boost COMPONENTS process)
-find_package(Boost REQUIRED COMPONENTS headers filesystem)
-
-# set up paths
-get_filename_component(_NIAS_CPP_DIR "${CMAKE_CURRENT_LIST_FILE}" PATH)
-set(NIAS_CPP_INCLUDE_DIRS "@CONF_INCLUDE_DIRS@")
-
-if (NOT TARGET nias_cpp)
-  include("${_NIAS_CPP_DIR}/nias_cpp-targets.cmake")
+if (NOT DEFINED _NIAS_CPP_DIR)
+    get_filename_component(_NIAS_CPP_DIR "${CMAKE_CURRENT_LIST_FILE}" PATH)
+    set(_NIAS_CPP_DIR ${_NIAS_CPP_DIR} CACHE INTERNAL "")
 endif()
 
+macro(NIAS_CPP_ADD_LIBRARY)
+    set(lib_name nias_cpp)
+    set(bindings_lib_name ${lib_name}_bindings)
+
+    if(TARGET ${lib_name})
+        return()
+    endif()
+
+    # find C++ source files
+    file(
+        GLOB_RECURSE library_sources
+        LIST_DIRECTORIES false
+        "${_NIAS_CPP_DIR}/src/nias_cpp/*.h" "${_NIAS_CPP_DIR}/src/nias_cpp/*.cpp")
+
+    # add C++ library
+    add_library(${lib_name} ${library_sources})
+
+    # add python bindings module
+    set(bindings_sources ${_NIAS_CPP_DIR}/src/bindings/bindings.h ${_NIAS_CPP_DIR}/src/bindings/bindings.cpp)
+    pybind11_add_module(${lib_name}_bindings MODULE ${bindings_sources} ${NIAS_CPP_PYBIND11_NO_EXTRAS})
+
+    # find boost
+    # boost process v1 is header-only but boost process v2 is not, so depending on
+    # the boost version/configuration we must/must not link the boost::process target.
+    find_package(Boost COMPONENTS process QUIET)
+    find_package(Boost REQUIRED COMPONENTS headers filesystem)
+
+    # specify include directories and link libraries
+    target_include_directories(${lib_name} PUBLIC $<BUILD_INTERFACE:${_NIAS_CPP_DIR}/src>
+                                                  $<INSTALL_INTERFACE:${NIAS_CPP_INCLUDE_INSTALL_DIR}>)
+    target_include_directories(${lib_name} PUBLIC $<BUILD_INTERFACE:${CMAKE_CURRENT_BINARY_DIR}>
+                                                  $<INSTALL_INTERFACE:${NIAS_CPP_INCLUDE_INSTALL_DIR}>)
+    target_link_libraries(${lib_name} PUBLIC pybind11::pybind11 pybind11::embed Boost::headers
+                                             Boost::filesystem)
+    if(TARGET Boost::process)
+        target_link_libraries(${lib_name} PUBLIC Boost::process)
+    endif()
+    target_link_libraries(${bindings_lib_name} PRIVATE ${lib_name})
+
+    # aliases
+    add_library(nias_cpp::nias_cpp ALIAS nias_cpp)
+    add_library(nias_cpp::nias_cpp_bindings ALIAS nias_cpp_bindings)
+endmacro()
+
+# find dependencies
+find_program(UV_EXECUTABLE NAMES uv uv.exe)
+find_package(Python "@NIAS_CPP_MIN_PYTHON_VERSION@" COMPONENTS Interpreter Development REQUIRED)
+find_package(pybind11 "@NIAS_CPP_MIN_PYBIND11_VERSION@" CONFIG REQUIRED)
+
+# add the nias_cpp library
+nias_cpp_add_library()
+
+# setup python virtual environment
+if(DEFINED ENV{VIRTUAL_ENV})
+    set(NIAS_CPP_VENV_DIR $ENV{VIRTUAL_ENV})
+    # TODO: check that nias_cpp is installed in the virtual environment
+else()
+    # if no virtualenv is active, we set up our own virtual environment to install our python dependencies
+    set(NIAS_CPP_VENV_DIR ${CMAKE_CURRENT_BINARY_DIR}/nias_cpp_venv/$<CONFIG>)
+    add_custom_target(create_venv COMMAND ${UV_EXECUTABLE} venv --python ${Python_EXECUTABLE} --quiet
+                                          ${NIAS_CPP_VENV_DIR})
+    add_custom_target(
+        install_dependencies_into_venv
+        COMMAND ${UV_EXECUTABLE} pip compile --python ${Python_EXECUTABLE} --quiet
+                ${_NIAS_CPP_DIR}/pyproject.toml -o ${CMAKE_CURRENT_BINARY_DIR}/requirements.txt
+        COMMAND ${UV_EXECUTABLE} venv --python ${Python_EXECUTABLE} ${NIAS_CPP_VENV_DIR} --quiet
+        COMMAND ${CMAKE_COMMAND} -E env "VIRTUAL_ENV=${NIAS_CPP_VENV_DIR}" ${UV_EXECUTABLE} pip install
+                --requirements ${CMAKE_CURRENT_BINARY_DIR}/requirements.txt --quiet
+        COMMENT "Installing nias_cpp dependencies into virtual environment")
+    add_dependencies(nias_cpp install_dependencies_into_venv)
+    add_dependencies(install_dependencies_into_venv create_venv)
+endif()
+
+# pass the virtual environment and library directory to the C++ code
+target_compile_definitions(nias_cpp PRIVATE NIAS_CPP_VENV_DIR="${NIAS_CPP_VENV_DIR}")
+target_compile_definitions(nias_cpp PRIVATE NIAS_CPP_BUILD_DIR="$<TARGET_FILE_DIR:nias_cpp>")
+
+export(
+    TARGETS nias_cpp nias_cpp_bindings
+    NAMESPACE nias_cpp::
+    FILE "${PROJECT_BINARY_DIR}/nias_cpp-targets.cmake")
+export(PACKAGE nias_cpp)
+
+# set up paths
+set(NIAS_CPP_INCLUDE_DIRS "@CONF_INCLUDE_DIRS@")
 set(NIAS_CPP_LIBRARIES nias_cpp)
