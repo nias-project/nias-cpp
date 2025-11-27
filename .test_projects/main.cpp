@@ -17,5 +17,7 @@ int main()
     auto vec_array = ListVectorArray<VectorType>(vectors, 3, true);
     [[maybe_unused]] auto orthonormalized_vectorarray = gram_schmidt(vec_array);
 
+    std::cout << "Gram-Schmidt orthogonalization completed successfully." << std::endl;
+
     return 0;
 }

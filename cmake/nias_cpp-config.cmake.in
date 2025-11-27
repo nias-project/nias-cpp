@@ -1,7 +1,14 @@
 include_guard(GLOBAL)
 
+set(CMAKE_CXX_STANDARD 23)
+set(CMAKE_POSITION_INDEPENDENT_CODE TRUE)
+
 if (NOT DEFINED _NIAS_CPP_DIR)
-    get_filename_component(_NIAS_CPP_DIR "${CMAKE_CURRENT_LIST_FILE}" PATH)
+    # we install this config file into the cmake subfolder so we have to call PARENT_PATH twice
+    # - first time to get the cmake folder
+    # - second time to get the nias_cpp root folder
+    cmake_path(GET CMAKE_CURRENT_LIST_FILE PARENT_PATH _NIAS_CPP_DIR)
+    cmake_path(GET _NIAS_CPP_DIR PARENT_PATH _NIAS_CPP_DIR)
     set(_NIAS_CPP_DIR ${_NIAS_CPP_DIR} CACHE INTERNAL "")
 endif()
 

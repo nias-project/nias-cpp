@@ -57,7 +57,7 @@ void ensure_interpreter_and_venv_are_active()
                        pybind11::exec(R"(
                            with open(venv_path / 'pyvenv.cfg', 'r') as f:
                                for line in f:
-                                   if line.startswith('version_info'):
+                                   if line.startswith('version_info') or line.startswith('version'):
                                        venv_version = line.split('=')[1].strip()
                                        break
                            interpreter_version = sys.version.split()[0]

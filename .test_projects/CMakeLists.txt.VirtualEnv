@@ -9,10 +9,15 @@ project(
 
 find_package(Python REQUIRED COMPONENTS Interpreter Development)
 execute_process(
+    COMMAND "${Python_EXECUTABLE}" -m pybind11 --cmakedir
+    OUTPUT_STRIP_TRAILING_WHITESPACE
+    OUTPUT_VARIABLE PYBIND11_DIR)
+execute_process(
     COMMAND "${Python_EXECUTABLE}" -m nias_cpp --cmake_dir
     OUTPUT_STRIP_TRAILING_WHITESPACE
     OUTPUT_VARIABLE NIAS_CPP_DIR)
 list(APPEND CMAKE_PREFIX_PATH "${NIAS_CPP_DIR}")
+list(APPEND CMAKE_PREFIX_PATH "${PYBIND11_DIR}")
 find_package(nias_cpp CONFIG REQUIRED)
 message(STATUS "found nias_cpp")
 
