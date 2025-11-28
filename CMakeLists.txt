@@ -97,7 +97,7 @@ get_version_from_pyproject_toml(pybind11 NIAS_CPP_MIN_PYBIND11_VERSION)
 configure_file("${_NIAS_CPP_DIR}/cmake/nias_cpp-config.cmake.in"
                "${PROJECT_BINARY_DIR}${CMAKE_FILES_DIRECTORY}/nias_cpp-config.cmake" @ONLY)
 install(FILES "${PROJECT_BINARY_DIR}${CMAKE_FILES_DIRECTORY}/nias_cpp-config.cmake"
-        DESTINATION "${NIAS_CPP_INSTALL_CMAKE_DIR}")
+        DESTINATION "${NIAS_CPP_INSTALL_DATADIR}")
 
 # return early if the user only wants to install nias-cpp
 if(NIAS_CPP_MASTER_PROJECT AND NOT NIAS_CPP_ENABLE_TESTS)
