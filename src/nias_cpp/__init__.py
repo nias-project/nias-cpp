@@ -17,7 +17,7 @@ def include_dir() -> str:
 
 def cmake_dir() -> str:
     "Return the path to the nanobind CMake module directory."
-    return Path(__file__).parent.resolve() / "cmake"
+    return Path(__file__).parent.resolve()
 
 
 __all__ = (
