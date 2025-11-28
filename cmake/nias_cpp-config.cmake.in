@@ -37,9 +37,9 @@ macro(NIAS_CPP_ADD_LIBRARY)
 
     # specify include directories and link libraries
     target_include_directories(${lib_name} PUBLIC $<BUILD_INTERFACE:${_NIAS_CPP_DIR}/src>
-                                                  $<INSTALL_INTERFACE:${NIAS_CPP_INCLUDE_INSTALL_DIR}>)
+        $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>)
     target_include_directories(${lib_name} PUBLIC $<BUILD_INTERFACE:${CMAKE_CURRENT_BINARY_DIR}>
-                                                  $<INSTALL_INTERFACE:${NIAS_CPP_INCLUDE_INSTALL_DIR}>)
+      $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>)
     target_link_libraries(${lib_name} PUBLIC pybind11::pybind11 pybind11::embed Boost::headers
                                              Boost::filesystem)
     if(TARGET Boost::process)
@@ -90,6 +90,22 @@ export(
     NAMESPACE nias_cpp::
     FILE "${PROJECT_BINARY_DIR}/nias_cpp-targets.cmake")
 export(PACKAGE nias_cpp)
+
+install(
+    TARGETS nias_cpp nias_cpp_bindings
+    EXPORT nias_cpp-targets
+    LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR})
+
+if(NOT DEFINED NIAS_CPP_INSTALL_DATADIR)
+    set(NIAS_CPP_INSTALL_DATADIR "nias_cpp")
+endif()
+
+install(TARGETS nias_cpp nias_cpp_bindings LIBRARY DESTINATION ${NIAS_CPP_INSTALL_DATADIR})
+
+install(
+    EXPORT nias_cpp-targets
+    NAMESPACE nias_cpp::
+    DESTINATION ${CMAKE_INSTALL_DATADIR})
 
 # set up paths
 set(NIAS_CPP_INCLUDE_DIRS "@CONF_INCLUDE_DIRS@")

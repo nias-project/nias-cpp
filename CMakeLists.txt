@@ -110,18 +110,6 @@ ensure_pybind11_is_available()
 
 include("${PROJECT_BINARY_DIR}${CMAKE_FILES_DIRECTORY}/nias_cpp-config.cmake")
 
-install(
-    TARGETS nias_cpp nias_cpp_bindings
-    EXPORT nias_cpp-targets
-    LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR})
-
-install(TARGETS nias_cpp nias_cpp_bindings LIBRARY DESTINATION ${NIAS_CPP_INSTALL_DATADIR})
-
-install(
-    EXPORT nias_cpp-targets
-    NAMESPACE nias_cpp::
-    DESTINATION ${NIAS_CPP_INSTALL_CMAKE_DIR})
-
 # enable warnings in debug mode
 if(CMAKE_CXX_COMPILER_ID MATCHES "GNU" OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
     set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -Wall -Wextra -Wpedantic -Werror -Wsign-conversion")
