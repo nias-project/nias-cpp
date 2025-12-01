@@ -18,7 +18,7 @@ namespace nias
 {
 
 
-class Indices
+class NIAS_CPP_DLL_LOCAL Indices
 {
    public:
     /// The default constructor initializes indices_ to an empty vector
@@ -91,18 +91,18 @@ class Indices
 
    private:
     // compute start, stop, step, and slicelength for a slice
-    [[nodiscard]] std::array<ssize_t, 4> compute(ssize_t length) const;
+    NIAS_CPP_DLL_LOCAL [[nodiscard]] std::array<ssize_t, 4> compute(ssize_t length) const;
 
     // a valid index i for a sequence of length n in Python fulfills  -n <= i <= n-1
     // we cannot check this in the constructor because the length of the sequence is not known at that point,
     // so we have to check it here. Since we want a list of valid C++ indices, we also have to convert negative indices to positive ones.
-    [[nodiscard]] static ssize_t positive_index(ssize_t index, ssize_t length);
+    NIAS_CPP_DLL_LOCAL [[nodiscard]] static ssize_t positive_index(ssize_t index, ssize_t length);
 
     // check if indices_ holds a vector (and not a slice)
-    [[nodiscard]] bool holds_vector() const;
+    NIAS_CPP_DLL_LOCAL [[nodiscard]] bool holds_vector() const;
 
     // get the stored vector (check with holds_vector() first)
-    [[nodiscard]] const std::vector<ssize_t>& stored_vector() const;
+    NIAS_CPP_DLL_LOCAL [[nodiscard]] const std::vector<ssize_t>& stored_vector() const;
 
     using ValueType = std::variant<std::vector<ssize_t>, pybind11::slice>;
     // See https://stackoverflow.com/questions/4145605/stdvector-needs-to-have-dll-interface-to-be-used-by-clients-of-class-xt-war on why this is a pointer

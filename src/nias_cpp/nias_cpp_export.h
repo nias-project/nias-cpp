@@ -3,7 +3,8 @@
 
 #ifndef NIAS_CPP_EXPORT
 #    ifdef NIAS_CPP_STATIC
-#        define NIAS_CPP_EXPORT
+#        define NIAS_CPP_EXPORT __attribute__((visibility("default")))
+#        define NIAS_CPP_DLL_LOCAL __attribute__((visibility("hidden")))
 #    else
 #        ifdef _WIN32
 #            ifdef nias_cpp_EXPORTS
@@ -13,6 +14,7 @@
 #            endif
 #        else
 #            define NIAS_CPP_EXPORT __attribute__((visibility("default")))
+#            define NIAS_CPP_DLL_LOCAL __attribute__((visibility("hidden")))
 #        endif
 #    endif
 #endif
