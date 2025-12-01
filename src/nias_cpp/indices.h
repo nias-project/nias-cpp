@@ -18,36 +18,36 @@ namespace nias
 {
 
 
-class NIAS_CPP_EXPORT Indices
+class Indices
 {
    public:
     /// The default constructor initializes indices_ to an empty vector
-    Indices();
+    NIAS_CPP_EXPORT Indices();
 
     /// Construct from a single index
-    explicit(false) Indices(ssize_t index);
+    NIAS_CPP_EXPORT explicit(false) Indices(ssize_t index);
 
     /// Construct from a vector of indices
-    explicit(false) Indices(const std::vector<ssize_t>& indices);
+    NIAS_CPP_EXPORT explicit(false) Indices(const std::vector<ssize_t>& indices);
 
     /// Construct from a set of indices
-    explicit(false) Indices(const std::set<ssize_t>& indices);
+    NIAS_CPP_EXPORT explicit(false) Indices(const std::set<ssize_t>& indices);
 
     /// Construct from a Python slice
-    explicit(false) Indices(const pybind11::slice& slice);
+    NIAS_CPP_EXPORT explicit(false) Indices(const pybind11::slice& slice);
 
     /// Construct from a list of indices
-    Indices(std::initializer_list<ssize_t> indices);
+    NIAS_CPP_EXPORT Indices(std::initializer_list<ssize_t> indices);
 
     /// Destructor
-    ~Indices();
+    NIAS_CPP_EXPORT ~Indices();
 
     // copy and move constructor
-    Indices(const Indices& other);
-    Indices(Indices&& other) noexcept;
+    NIAS_CPP_EXPORT Indices(const Indices& other);
+    NIAS_CPP_EXPORT Indices(Indices&& other) noexcept;
     // copy and move assignment operators
-    Indices& operator=(const Indices& other);
-    Indices& operator=(Indices&& other) noexcept;
+    NIAS_CPP_EXPORT Indices& operator=(const Indices& other);
+    NIAS_CPP_EXPORT Indices& operator=(Indices&& other) noexcept;
 
     /**
       * \brief Get number of indices for a sequence of given length
@@ -55,7 +55,7 @@ class NIAS_CPP_EXPORT Indices
       * Returns the number of indices in the Indices object. Since the indices can
       * be a slice, the length of the sequence the indices are applied to is needed.
       */
-    [[nodiscard]] ssize_t size(ssize_t length) const;
+    NIAS_CPP_EXPORT [[nodiscard]] ssize_t size(ssize_t length) const;
 
     /**
       * \brief Get i-th index for a sequence of given length
@@ -63,7 +63,7 @@ class NIAS_CPP_EXPORT Indices
       * Since the stored indices can be a slice, the i-th index depends on the length
       * of the sequence the indices are applied.
       */
-    [[nodiscard]] ssize_t get(ssize_t i, ssize_t length) const;
+    NIAS_CPP_EXPORT [[nodiscard]] ssize_t get(ssize_t i, ssize_t length) const;
 
     /**
       * \brief Check that all indices are valid for a sequence of given length
@@ -72,12 +72,12 @@ class NIAS_CPP_EXPORT Indices
       * If we hold a slice, we do not have to check anything as slices will just be empty if they
       * do not fit the sequence (e.g., for a sequence vec of length 10 in Python, vec[20:30] will just be empty)
       */
-    void check_valid(ssize_t length) const;
+    NIAS_CPP_EXPORT void check_valid(ssize_t length) const;
 
     /**
       * \brief Apply a function for each index
       */
-    void for_each(const std::function<void(ssize_t)>& func, ssize_t length) const;
+    NIAS_CPP_EXPORT void for_each(const std::function<void(ssize_t)>& func, ssize_t length) const;
 
     /**
       * \brief Get the indices as a vector
@@ -85,9 +85,9 @@ class NIAS_CPP_EXPORT Indices
       * Takes the length of the sequence the indices are applied to as an argument and
       * returns a vector of indices with 0 <= index < length.
       */
-    [[nodiscard]] std::vector<ssize_t> as_vec(ssize_t length) const;
+    NIAS_CPP_EXPORT [[nodiscard]] std::vector<ssize_t> as_vec(ssize_t length) const;
 
-    [[nodiscard]] std::set<ssize_t> unique_indices(ssize_t length) const;
+    NIAS_CPP_EXPORT [[nodiscard]] std::set<ssize_t> unique_indices(ssize_t length) const;
 
    private:
     // compute start, stop, step, and slicelength for a slice
@@ -111,11 +111,11 @@ class NIAS_CPP_EXPORT Indices
 
 // Convenience class to not have to write Indices(pybind11::slice(start, stop, step)) when creating a slice
 // TODO: Drop this class?
-class NIAS_CPP_EXPORT Slice : public Indices
+class Slice : public Indices
 {
    public:
-    Slice(std::optional<ssize_t> start, std::optional<ssize_t> stop,
-          std::optional<ssize_t> step = std::nullopt)
+    NIAS_CPP_EXPORT Slice(std::optional<ssize_t> start, std::optional<ssize_t> stop,
+                          std::optional<ssize_t> step = std::nullopt)
         : Indices(pybind11::slice(start, stop, step))
     {
     }
