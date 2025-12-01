@@ -27,7 +27,8 @@ namespace nias
 
 
 template <class VectorType>
-class ListVectorArray : public VectorArrayInterface<typename VectorWrapperTraits<VectorType>::ScalarType>
+class NIAS_CPP_DLL_LOCAL ListVectorArray
+    : public VectorArrayInterface<typename VectorWrapperTraits<VectorType>::ScalarType>
 {
     using ThisType = ListVectorArray;
     using F = typename VectorWrapperTraits<VectorType>::ScalarType;

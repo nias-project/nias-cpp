@@ -6,7 +6,6 @@
 #include <initializer_list>
 #include <optional>
 #include <set>
-#include <variant>
 #include <vector>
 
 #include <nias_cpp/type_traits.h>
@@ -16,7 +15,6 @@
 
 namespace nias
 {
-
 
 class NIAS_CPP_DLL_LOCAL Indices
 {
@@ -55,7 +53,7 @@ class NIAS_CPP_DLL_LOCAL Indices
       * Returns the number of indices in the Indices object. Since the indices can
       * be a slice, the length of the sequence the indices are applied to is needed.
       */
-    NIAS_CPP_EXPORT [[nodiscard]] ssize_t size(ssize_t length) const;
+    [[nodiscard]] NIAS_CPP_EXPORT ssize_t size(ssize_t length) const;
 
     /**
       * \brief Get i-th index for a sequence of given length
@@ -63,7 +61,7 @@ class NIAS_CPP_DLL_LOCAL Indices
       * Since the stored indices can be a slice, the i-th index depends on the length
       * of the sequence the indices are applied.
       */
-    NIAS_CPP_EXPORT [[nodiscard]] ssize_t get(ssize_t i, ssize_t length) const;
+    [[nodiscard]] NIAS_CPP_EXPORT ssize_t get(ssize_t i, ssize_t length) const;
 
     /**
       * \brief Check that all indices are valid for a sequence of given length
@@ -85,33 +83,34 @@ class NIAS_CPP_DLL_LOCAL Indices
       * Takes the length of the sequence the indices are applied to as an argument and
       * returns a vector of indices with 0 <= index < length.
       */
-    NIAS_CPP_EXPORT [[nodiscard]] std::vector<ssize_t> as_vec(ssize_t length) const;
+    [[nodiscard]] NIAS_CPP_EXPORT std::vector<ssize_t> as_vec(ssize_t length) const;
 
-    NIAS_CPP_EXPORT [[nodiscard]] std::set<ssize_t> unique_indices(ssize_t length) const;
+    [[nodiscard]] NIAS_CPP_EXPORT std::set<ssize_t> unique_indices(ssize_t length) const;
 
    private:
     // compute start, stop, step, and slicelength for a slice
-    NIAS_CPP_DLL_LOCAL [[nodiscard]] std::array<ssize_t, 4> compute(ssize_t length) const;
+    [[nodiscard]] NIAS_CPP_DLL_LOCAL std::array<ssize_t, 4> compute(ssize_t length) const;
 
     // a valid index i for a sequence of length n in Python fulfills  -n <= i <= n-1
     // we cannot check this in the constructor because the length of the sequence is not known at that point,
     // so we have to check it here. Since we want a list of valid C++ indices, we also have to convert negative indices to positive ones.
-    NIAS_CPP_DLL_LOCAL [[nodiscard]] static ssize_t positive_index(ssize_t index, ssize_t length);
+    [[nodiscard]] NIAS_CPP_DLL_LOCAL static ssize_t positive_index(ssize_t index, ssize_t length);
 
     // check if indices_ holds a vector (and not a slice)
-    NIAS_CPP_DLL_LOCAL [[nodiscard]] bool holds_vector() const;
+    [[nodiscard]] NIAS_CPP_DLL_LOCAL bool holds_vector() const;
 
     // get the stored vector (check with holds_vector() first)
-    NIAS_CPP_DLL_LOCAL [[nodiscard]] const std::vector<ssize_t>& stored_vector() const;
+    [[nodiscard]] NIAS_CPP_DLL_LOCAL const std::vector<ssize_t>& stored_vector() const;
 
-    using ValueType = std::variant<std::vector<ssize_t>, pybind11::slice>;
-    // See https://stackoverflow.com/questions/4145605/stdvector-needs-to-have-dll-interface-to-be-used-by-clients-of-class-xt-war on why this is a pointer
-    ValueType* indices_;
+    // Forward declaration of nested implementation struct
+    struct Impl;
+    // PIMPL idiom to hide implementation details and fix visibility warnings
+    Impl* pimpl_;
 };
 
 // Convenience class to not have to write Indices(pybind11::slice(start, stop, step)) when creating a slice
 // TODO: Drop this class?
-class Slice : public Indices
+class NIAS_CPP_DLL_LOCAL Slice : public Indices
 {
    public:
     NIAS_CPP_EXPORT Slice(std::optional<ssize_t> start, std::optional<ssize_t> stop,

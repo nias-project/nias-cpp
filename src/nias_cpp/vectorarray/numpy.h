@@ -22,7 +22,7 @@ namespace nias
 
 
 template <std::floating_point F>
-class NumpyVectorArray : public VectorArrayInterface<F>
+class NIAS_CPP_DLL_LOCAL NumpyVectorArray : public VectorArrayInterface<F>
 {
     using ThisType = NumpyVectorArray;
     using VectorInterfaceType = VectorInterface<F>;

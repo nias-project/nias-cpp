@@ -26,7 +26,7 @@ template <floating_point_or_complex F>
 class VectorArrayInterface;
 
 template <floating_point_or_complex F>
-class ConstVectorArrayView : public VectorArrayInterface<F>
+class NIAS_CPP_DLL_LOCAL ConstVectorArrayView : public VectorArrayInterface<F>
 {
     using ThisType = ConstVectorArrayView<F>;
     using InterfaceType = VectorArrayInterface<F>;
@@ -146,7 +146,7 @@ class ConstVectorArrayView : public VectorArrayInterface<F>
 };
 
 template <floating_point_or_complex F>
-class VectorArrayView : public ConstVectorArrayView<F>
+class NIAS_CPP_DLL_LOCAL VectorArrayView : public ConstVectorArrayView<F>
 {
     using ThisType = VectorArrayView<F>;
     using InterfaceType = VectorArrayInterface<F>;
@@ -192,7 +192,7 @@ template <class VectorType>
 class VectorWrapper;
 
 template <floating_point_or_complex F>
-class VectorArrayInterface
+class NIAS_CPP_DLL_LOCAL VectorArrayInterface
 {
     using ThisType = VectorArrayInterface;
 

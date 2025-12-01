@@ -16,63 +16,97 @@
 namespace nias
 {
 
+// Implementation struct definition
+struct Indices::Impl
+{
+    using ValueType = std::variant<std::vector<ssize_t>, pybind11::slice>;
+    ValueType data;
+
+    Impl() = default;
+
+    explicit Impl(ssize_t index)
+        : data(std::in_place_type_t<std::vector<ssize_t>>{}, 1, index)
+    {
+    }
+
+    explicit Impl(const std::vector<ssize_t>& indices)
+        : data(indices)
+    {
+    }
+
+    explicit Impl(const std::set<ssize_t>& indices)
+        : data(std::in_place_type_t<std::vector<ssize_t>>{}, indices.begin(), indices.end())
+    {
+    }
+
+    explicit Impl(const pybind11::slice& slice)
+        : data(slice)
+    {
+    }
+
+    Impl(std::initializer_list<ssize_t> indices)
+        : data(std::in_place_type_t<std::vector<ssize_t>>{}, indices)
+    {
+    }
+};
+
 Indices::Indices()
-    : indices_(new ValueType())
+    : pimpl_(new Impl())
 {
 }
 
 Indices::Indices(ssize_t index)
-    : indices_(new ValueType(std::in_place_type_t<std::vector<ssize_t>>{}, 1, index))
+    : pimpl_(new Impl(index))
 {
 }
 
 Indices::Indices(const std::vector<ssize_t>& indices)
-    : indices_(new ValueType(indices))
+    : pimpl_(new Impl(indices))
 {
 }
 
 Indices::Indices(const std::set<ssize_t>& indices)
-    : indices_(new ValueType(std::in_place_type_t<std::vector<ssize_t>>{}, indices.begin(), indices.end()))
+    : pimpl_(new Impl(indices))
 {
 }
 
 Indices::Indices(const pybind11::slice& slice)
-    : indices_(new ValueType(slice))
+    : pimpl_(new Impl(slice))
 {
 }
 
 Indices::Indices(std::initializer_list<ssize_t> indices)
-    : indices_(new ValueType(std::in_place_type_t<std::vector<ssize_t>>{}, indices))
+    : pimpl_(new Impl(indices))
 {
 }
 
 Indices::~Indices()
 {
-    delete indices_;
+    delete pimpl_;
 }
 
 Indices::Indices(const Indices& other)
-    : indices_((other.indices_ != nullptr) ? new ValueType(*other.indices_) : nullptr)
+    : pimpl_((other.pimpl_ != nullptr) ? new Impl(*other.pimpl_) : nullptr)
 {
 }
 
 Indices::Indices(Indices&& other) noexcept
-    : indices_(nullptr)
+    : pimpl_(nullptr)
 {
-    std::swap(indices_, other.indices_);
+    std::swap(pimpl_, other.pimpl_);
 }
 
 Indices& Indices::operator=(const Indices& other)
 {
     Indices tmp(other);
-    std::swap(indices_, tmp.indices_);
+    std::swap(pimpl_, tmp.pimpl_);
     return *this;
 }
 
 Indices& Indices::operator=(Indices&& other) noexcept
 {
     Indices tmp(std::move(other));
-    std::swap(indices_, tmp.indices_);
+    std::swap(pimpl_, tmp.pimpl_);
     return *this;
 }
 
@@ -186,7 +220,7 @@ std::array<ssize_t, 4> Indices::compute(ssize_t length) const
 {
     if (holds_vector())
     {
-        throw InvalidStateError("compute can only be called if indices_ holds a slice");
+        throw InvalidStateError("compute can only be called if pimpl_ holds a slice");
     }
     ssize_t start = 0;
     ssize_t stop = 0;
@@ -196,7 +230,7 @@ std::array<ssize_t, 4> Indices::compute(ssize_t length) const
     // https://github.com/python/cpython/blob/main/Objects/sliceobject.c
     // length is the length of the sequence which the slice is applied to, and slicelength is the length of the resulting slice (number of indices in the slice)
     // PySlice_AdjustIndices adjust start and stop indices automatically to fit within the bounds of the sequence (depending on the sign of step)
-    std::get<pybind11::slice>(*indices_).compute(length, &start, &stop, &step, &slicelength);
+    std::get<pybind11::slice>(pimpl_->data).compute(length, &start, &stop, &step, &slicelength);
     return {start, stop, step, slicelength};
 }
 
@@ -215,12 +249,12 @@ ssize_t Indices::positive_index(ssize_t index, ssize_t length)
 
 bool Indices::holds_vector() const
 {
-    return std::holds_alternative<std::vector<ssize_t>>(*indices_);
+    return std::holds_alternative<std::vector<ssize_t>>(pimpl_->data);
 }
 
 const std::vector<ssize_t>& Indices::stored_vector() const
 {
-    return std::get<std::vector<ssize_t>>(*indices_);
+    return std::get<std::vector<ssize_t>>(pimpl_->data);
 }
 
 }  // namespace nias
