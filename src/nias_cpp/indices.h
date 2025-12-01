@@ -20,8 +20,6 @@ namespace nias
 
 class NIAS_CPP_EXPORT Indices
 {
-    using ValueType = std::variant<std::vector<ssize_t>, pybind11::slice>;
-
    public:
     /// The default constructor initializes indices_ to an empty vector
     Indices();
@@ -106,6 +104,7 @@ class NIAS_CPP_EXPORT Indices
     // get the stored vector (check with holds_vector() first)
     [[nodiscard]] const std::vector<ssize_t>& stored_vector() const;
 
+    using ValueType = std::variant<std::vector<ssize_t>, pybind11::slice>;
     // See https://stackoverflow.com/questions/4145605/stdvector-needs-to-have-dll-interface-to-be-used-by-clients-of-class-xt-war on why this is a pointer
     ValueType* indices_;
 };
