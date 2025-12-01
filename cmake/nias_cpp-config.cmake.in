@@ -26,6 +26,11 @@ macro(NIAS_CPP_ADD_LIBRARY)
 
     # add C++ library
     add_library(${lib_name} ${library_sources})
+    if (BUILD_SHARED_LIBS)
+        target_compile_definitions(${lib_name} PRIVATE nias_cpp_EXPORTS=1)
+    else()
+        target_compile_definitions(${lib_name} PUBLIC NIAS_CPP_STATIC=1)
+    endif()
 
     # add python bindings module
     set(bindings_sources ${_NIAS_CPP_DIR}/src/bindings/bindings.h ${_NIAS_CPP_DIR}/src/bindings/bindings.cpp)
