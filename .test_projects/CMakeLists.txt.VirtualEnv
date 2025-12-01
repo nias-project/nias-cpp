@@ -1,5 +1,6 @@
 cmake_minimum_required(VERSION 3.27..3.31)
 set(CMAKE_CXX_STANDARD 23)
+set(CMAKE_COMPILE_WARNING_AS_ERROR ON)
 
 project(
     test-project
