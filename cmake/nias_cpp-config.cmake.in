@@ -90,6 +90,7 @@ else()
 endif()
 
 # pass the virtual environment and library directory to the C++ code
+cmake_path(ABSOLUTE_PATH NIAS_CPP_VENV_DIR NORMALIZE OUTPUT_VARIABLE NIAS_CPP_VENV_DIR)
 target_compile_definitions(nias_cpp PRIVATE NIAS_CPP_VENV_DIR="${NIAS_CPP_VENV_DIR}")
 target_compile_definitions(nias_cpp PRIVATE NIAS_CPP_BUILD_DIR="$<TARGET_FILE_DIR:nias_cpp>")
 
