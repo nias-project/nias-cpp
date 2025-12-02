@@ -59,18 +59,6 @@ void ensure_interpreter_and_venv_are_active()
                            venv_module_path = venv_module_path[0]
                            sys.path.insert(0, str(venv_module_path))
                            )");
-                       // check that Python versions match
-                       pybind11::exec(R"(
-                           with open(venv_path / 'pyvenv.cfg', 'r') as f:
-                               for line in f:
-                                   if line.startswith('version_info') or line.startswith('version'):
-                                       venv_version = line.split('=')[1].strip()
-                                       break
-                           interpreter_version = sys.version.split()[0]
-                           if venv_version != interpreter_version:
-                               raise RuntimeError(f'Python versions (interpreter {interpreter_version}'
-                                                  f' vs virtualenv {venv_version}) do not match!')
-                           )");
                    });
 }
 
