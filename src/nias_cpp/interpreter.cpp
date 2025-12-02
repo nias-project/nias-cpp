@@ -3,8 +3,15 @@
 #include <cstdlib>
 #include <filesystem>
 #include <mutex>
+#include <stdexcept>
+#include <string>
 
-#include <boost/process/v2/environment.hpp>
+// We intentionally do not include Python.h ourselves since it uses autolinking of the Python library
+// which causes compilation failures on Windows with MSVC. pybind11 has machinery in place to avoid the
+// autolinking issue.
+// See https://discourse.paraview.org/t/debug-build-fail-cannot-open-file-python310-lib/9000/2
+// We can use https://github.com/python/cpython/pull/19740 once our minimum required
+// Python version is high enough.
 #include <pybind11/embed.h>
 #include <pybind11/eval.h>
 
@@ -32,14 +39,28 @@ void ensure_interpreter_and_venv_are_active()
 #else
     static const auto pythonHome = python_lib_dir.native();
 #endif
-    // The issue linked above suggests to use Py_SetPythonHome which, however, is deprecated in Python 3.11+.
-    // The suggested alternative is PyConfig.home (see https://docs.python.org/3/c-api/init.html#c.Py_SetPythonHome)
-    // but using that seems to a bit more involved.
-    // TODO: Figure out whether we can/should use PyConfig.home here instead of setting the environment variable.
-    // PyConfig might also help us to set up the other paths that we set below using pybind11::exec.
-    boost::process::v2::environment::set(boost::process::v2::environment::key("PYTHONHOME"),
-                                         pythonHome.data());
-    static auto interpreter = pybind11::scoped_interpreter{};
+    // Use PyConfig.home as recommended in Python 3.11+ instead of the deprecated Py_SetPythonHome
+    // or setting the PYTHONHOME environment variable.
+    // See https://docs.python.org/3/c-api/init.html#c.Py_SetPythonHome
+    static auto interpreter = []()
+    {
+        PyConfig config;
+        PyConfig_InitPythonConfig(&config);
+        const PyStatus status = PyConfig_SetBytesString(&config, &config.home, pythonHome.c_str());
+        if (PyStatus_Exception(status))
+        {
+            std::string error_msg = "Failed to set PyConfig.home";
+            if (PyStatus_IsError(status) && status.err_msg != nullptr)
+            {
+                error_msg += ": ";
+                error_msg += status.err_msg;
+            }
+            PyConfig_Clear(&config);
+            throw std::runtime_error(error_msg);
+        }
+        // Note: pybind11::scoped_interpreter will call PyConfig_Clear internally after initialization
+        return pybind11::scoped_interpreter(&config);
+    }();
     static std::once_flag flag;
     std::call_once(flag,
                    [&]()
