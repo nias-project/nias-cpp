@@ -41,15 +41,14 @@ macro(NIAS_CPP_ADD_LIBRARY)
     # boost process v1 is header-only but boost process v2 is not, so depending on
     # the boost version/configuration we must/must not link the boost::process target.
     find_package(Boost COMPONENTS process QUIET)
-    find_package(Boost REQUIRED COMPONENTS headers filesystem)
+    find_package(Boost REQUIRED COMPONENTS headers)
 
     # specify include directories and link libraries
     target_include_directories(${lib_name} PUBLIC $<BUILD_INTERFACE:${_NIAS_CPP_DIR}/src>
         $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>)
     target_include_directories(${lib_name} PUBLIC $<BUILD_INTERFACE:${CMAKE_CURRENT_BINARY_DIR}>
       $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>)
-    target_link_libraries(${lib_name} PUBLIC pybind11::pybind11 pybind11::embed Boost::headers
-                                             Boost::filesystem)
+    target_link_libraries(${lib_name} PUBLIC pybind11::pybind11 pybind11::embed Boost::headers)
     if(TARGET Boost::process)
         target_link_libraries(${lib_name} PUBLIC Boost::process)
     endif()
@@ -91,7 +90,10 @@ endif()
 
 # pass the virtual environment and library directory to the C++ code
 cmake_path(ABSOLUTE_PATH NIAS_CPP_VENV_DIR NORMALIZE OUTPUT_VARIABLE NIAS_CPP_VENV_DIR)
+list(GET Python_RUNTIME_LIBRARY_DIRS 0 NIAS_CPP_PYTHON_LIBRARY_DIR)
+cmake_path(ABSOLUTE_PATH NIAS_CPP_PYTHON_LIBRARY_DIR NORMALIZE OUTPUT_VARIABLE NIAS_CPP_PYTHON_LIBRARY_DIR)
 target_compile_definitions(nias_cpp PRIVATE NIAS_CPP_VENV_DIR="${NIAS_CPP_VENV_DIR}")
+target_compile_definitions(nias_cpp PRIVATE NIAS_CPP_PYTHON_LIBRARY_DIR="${NIAS_CPP_PYTHON_LIBRARY_DIR}")
 target_compile_definitions(nias_cpp PRIVATE NIAS_CPP_BUILD_DIR="$<TARGET_FILE_DIR:nias_cpp>")
 
 export(

@@ -1,9 +1,9 @@
 #include "interpreter.h"
 
 #include <cstdlib>
+#include <filesystem>
 #include <mutex>
 
-#include <boost/dll/runtime_symbol_info.hpp>
 #include <boost/process/v2/environment.hpp>
 #include <pybind11/embed.h>
 #include <pybind11/eval.h>
@@ -14,23 +14,23 @@ namespace nias
 
 void ensure_interpreter_and_venv_are_active()
 {
-// We have to ensure that we use the same Python interpreter (version) as the one linked to pybind11.
-// See https://github.com/pybind/pybind11/issues/2369
+    // We have to ensure that we use the same Python interpreter (version) as the one linked to pybind11.
+    // See https://github.com/pybind/pybind11/issues/2369
+    static auto python_lib_dir = std::filesystem::path(NIAS_CPP_PYTHON_LIBRARY_DIR);
 #ifndef _WIN32
     // On Linux, the python library might be in a subfolder of the lib dir (e.g., /lib/x86_64-linux-gnu/libpython3.12.so)
     // so we cannot just take the parent path of the library location as PYTHONHOME. Instead, we search upwards until we find
     // the "lib" folder.
-    static auto pythonHome = []()
+    static const auto pythonHome = []()
     {
-        auto lib_location = boost::dll::symbol_location(Py_Initialize).parent_path();
-        while (lib_location.filename() != "lib" && lib_location.has_parent_path())
+        while (python_lib_dir.filename() != "lib" && python_lib_dir.has_parent_path())
         {
-            lib_location = lib_location.parent_path();
+            python_lib_dir = python_lib_dir.parent_path();
         }
-        return lib_location.parent_path().native();
+        return python_lib_dir.parent_path().native();
     }();
 #else
-    static auto pythonHome = boost::dll::symbol_location(Py_Initialize).parent_path().native();
+    static const auto pythonHome = python_lib_dir.native();
 #endif
     // The issue linked above suggests to use Py_SetPythonHome which, however, is deprecated in Python 3.11+.
     // The suggested alternative is PyConfig.home (see https://docs.python.org/3/c-api/init.html#c.Py_SetPythonHome)
@@ -40,11 +40,6 @@ void ensure_interpreter_and_venv_are_active()
     boost::process::v2::environment::set(boost::process::v2::environment::key("PYTHONHOME"),
                                          pythonHome.data());
     static auto interpreter = pybind11::scoped_interpreter{};
-    // For the moment, we simply prepend the virtualenv module path to Python's module search path.
-    // This seems to work fine for now but we have to ensure that the python version that is linked to pybind11
-    // is the same as the one in the virtualenv. In the future, we might want to
-    // - use the Python C API to choose the virtualenv Python interpreter, see https://docs.python.org/3/c-api/init_config.html
-    // - make sure (in CMake) that pybind11 is linked to the Python version from the virtualenv
     static std::once_flag flag;
     std::call_once(flag,
                    [&]()
