@@ -67,12 +67,12 @@ jobs:
 
     - name: Build with cmake
       run: |
-        cmake --build build
+        cmake --build build --parallel
 
     - name: Build headercheck with cmake
       run: |
-        cmake --build build --target headercheck
+        cmake --build build --parallel --target headercheck
 
     - name: Build C++ tests with cmake
       run: |
-        cmake --build build --target all_test_binaries
+        cmake --build build --parallel --target all_test_binaries
