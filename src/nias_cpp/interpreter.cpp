@@ -34,10 +34,10 @@ void ensure_interpreter_and_venv_are_active()
         {
             python_lib_dir = python_lib_dir.parent_path();
         }
-        return python_lib_dir.parent_path().native();
+        return python_lib_dir.parent_path().string();
     }();
 #else
-    static const auto pythonHome = python_lib_dir.native();
+    static const auto pythonHome = python_lib_dir.string();
 #endif
     // Use PyConfig.home as recommended in Python 3.11+ instead of the deprecated Py_SetPythonHome
     // or setting the PYTHONHOME environment variable.
