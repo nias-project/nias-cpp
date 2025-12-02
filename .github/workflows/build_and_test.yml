@@ -78,20 +78,20 @@ jobs:
 
     - name: Build with cmake
       run: |
-        cmake --build build
+        cmake --build build --parallel
 
     - name: Build headerchecks with cmake
       run: |
-        cmake --build build --target headercheck
+        cmake --build build --parallel --target headercheck
 
     - name: Build C++ tests with cmake
       run: |
-        cmake --build build --target all_test_binaries
+        cmake --build build --parallel --target all_test_binaries
 
     - name: Run C++ tests with ctest
       id: run_tests
       run: |
-        ctest --test-dir build
+        ctest --parallel --test-dir build
 
     - name: Re-run failed tests for more information
       if: always() && steps.run_tests.conclusion == 'failure'
@@ -129,20 +129,20 @@ jobs:
 
     - name: Build with cmake
       run: |
-        cmake --build build --config ${{ matrix.type }}
+        cmake --build build --parallel --config ${{ matrix.type }}
 
     - name: Build headerchecks with cmake
       run: |
-        cmake --build build --config ${{ matrix.type }} --target headercheck
+        cmake --build build --parallel --config ${{ matrix.type }} --target headercheck
 
     - name: Build C++ tests with cmake
       run: |
-        cmake --build build --config ${{ matrix.type }} --target all_test_binaries
+        cmake --build build --parallel --config ${{ matrix.type }} --target all_test_binaries
 
     - name: Run C++ tests with ctest
       id: run_tests
       run: |
-        ctest --test-dir build -C ${{ matrix.type }}
+        ctest --parallel --test-dir build -C ${{ matrix.type }}
 
     - name: Re-run failed tests for more information
       if: always() && steps.run_tests.conclusion == 'failure'
