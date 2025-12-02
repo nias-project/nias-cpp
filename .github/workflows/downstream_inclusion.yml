@@ -39,9 +39,6 @@ jobs:
     - name: Setup uv
       uses: astral-sh/setup-uv@v7
 
-    - name: Install boost
-      run: sudo apt-get install -y libboost-all-dev
-
     - name: Checkout nias-cpp
       uses: actions/checkout@v5
       with:
@@ -89,9 +86,6 @@ jobs:
     - name: Setup uv
       uses: astral-sh/setup-uv@v7
 
-    - name: Install boost
-      run: sudo apt-get install -y libboost-all-dev
-
     - name: Checkout nias-cpp
       uses: actions/checkout@v5
       with:
@@ -137,9 +131,6 @@ jobs:
 
     - name: Setup uv
       uses: astral-sh/setup-uv@v7
-
-    - name: Install boost
-      run: sudo apt-get install -y libboost-all-dev
 
     - name: Checkout nias-cpp
       uses: actions/checkout@v5

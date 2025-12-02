@@ -38,9 +38,6 @@ jobs:
     - name: Setup uv
       uses: astral-sh/setup-uv@v7
 
-    - name: Install boost
-      run: sudo apt-get install -y libboost-all-dev
-
     - name: Setup Clang toolchain (on Linux)
       if: runner.os == 'Linux'
       run: |
