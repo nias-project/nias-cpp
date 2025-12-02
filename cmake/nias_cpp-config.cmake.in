@@ -37,21 +37,12 @@ macro(NIAS_CPP_ADD_LIBRARY)
     set(bindings_sources ${_NIAS_CPP_DIR}/src/bindings/bindings.h ${_NIAS_CPP_DIR}/src/bindings/bindings.cpp)
     pybind11_add_module(${lib_name}_bindings MODULE ${bindings_sources} ${NIAS_CPP_PYBIND11_NO_EXTRAS})
 
-    # find boost
-    # boost process v1 is header-only but boost process v2 is not, so depending on
-    # the boost version/configuration we must/must not link the boost::process target.
-    find_package(Boost COMPONENTS process QUIET)
-    find_package(Boost REQUIRED COMPONENTS headers)
-
     # specify include directories and link libraries
     target_include_directories(${lib_name} PUBLIC $<BUILD_INTERFACE:${_NIAS_CPP_DIR}/src>
         $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>)
     target_include_directories(${lib_name} PUBLIC $<BUILD_INTERFACE:${CMAKE_CURRENT_BINARY_DIR}>
       $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>)
-    target_link_libraries(${lib_name} PUBLIC pybind11::pybind11 pybind11::embed Boost::headers)
-    if(TARGET Boost::process)
-        target_link_libraries(${lib_name} PUBLIC Boost::process)
-    endif()
+    target_link_libraries(${lib_name} PUBLIC pybind11::pybind11 pybind11::embed)
     target_link_libraries(${bindings_lib_name} PRIVATE ${lib_name})
 
     # aliases
