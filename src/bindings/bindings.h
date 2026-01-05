@@ -313,6 +313,7 @@ pybind11::array_t<F> py_apply_inner_product(const InnerProductInterface<F>& self
         {
             ret_array_mutable(i) = ret[as_size_t(i)];
         }
+        return ret_array;
     }
 
     const auto ret = self.apply(left, right, left_indices, right_indices);
