@@ -13,7 +13,7 @@ if(SKBUILD)
 else()
     project(
         nias_cpp
-        VERSION 0.1.4
+        VERSION 0.1.5
         LANGUAGES CXX)
 endif()
 set(CMAKE_CXX_STANDARD 23)
