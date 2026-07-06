@@ -34,7 +34,7 @@ class EuclideanInnerProduct : public InnerProductInterface<F>
         {
             for (ssize_t j = 0; j < right.size(); ++j)
             {
-                ret[as_size_t(i)][as_size_t(j)] = dot_product(left, right, {i}, {j})[0];
+                ret.at(as_size_t(i)).at(as_size_t(j)) = dot_product(left, right, {i}, {j}).at(0);
             }
         }
         return ret;

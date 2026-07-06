@@ -75,22 +75,22 @@ auto bind_vector_interface(pybind11::module& m, const std::string& name = "Vecto
                               alpha, x);
         }
 
-        F& operator[](ssize_t i) override
+        F& at(ssize_t i) override
         {
             PYBIND11_OVERRIDE_PURE_NAME(F&,            /* Return type */
                                         VecInterface,  /* Parent class */
                                         "__setitem__", /* Name of function in Python */
-                                        operator[],    /* Name of function in C++ */
+                                        at,            /* Name of function in C++ */
                                         i              /* Argument(s) */
             );
         }
 
-        [[nodiscard]] const F& operator[](ssize_t i) const override
+        [[nodiscard]] const F& at(ssize_t i) const override
         {
             PYBIND11_OVERRIDE_PURE_NAME(const F&,      /* Return type */
                                         VecInterface,  /* Parent class */
                                         "__getitem__", /* Name of function in Python */
-                                        operator[],    /* Name of function in C++ */
+                                        at,            /* Name of function in C++ */
                                         i              /* Argument(s) */
             );
         }
@@ -107,7 +107,7 @@ auto bind_vector_interface(pybind11::module& m, const std::string& name = "Vecto
                    .def("copy", &VecInterface::copy)
                    .def("scal", &VecInterface::scal)
                    .def("axpy", &VecInterface::axpy)
-                   .def("__getitem__", py::overload_cast<ssize_t>(&VecInterface::operator[], py::const_));
+                   .def("__getitem__", py::overload_cast<ssize_t>(&VecInterface::at, py::const_));
 
     return ret;
 }
@@ -311,7 +311,7 @@ pybind11::array_t<F> py_apply_inner_product(const InnerProductInterface<F>& self
         auto ret_array_mutable = ret_array.mutable_unchecked();
         for (ssize_t i = 0; i < std::ssize(ret); ++i)
         {
-            ret_array_mutable(i) = ret[as_size_t(i)];
+            ret_array_mutable(i) = ret.at(as_size_t(i));
         }
         return ret_array;
     }
@@ -319,7 +319,7 @@ pybind11::array_t<F> py_apply_inner_product(const InnerProductInterface<F>& self
     const auto ret = self.apply(left, right, left_indices, right_indices);
     const ssize_t n = left_indices ? left_indices->size(left.size()) : left.size();
     const ssize_t m = right_indices ? right_indices->size(right.size()) : right.size();
-    if (std::ssize(ret) != n || (n > 0 && std::ssize(ret[0]) != m))
+    if (std::ssize(ret) != n || (n > 0 && std::ssize(ret.at(0)) != m))
     {
         throw nias::InvalidStateError("Result has wrong size.");
     }
@@ -329,7 +329,7 @@ pybind11::array_t<F> py_apply_inner_product(const InnerProductInterface<F>& self
     {
         for (ssize_t j = 0; j < m; ++j)
         {
-            ret_array_mutable(i, j) = ret[as_size_t(i)][as_size_t(j)];
+            ret_array_mutable(i, j) = ret.at(as_size_t(i)).at(as_size_t(j));
         }
     }
     return ret_array;

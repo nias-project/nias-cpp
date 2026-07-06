@@ -228,7 +228,7 @@ class NIAS_CPP_DLL_LOCAL NumpyVectorArray : public VectorArrayInterface<F>
         {
             for (ssize_t j = 0; j < dim(); ++j)
             {
-                new_array.mutable_at(i, j) = array_.at(indices_to_keep[as_size_t(i)], j);
+                new_array.mutable_at(i, j) = array_.at(indices_to_keep.at(as_size_t(i)), j);
             }
         }
         array_ = new_array;

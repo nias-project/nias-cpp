@@ -46,7 +46,7 @@ std::string print_vec(const nias::VectorInterface<F>& vec)
     std::string ret = "[";
     for (ssize_t i = 0; i < vec.dim(); ++i)
     {
-        ret += print_scalar(vec[i]);
+        ret += print_scalar(vec.at(i));
         if (i != vec.dim() - 1)
         {
             ret += ", ";
@@ -95,7 +95,7 @@ void print(const nias::VectorArrayInterface<F>& vec_array, std::string_view name
     {
         for (ssize_t j = 0; j < vec_array.size(); ++j)
         {
-            std::cout << nias::dot_product(vec_array, vec_array, {i}, {j})[0] << " ";
+            std::cout << nias::dot_product(vec_array, vec_array, {i}, {j}).at(0) << " ";
         }
         std::cout << '\n';
     }
@@ -105,7 +105,7 @@ template <class VectorType>
 void test_gram_schmidt()
 {
     using namespace nias;
-    using F = typename VectorWrapperTraits<VectorType>::ScalarType;
+    using F = VectorWrapperTraits<VectorType>::ScalarType;
 
     // Create some input vectors and print them
     const std::vector<VectorType> vectors{VectorType{F(1.), F(2.), F(3.)}, VectorType{F(4.), F(5.), F(6.)},
@@ -130,12 +130,12 @@ void test_gram_schmidt()
         {
             if constexpr (complex<F>)
             {
-                using R = typename F::value_type;
-                ret += std::conj(lhs[i]) * F(R(i + 1), R(0)) * rhs[i];
+                using R = F::value_type;
+                ret += std::conj(lhs.at(i)) * F(R(i + 1), R(0)) * rhs.at(i);
             }
             else
             {
-                ret += lhs[i] * F(i + 1) * rhs[i];
+                ret += lhs.at(i) * F(i + 1) * rhs.at(i);
             }
         }
         return ret;

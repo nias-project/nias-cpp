@@ -21,7 +21,7 @@ namespace internal
 
 // helper type for the variant visitor
 template <class... Ts>
-struct overloads : Ts...
+struct overloads : Ts...  // NOLINT(misc-multiple-inheritance)
 {
     using Ts::operator()...;
 };
@@ -33,7 +33,7 @@ template <class VectorType>
 class VectorWrapper : public VectorInterface<typename VectorWrapperTraits<VectorType>::ScalarType>
 {
    public:
-    using F = typename VectorWrapperTraits<VectorType>::ScalarType;
+    using F = VectorWrapperTraits<VectorType>::ScalarType;
 
     explicit VectorWrapper(const VectorType& vector, bool copy)
         : vector_(&vector)
@@ -96,6 +96,18 @@ class VectorWrapper : public VectorInterface<typename VectorWrapperTraits<Vector
 
     [[nodiscard]] const F& operator[](ssize_t i) const override
     {
+        return VectorWrapperTraits<VectorType>::const_get(get_vector(), i);
+    }
+
+    [[nodiscard]] F& at(ssize_t i) override
+    {
+        // TODO: use underlying vector's 'at' if possible or add bounds checks here
+        return VectorWrapperTraits<VectorType>::get(get_vector(), i);
+    }
+
+    [[nodiscard]] const F& at(ssize_t i) const override
+    {
+        // TODO: use underlying vector's 'at' if possible or add bounds checks here
         return VectorWrapperTraits<VectorType>::const_get(get_vector(), i);
     }
 

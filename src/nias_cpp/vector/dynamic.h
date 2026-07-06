@@ -124,12 +124,12 @@ class DynamicVector : public nias::VectorInterface<F>
     }
 
     // element access
-    [[nodiscard]] F& operator[](ssize_t i) override
+    [[nodiscard]] F& at(ssize_t i) override
     {
         return data_.at(nias::as_size_t(i));
     }
 
-    [[nodiscard]] const F& operator[](ssize_t i) const override
+    [[nodiscard]] const F& at(ssize_t i) const override
     {
         return data_.at(nias::as_size_t(i));
     }

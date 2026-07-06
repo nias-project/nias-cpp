@@ -124,7 +124,7 @@ ssize_t Indices::get(ssize_t i, ssize_t length) const
 {
     if (holds_vector())
     {
-        return positive_index(stored_vector()[as_size_t(i)], length);
+        return positive_index(stored_vector().at(as_size_t(i)), length);
     }
     const auto [start, stop, step, slicelength] = compute(length);
     if (i < 0 || i >= slicelength)

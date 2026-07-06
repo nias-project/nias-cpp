@@ -31,8 +31,20 @@ class VectorInterface
     VectorInterface& operator=(VectorInterface&&) = default;
 
     // accessors
-    [[nodiscard]] virtual const F& operator[](ssize_t i) const = 0;
-    [[nodiscard]] virtual F& operator[](ssize_t i) = 0;
+    // (possibly) unchecked access, override in derived classes if necessary for performance
+    [[nodiscard]] virtual const F& operator[](ssize_t i) const
+    {
+        return this->at(i);
+    }
+
+    [[nodiscard]] virtual F& operator[](ssize_t i)
+    {
+        return this->at(i);
+    }
+
+    // bounds-checked access
+    [[nodiscard]] virtual const F& at(ssize_t i) const = 0;
+    [[nodiscard]] virtual F& at(ssize_t i) = 0;
 
     // return the dimension (length) of the vector
     [[nodiscard]] virtual ssize_t dim() const = 0;
@@ -45,7 +57,7 @@ class VectorInterface
     {
         for (ssize_t i = 0; i < this->dim(); ++i)
         {
-            (*this)[i] *= alpha;
+            (*this).at(i) *= alpha;
         }
     }
 
@@ -59,7 +71,7 @@ class VectorInterface
         }
         for (ssize_t i = 0; i < this->dim(); ++i)
         {
-            (*this)[i] += alpha * x[i];
+            (*this).at(i) += alpha * x.at(i);
         }
     }
 };
@@ -70,7 +82,7 @@ std::ostream& operator<<(std::ostream& os, const VectorInterface<F>& vec)
     os << "[";
     for (ssize_t i = 0; i < vec.dim(); ++i)
     {
-        os << vec[i];
+        os << vec.at(i);
         if (i < vec.dim() - 1)
         {
             os << ", ";
@@ -99,7 +111,7 @@ template <class V>
 struct VectorWrapperTraits<V>
 {
     using VectorType = V;
-    using ScalarType = std::remove_cvref_t<decltype(std::declval<VectorType>()[0])>;
+    using ScalarType = std::remove_cvref_t<decltype(std::declval<VectorType>().at(0))>;
     static constexpr auto dim = [](const VectorType& vec) -> ssize_t
     {
         return vec.dim();
@@ -110,11 +122,11 @@ struct VectorWrapperTraits<V>
     };
     static constexpr auto get = [](VectorType& vec, ssize_t i) -> ScalarType&
     {
-        return vec[i];
+        return vec.at(i);
     };
     static constexpr auto const_get = [](const VectorType& vec, ssize_t i) -> const ScalarType&
     {
-        return vec[i];
+        return vec.at(i);
     };
 };
 

@@ -5,7 +5,6 @@
 
 # Note that the tests and/or examples subdir might have a sub-config that disables some checks.
 
-HeaderFilterRegex: (src|tests|examples)/.*
 ExcludeHeaderFilterRegex: .*/ut.hpp
 WarningsAsErrors: '*,-clang-diagnostic-unused-function'
 Checks: >
@@ -37,9 +36,12 @@ Checks: >
   -darwin-*,
   -objc-*, Objective-c not relevant,
   -llvmlibc-*, We want to use glibc,
+  -misc-misplaced-const,
   -misc-no-recursion,
   -readability-function-cognitive-complexity,
   -google-upgrade-googletest-case, we do not use gtest,
+  -portability-template-virtual-member-function, it is not clear how to fix these warnings and we test both MSVC and Clang/GCC so we should be fine,
+  -readability-math-missing-parentheses, wants to add parentheses for math expressions where evaluation order is already clear,
 
 
   These don't match our general guidance,
@@ -48,20 +50,28 @@ Checks: >
   -readability-identifier-length,
   This warns even for 'using namespace' in a .cpp file. We don't want that,
   -google-build-using-namespace,
+  -boost-use-ranges,
+  We had a discussion about this and decided that we want const data members,
+  although they disable move assignment and construction,
+  since they make the code simpler (no getters needed if they are public,
+  and no accidental modifications possible in member functions),
+  -cppcoreguidelines-avoid-const-or-ref-data-members,
 
   These warrant more discussion,
-  -cppcoreguidelines-avoid-const-or-ref-data-members,
   -bugprone-easily-swappable-parameters,
+  -readability-avoid-const-params-in-decls,
   -cppcoreguidelines-non-private-member-variables-in-classes,
   -misc-non-private-member-variables-in-classes, This should be a duplicate of the above?,
   -google-default-arguments,
-  -portability-template-virtual-member-function,
+  -llvm-prefer-static-over-anonymous-namespace,
 
   Cannot use due a bug in clang-tidy (https://github.com/llvm/llvm-project/issues/52682),
   -llvm-header-guard,
 
+  Reports errors in the Microsoft STL when using clang-tidy with clang-cl,
+  -readability-redundant-casting,
+
   Aliases. These are just duplicates of other warnings and should always be ignored,
-  -bugprone-narrowing-conversions,
   -cert-dcl37-c,
   -cert-dcl51-cpp,
   -cert-exp42-c,
@@ -75,6 +85,7 @@ Checks: >
   -hicpp-braces-around-statements,
   -hicpp-named-parameter,
   -hicpp-use-auto,
+  -cert-arr39-c, alias for bugprone-sizeof-expression,
   -cert-con36-c, alias for  bugprone-spuriously-wake-up-functions,
   -cert-con54-cpp, alias for  bugprone-spuriously-wake-up-functions,
   -cert-ctr56-cpp, alias for  bugprone-pointer-arithmetic-on-polymorphic-object,
@@ -100,6 +111,7 @@ Checks: >
   -cppcoreguidelines-c-copy-assignment-signature, alias for  misc-unconventional-assign-operator,
   -cppcoreguidelines-explicit-virtual-functions, alias for  modernize-use-override,
   -cppcoreguidelines-macro-to-enum, alias for  modernize-macro-to-enum,
+  -cppcoreguidelines-narrowing-conversions, alias for bugprone-narrowing-conversions,
   -cppcoreguidelines-noexcept-destructor, alias for  performance-noexcept-destructor,
   -cppcoreguidelines-noexcept-move-operations, alias for  performance-noexcept-move-constructor,
   -cppcoreguidelines-noexcept-swap, alias for  performance-noexcept-swap,
@@ -132,10 +144,10 @@ Checks: >
   This warns for any TODO left in source and could be useful,
   -google-readability-todo,
 
-# clang-tidy can auto-run clang-format for us. Tell it which style to use.
 FormatStyle: file
-
 CheckOptions:
-  - { key: misc-include-cleaner.IgnoreHeaders, value: pybind11.detail.*;nias_cpp.vector.stl.h;pylifecycle.h;cpython.*;Python.h }
+  - { key: misc-include-cleaner.IgnoreHeaders, value: .*sys.types.h;.*bits.chrono.h;Eigen.*;__msvc_chrono.hpp;fmt.ranges.h;fmt.*std.h;nlohmann.json.*.hpp;pybind11.detail.*;boost.unordered.*;pylifecycle.h;cpython.*;Python.h }
   # See https://clang.llvm.org/extra/clang-tidy/checks/readability/identifier-naming.html for a list of possible options
   - { key: readability-identifier-naming.NamespaceCase,          value: lower_case }
+  - { key: readability-identifier-naming.NamespaceIgnoredRegexp,      value: "Catch" }
+  - { key: cppcoreguidelines-pro-bounds-avoid-unchecked-container-access.ExcludeClasses,      value: "::std::map;::std::unordered_map;::std::flat_map;::nias::VectorArrayInterface" }

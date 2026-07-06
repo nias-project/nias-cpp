@@ -129,7 +129,7 @@ class NIAS_CPP_DLL_LOCAL ConstVectorArrayView : public VectorArrayInterface<F>
         view_indices->for_each(
             [&new_indices_vec, &old_indices_vec](ssize_t i)
             {
-                new_indices_vec.push_back(old_indices_vec[as_size_t(i)]);
+                new_indices_vec.push_back(old_indices_vec.at(as_size_t(i)));
             },
             this->size());
         std::cerr << "new_indices_vec: ";
@@ -281,7 +281,7 @@ class NIAS_CPP_DLL_LOCAL VectorArrayInterface
                 const auto alpha_index = as_size_t(alpha.size() == 1 ? 0 : i);
                 for (ssize_t j = 0; j < dim(); ++j)
                 {
-                    this->set(i, j, this->get(i, j) * alpha[alpha_index]);
+                    this->set(i, j, this->get(i, j) * alpha.at(alpha_index));
                 }
             }
         }
@@ -296,7 +296,7 @@ class NIAS_CPP_DLL_LOCAL VectorArrayInterface
                 {
                     for (ssize_t j = 0; j < dim(); ++j)
                     {
-                        this->set(i, j, this->get(i, j) * alpha[alpha_index]);
+                        this->set(i, j, this->get(i, j) * alpha.at(alpha_index));
                     }
                     if (alpha.size() > 1)
                     {
@@ -359,7 +359,8 @@ class NIAS_CPP_DLL_LOCAL VectorArrayInterface
             const auto alpha_index = as_size_t(alpha.size() == 1 ? 0 : i);
             for (ssize_t j = 0; j < dim(); ++j)
             {
-                this->set(this_index, j, this->get(this_index, j) + (alpha[alpha_index] * x.get(x_index, j)));
+                this->set(this_index, j,
+                          this->get(this_index, j) + (alpha.at(alpha_index) * x.get(x_index, j)));
             }
         }
     }

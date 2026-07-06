@@ -38,7 +38,7 @@ void check_random_vector_access(const VectorArrayInterface<F>& vec_array)
                 {
                     const auto& vec = vec_array.vector(i);
                     expect(constant<std::is_same_v<decltype(vec), const VectorInterface<F>&>>);
-                    expect(exactly_equal(vec, vec_array_as_list.vectors()[as_size_t(i)]));
+                    expect(exactly_equal(vec, vec_array_as_list.vectors().at(as_size_t(i))));
                 }
             };
 
@@ -51,9 +51,10 @@ void check_random_vector_access(const VectorArrayInterface<F>& vec_array)
                     mut_vec.scal(F(2));
                     for (ssize_t j = 0; j < vec_array.dim(); ++j)
                     {
-                        expect(exactly_equal(mut_vec[j], vec_array_as_list.vectors()[as_size_t(i)][j] * 2));
-                        expect(exactly_equal(mut_vec_array_as_list.vectors()[as_size_t(i)][j],
-                                             vec_array_as_list.vectors()[as_size_t(i)][j] * 2));
+                        expect(exactly_equal(mut_vec.at(j),
+                                             vec_array_as_list.vectors().at(as_size_t(i)).at(j) * 2));
+                        expect(exactly_equal(mut_vec_array_as_list.vectors().at(as_size_t(i)).at(j),
+                                             vec_array_as_list.vectors().at(as_size_t(i)).at(j) * 2));
                     }
                 }
             };
@@ -65,7 +66,7 @@ void check_random_vector_access(const VectorArrayInterface<F>& vec_array)
                     const auto& vec_as_underlying_vec = vec_array.template unwrapped_vector<VectorType>(i);
                     expect(constant<std::is_same_v<decltype(vec_as_underlying_vec), const VectorType&>>);
                     expect(exactly_equal(vec_as_underlying_vec,
-                                         vec_array_as_list.vectors()[as_size_t(i)].backend()));
+                                         vec_array_as_list.vectors().at(as_size_t(i)).backend()));
                 }
             };
 
@@ -78,11 +79,11 @@ void check_random_vector_access(const VectorArrayInterface<F>& vec_array)
                     expect(constant<std::is_same_v<decltype(mut_vec_as_underlying_vec), VectorType&>>);
                     for (ssize_t j = 0; j < vec_array.dim(); ++j)
                     {
-                        mut_vec_as_underlying_vec[checked_integer_cast<IndexType>(j)] *= F(2);
-                        expect(exactly_equal(mut_vec_as_underlying_vec[checked_integer_cast<IndexType>(j)],
-                                             vec_array_as_list.vectors()[as_size_t(i)][j] * 4));
-                        expect(exactly_equal(mut_vec_array_as_list.vectors()[as_size_t(i)][j],
-                                             vec_array_as_list.vectors()[as_size_t(i)][j] * 4));
+                        mut_vec_as_underlying_vec.at(checked_integer_cast<IndexType>(j)) *= F(2);
+                        expect(exactly_equal(mut_vec_as_underlying_vec.at(checked_integer_cast<IndexType>(j)),
+                                             vec_array_as_list.vectors().at(as_size_t(i)).at(j) * 4));
+                        expect(exactly_equal(mut_vec_array_as_list.vectors().at(as_size_t(i)).at(j),
+                                             vec_array_as_list.vectors().at(as_size_t(i)).at(j) * 4));
                     }
                 }
             };

@@ -56,7 +56,7 @@ std::shared_ptr<ListVectorArray<VectorType>> gram_schmidt(
 
     // create a Python VectorArray
     using namespace pybind11::literals;  // for the _a literal
-    using F = typename VectorWrapperTraits<VectorType>::ScalarType;
+    using F = VectorWrapperTraits<VectorType>::ScalarType;
     const VectorArrayInterface<F>& vec_array_ref = vec_array;
     const auto py_vec_array = py::cast(vec_array_ref, py::return_value_policy::reference);
     auto nias_vec_array = NiasVecArray("impl"_a = NiasVecArrayImpl(py_vec_array));
@@ -101,7 +101,7 @@ void gram_schmidt_in_place(
 
     // create a Python VectorArray
     using namespace pybind11::literals;  // for the _a literal
-    using F = typename VectorWrapperTraits<VectorType>::ScalarType;
+    using F = VectorWrapperTraits<VectorType>::ScalarType;
     // vec_array_ref and py_vec_array can be declared as const on the C++ side but that is misleading
     // because the array will be modified on the Python side, so we just silence the clang-tidy complaint here
     // NOLINTBEGIN(misc-const-correctness)
@@ -129,7 +129,7 @@ void gram_schmidt_cpp(VectorArrayInterface<F>& vec_array,
     {
         for (ssize_t j = 0; j < i; j++)
         {
-            if (remove[as_size_t(j)])
+            if (remove.at(as_size_t(j)))
             {
                 continue;
             }
@@ -140,7 +140,7 @@ void gram_schmidt_cpp(VectorArrayInterface<F>& vec_array,
         const auto norm2 = inner_product.apply_pairwise(vec_array, vec_array, {i}, {i}).at(0);
         if (norm2 < atol)
         {
-            remove[as_size_t(i)] = true;
+            remove.at(as_size_t(i)) = true;
         }
         else
         {
@@ -150,7 +150,7 @@ void gram_schmidt_cpp(VectorArrayInterface<F>& vec_array,
     std::vector<ssize_t> indices_to_remove;
     for (ssize_t i = 0; i < vec_array.size(); ++i)
     {
-        if (remove[as_size_t(i)])
+        if (remove.at(as_size_t(i)))
         {
             indices_to_remove.push_back(i);
         }

@@ -41,11 +41,11 @@ auto dot_product(const VectorInterface<F>& lhs, const VectorInterface<F>& rhs)
     {
         if constexpr (complex<F>)
         {
-            ret += std::conj(lhs[i]) * rhs[i];
+            ret += std::conj(lhs.at(i)) * rhs.at(i);
         }
         else
         {
-            ret += lhs[i] * rhs[i];
+            ret += lhs.at(i) * rhs.at(i);
         }
     }
     return ret;
@@ -74,11 +74,11 @@ std::vector<F> dot_product(const VectorArrayInterface<F>& lhs, const VectorArray
         {
             if constexpr (complex<F>)
             {
-                ret[as_size_t(i)] += std::conj(lhs.get(i, k)) * rhs.get(i, k);
+                ret.at(as_size_t(i)) += std::conj(lhs.get(i, k)) * rhs.get(i, k);
             }
             else
             {
-                ret[as_size_t(i)] += lhs.get(i, k) * rhs.get(i, k);
+                ret.at(as_size_t(i)) += lhs.get(i, k) * rhs.get(i, k);
             }
         }
     }

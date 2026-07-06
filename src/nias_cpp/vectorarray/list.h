@@ -31,7 +31,7 @@ class NIAS_CPP_DLL_LOCAL ListVectorArray
     : public VectorArrayInterface<typename VectorWrapperTraits<VectorType>::ScalarType>
 {
     using ThisType = ListVectorArray;
-    using F = typename VectorWrapperTraits<VectorType>::ScalarType;
+    using F = VectorWrapperTraits<VectorType>::ScalarType;
     using VectorInterfaceType = VectorInterface<F>;
     using InterfaceType = VectorArrayInterface<F>;
     using VectorWrapperType = VectorWrapper<VectorType>;
@@ -93,13 +93,13 @@ class NIAS_CPP_DLL_LOCAL ListVectorArray
     [[nodiscard]] F get(ssize_t i, ssize_t j) const override
     {
         this->check_indices(i, j);
-        return vectors_[as_size_t(i)][j];
+        return vectors_.at(as_size_t(i)).at(j);
     }
 
     void set(ssize_t i, ssize_t j, F value) override
     {
         this->check_indices(i, j);
-        vectors_[as_size_t(i)][j] = value;
+        vectors_.at(as_size_t(i)).at(j) = value;
     }
 
     [[nodiscard]] const std::vector<VectorWrapperType>& vectors() const
@@ -120,7 +120,7 @@ class NIAS_CPP_DLL_LOCAL ListVectorArray
         indices->for_each(
             [this, &copied_vectors](ssize_t i)
             {
-                copied_vectors.push_back(vectors_[as_size_t(i)]);
+                copied_vectors.push_back(vectors_.at(as_size_t(i)));
             },
             this->size());
         return std::make_shared<ThisType>(std::move(copied_vectors), dim_, false);
@@ -229,7 +229,7 @@ class NIAS_CPP_DLL_LOCAL ListVectorArray
             other_indices->for_each(
                 [this, &other](ssize_t i)
                 {
-                    vectors_.push_back(other.vectors_[as_size_t(i)]);
+                    vectors_.push_back(other.vectors_.at(as_size_t(i)));
                 },
                 other.size());
         }
@@ -253,7 +253,7 @@ class NIAS_CPP_DLL_LOCAL ListVectorArray
                 [this, &other](ssize_t i)
                 {
                     // we cannot move here because there might be duplicated indices
-                    vectors_.push_back(other.vectors_[as_size_t(i)]);
+                    vectors_.push_back(other.vectors_.at(as_size_t(i)));
                 },
                 other.size());
             other.delete_vectors(other_indices);

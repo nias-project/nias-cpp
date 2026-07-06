@@ -51,7 +51,7 @@ struct ExactlyEqualOpVecInterface
         }
         for (ssize_t i = 0; i < lhs_->dim(); ++i)
         {
-            if ((*lhs_)[i] != (*rhs_)[i])
+            if ((*lhs_).at(i) != (*rhs_).at(i))
             {
                 return false;
             }
@@ -91,7 +91,7 @@ struct ApproxEqualOpVecInterface
         }
         for (ssize_t i = 0; i < lhs_->dim(); ++i)
         {
-            if (!approx_equal(((*lhs_)[i], (*rhs_)[i])))
+            if (!approx_equal(((*lhs_).at(i), (*rhs_).at(i))))
             {
                 return false;
             }
@@ -267,7 +267,7 @@ auto approx_equal(const VectorArrayInterface<F>& lhs, const VectorArrayInterface
 template <class VectorArray>
 struct TestVectorArrayFactory
 {
-    using F = typename VectorArray::ScalarType;
+    using F = VectorArray::ScalarType;
 
     static_assert(always_false<VectorArray>::value,
                   "Not implemented, specialize this template for the specific VectorArray type");
@@ -289,7 +289,7 @@ struct TestVectorArrayFactory<ListVectorArray<std::vector<F>>>
             VectorType new_vec(as_size_t(dim));
             for (ssize_t j = 0; j < dim; ++j)
             {
-                new_vec[as_size_t(j)] = current_number;
+                new_vec.at(as_size_t(j)) = current_number;
                 current_number += F(1);
             }
             vec_array->append(new_vec);
@@ -312,7 +312,7 @@ struct TestVectorArrayFactory<ListVectorArray<DynamicVector<F>>>
             VectorType new_vec(dim);
             for (ssize_t j = 0; j < dim; ++j)
             {
-                new_vec[j] = current_number;
+                new_vec.at(j) = current_number;
                 current_number += F(1);
             }
             vec_array->append(new_vec);
@@ -360,7 +360,7 @@ auto create_test_alphas(ssize_t size)
     std::vector<F> iota_alpha(as_size_t(size));
     for (ssize_t i = 0; i < size; ++i)
     {
-        iota_alpha[as_size_t(i)] = F(-1 + i);
+        iota_alpha.at(as_size_t(i)) = F(-1 + i);
     }
     ret.push_back(iota_alpha);
     return ret;
@@ -375,7 +375,7 @@ template <class VectorArray>
 auto create_test_vectorarrays(ssize_t size, ssize_t dim)
 {
     using VecArrayFactory = TestVectorArrayFactory<VectorArray>;
-    using F = typename VectorArray::ScalarType;
+    using F = VectorArray::ScalarType;
     std::vector<std::shared_ptr<VectorArrayInterface<F>>> ret;
     for (const ssize_t sz : std::vector<ssize_t>{0, 1, size, size + 2})
     {
@@ -695,7 +695,7 @@ void check_scal(const VectorArrayInterface<F>& v, ssize_t size, ssize_t dim)
                             for (ssize_t i = 0; i < size; ++i)
                             {
                                 const auto scaling_factor =
-                                    alpha.size() == 1 ? alpha[0] : alpha[as_size_t(i)];
+                                    alpha.size() == 1 ? alpha.at(0) : alpha.at(as_size_t(i));
                                 for (ssize_t j = 0; j < dim; ++j)
                                 {
                                     expect(v_scaled->get(i, j) == scaling_factor * v.get(i, j));
@@ -743,9 +743,10 @@ void check_scal(const VectorArrayInterface<F>& v, ssize_t size, ssize_t dim)
                                         F scaling_factor = F(1.);
                                         for (size_t k = 0; k < index_vec.size(); ++k)
                                         {
-                                            if (index_vec[k] == i || index_vec[k] == i - size)
+                                            if (index_vec.at(k) == i || index_vec.at(k) == i - size)
                                             {
-                                                scaling_factor *= alpha.size() == 1 ? alpha[0] : alpha[k];
+                                                scaling_factor *=
+                                                    alpha.size() == 1 ? alpha.at(0) : alpha.at(k);
                                             }
                                         }
                                         for (ssize_t j = 0; j < dim; ++j)
@@ -771,7 +772,7 @@ template <class VectorArray>
 void check_axpy(const VectorArrayInterface<typename VectorArray::ScalarType>& v, ssize_t size, ssize_t dim)
 {
     using namespace boost::ut::bdd;
-    using F = typename VectorArray::ScalarType;
+    using F = VectorArray::ScalarType;
     using VecArrayFactory = TestVectorArrayFactory<VectorArray>;
 
     given("A vectorarray v of size size and dimension dim") = [&]()
@@ -829,7 +830,7 @@ void check_axpy(const VectorArrayInterface<typename VectorArray::ScalarType>& v,
                                             {
                                                 expect(v_axpy->get(i, j) ==
                                                        v.get(i, j) +
-                                                           (alpha[alpha_index] * x->get(x_index, j)));
+                                                           (alpha.at(alpha_index) * x->get(x_index, j)));
                                             }
                                         }
                                     };
@@ -918,12 +919,13 @@ void check_axpy(const VectorArrayInterface<typename VectorArray::ScalarType>& v,
                                                                 F alpha_x_ij = F(0.);
                                                                 for (size_t k = 0; k < index_vec.size(); ++k)
                                                                 {
-                                                                    if (index_vec[k] == i ||
-                                                                        index_vec[k] == i - size)
+                                                                    if (index_vec.at(k) == i ||
+                                                                        index_vec.at(k) == i - size)
                                                                     {
                                                                         alpha_x_ij +=
-                                                                            (alpha.size() == 1 ? alpha[0]
-                                                                                               : alpha[k]) *
+                                                                            (alpha.size() == 1
+                                                                                 ? alpha.at(0)
+                                                                                 : alpha.at(k)) *
                                                                             (x->size() == 1
                                                                                  ? x->get(0, j)
                                                                                  : x->get(as_ssize_t(k), j));
