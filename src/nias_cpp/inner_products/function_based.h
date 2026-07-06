@@ -47,7 +47,8 @@ class VectorFunctionBasedInnerProduct : public InnerProductInterface<F>
         {
             for (ssize_t j = 0; j < right.size(); ++j)
             {
-                ret[as_size_t(i)][as_size_t(j)] = inner_product_function_(left.vector(i), right.vector(j));
+                ret.at(as_size_t(i)).at(as_size_t(j)) =
+                    inner_product_function_(left.vector(i), right.vector(j));
             }
         }
         return ret;
@@ -69,7 +70,7 @@ class VectorFunctionBasedInnerProduct : public InnerProductInterface<F>
         std::vector<F> ret(as_size_t(left.size()));
         for (ssize_t i = 0; i < left.size(); ++i)
         {
-            ret[as_size_t(i)] = inner_product_function_(left.vector(i), right.vector(i));
+            ret.at(as_size_t(i)) = inner_product_function_(left.vector(i), right.vector(i));
         }
         return ret;
     }

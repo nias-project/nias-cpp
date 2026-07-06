@@ -11,6 +11,7 @@
 #include <nias_cpp/interfaces/vector.h>
 #include <nias_cpp/interfaces/vectorarray.h>
 #include <nias_cpp/type_traits.h>
+#include <nias_cpp/vector/wrapper.h>
 
 namespace nias
 {
@@ -19,23 +20,32 @@ namespace nias
 /**
  * \brief Euclidean dot product of vectors
 */
+template <class LhsVectorType, class RhsVectorType>
+    requires(wrappable_vector<LhsVectorType> && wrappable_vector<RhsVectorType> &&
+             !derived_from_vector_interface<LhsVectorType> && !derived_from_vector_interface<RhsVectorType>)
+auto dot_product(const LhsVectorType& lhs, const RhsVectorType& rhs)
+{
+    return dot_product(VectorWrapper<LhsVectorType>(lhs, false), VectorWrapper<RhsVectorType>(rhs, false));
+}
+
 template <floating_point_or_complex F>
-F dot_product(const VectorInterface<F>& lhs, const VectorInterface<F>& rhs)
+auto dot_product(const VectorInterface<F>& lhs, const VectorInterface<F>& rhs)
 {
     if (lhs.dim() != rhs.dim())
     {
-        throw std::invalid_argument("lhs and rhs must have the same size and dimension");
+        throw std::invalid_argument("lhs and rhs must have the same dimension");
     }
-    auto ret = F(0);
+
+    auto ret = F(0.);
     for (ssize_t i = 0; i < lhs.dim(); ++i)
     {
         if constexpr (complex<F>)
         {
-            ret += std::conj(lhs.get(i)) * rhs.get(i);
+            ret += std::conj(lhs.at(i)) * rhs.at(i);
         }
         else
         {
-            ret += lhs.get(i) * rhs.get(i);
+            ret += lhs.at(i) * rhs.at(i);
         }
     }
     return ret;
@@ -64,11 +74,11 @@ std::vector<F> dot_product(const VectorArrayInterface<F>& lhs, const VectorArray
         {
             if constexpr (complex<F>)
             {
-                ret[as_size_t(i)] += std::conj(lhs.get(i, k)) * rhs.get(i, k);
+                ret.at(as_size_t(i)) += std::conj(lhs.get(i, k)) * rhs.get(i, k);
             }
             else
             {
-                ret[as_size_t(i)] += lhs.get(i, k) * rhs.get(i, k);
+                ret.at(as_size_t(i)) += lhs.get(i, k) * rhs.get(i, k);
             }
         }
     }

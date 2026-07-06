@@ -31,12 +31,12 @@ jobs:
     steps:
 
     - name: Setup Python
-      uses: actions/setup-python@v5
+      uses: actions/setup-python@v6
       with:
         python-version: ${{ env.PYTHON_VERSION }}
 
     - name: Setup uv
-      uses: yezz123/setup-uv@v4
+      uses: astral-sh/setup-uv@v7
 
     - name: Setup Clang toolchain (on Linux)
       if: runner.os == 'Linux'
@@ -59,7 +59,7 @@ jobs:
         uv tool install "clang-tidy>=${llvm_version},<${next_major_version}"
 
     - name: Checkout
-      uses: actions/checkout@v4
+      uses: actions/checkout@v5
 
     - name: Configure with cmake
       run: |
@@ -67,12 +67,12 @@ jobs:
 
     - name: Build with cmake
       run: |
-        cmake --build build
+        cmake --build build --parallel
 
     - name: Build headercheck with cmake
       run: |
-        cmake --build build --target headercheck
+        cmake --build build --parallel --target headercheck
 
     - name: Build C++ tests with cmake
       run: |
-        cmake --build build --target all_test_binaries
+        cmake --build build --parallel --target all_test_binaries

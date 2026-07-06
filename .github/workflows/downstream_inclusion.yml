@@ -31,16 +31,16 @@ jobs:
     steps:
 
     - name: Setup Python
-      uses: actions/setup-python@v5
+      uses: actions/setup-python@v6
       id: setup_python
       with:
         python-version: ${{ env.PYTHON_VERSION }}
 
     - name: Setup uv
-      uses: astral-sh/setup-uv@v5
+      uses: astral-sh/setup-uv@v7
 
     - name: Checkout nias-cpp
-      uses: actions/checkout@v4
+      uses: actions/checkout@v5
       with:
         path: nias-cpp
 
@@ -48,20 +48,21 @@ jobs:
       run: |
         mkdir "${TEST_PROJECT_DIR}"
         cp nias-cpp/.test_projects/main.cpp "${TEST_PROJECT_DIR}/"
-        cp nias-cpp/tests/test_vector.h "${TEST_PROJECT_DIR}/"
         cp nias-cpp/.test_projects/CMakeLists.txt.Submodule "${TEST_PROJECT_DIR}/CMakeLists.txt"
 
     - name: Checkout nias_cpp as submodule
-      uses: actions/checkout@v4
+      uses: actions/checkout@v5
       with:
         path: ${{ env.TEST_PROJECT_DIR }}/nias-cpp
 
-    - name: Configure and build test project
+    - name: Configure, build and run test project
       run: |
         cd "${TEST_PROJECT_DIR}"
         mkdir build
         cmake -B build -DCMAKE_BUILD_TYPE=Debug
         cmake --build build
+        cd build
+        ./test-project-main
 
   inclusion_via_fetchcontent:
     strategy:
@@ -77,16 +78,16 @@ jobs:
     steps:
 
     - name: Setup Python
-      uses: actions/setup-python@v5
+      uses: actions/setup-python@v6
       id: setup_python
       with:
         python-version: ${{ env.PYTHON_VERSION }}
 
     - name: Setup uv
-      uses: astral-sh/setup-uv@v5
+      uses: astral-sh/setup-uv@v7
 
     - name: Checkout nias-cpp
-      uses: actions/checkout@v4
+      uses: actions/checkout@v5
       with:
         path: nias-cpp
 
@@ -94,16 +95,17 @@ jobs:
       run: |
         mkdir "${TEST_PROJECT_DIR}"
         cp nias-cpp/.test_projects/main.cpp "${TEST_PROJECT_DIR}/"
-        cp nias-cpp/tests/test_vector.h "${TEST_PROJECT_DIR}/"
         cp nias-cpp/.test_projects/CMakeLists.txt.FetchContent "${TEST_PROJECT_DIR}/CMakeLists.txt"
         sed -i 's/<GIT_TAG_PLACEHOLDER>/${{ github.event.pull_request.head.sha }}/' "${TEST_PROJECT_DIR}/CMakeLists.txt"
 
-    - name: Configure and build test project
+    - name: Configure, build and run test project
       run: |
         cd "${TEST_PROJECT_DIR}"
         mkdir build
         cmake -B build -DCMAKE_BUILD_TYPE=Debug
         cmake --build build
+        cd build
+        ./test-project-main
 
   use_from_virtualenv:
     strategy:
@@ -119,35 +121,40 @@ jobs:
     steps:
 
     - name: Setup Python
-      uses: actions/setup-python@v5
+      uses: actions/setup-python@v6
       id: setup_python
       with:
         python-version: ${{ env.PYTHON_VERSION }}
+        # disable setting environment variables, in particular Python_ROOT_DIR which
+        # otherwise makes CMake always find the system Python instead of the virtualenv one
+        update-environment: false
 
     - name: Setup uv
-      uses: astral-sh/setup-uv@v5
+      uses: astral-sh/setup-uv@v7
 
     - name: Checkout nias-cpp
-      uses: actions/checkout@v4
+      uses: actions/checkout@v5
       with:
         path: nias-cpp
 
     - name: Setup virtualenv
       run: |
-        uv venv --python='${{ steps.setup_python.outputs.python-path }}'
-        uv pip install ./nias-cpp
+        '${{ steps.setup_python.outputs.python-path }}' -m venv .venv
+        source .venv/bin/activate
+        pip install ./nias-cpp
 
     - name: Create test project
       run: |
         mkdir "${TEST_PROJECT_DIR}"
         cp nias-cpp/.test_projects/main.cpp "${TEST_PROJECT_DIR}/"
-        cp nias-cpp/tests/test_vector.h "${TEST_PROJECT_DIR}/"
         cp nias-cpp/.test_projects/CMakeLists.txt.VirtualEnv "${TEST_PROJECT_DIR}/CMakeLists.txt"
 
-    - name: Configure and build test project
+    - name: Configure, build and run test project
       run: |
         source .venv/bin/activate
         cd "${TEST_PROJECT_DIR}"
         mkdir build
-        cmake -B build -DPython_EXECUTABLE="$(which python${{ env.PYTHON_VERSION }})" -DCMAKE_BUILD_TYPE=Debug
+        cmake -B build -DCMAKE_BUILD_TYPE=Debug
         cmake --build build
+        cd build
+        ./test-project-main

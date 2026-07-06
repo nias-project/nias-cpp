@@ -11,7 +11,7 @@
 *.egg
 *.egg-info
 dist
-build
+build*
 eggs
 parts
 bin
@@ -84,3 +84,6 @@ docs/source/_static/standalone.js*
 # uv
 uv.lock
 Testing
+
+# CodeQL
+_codeql_detected_source_root

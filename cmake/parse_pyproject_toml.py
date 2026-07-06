@@ -21,10 +21,26 @@ def get_dependency_version(dependency_name):
         return f"Error: An error occurred: {e}"
 
 
+def get_min_python_version(dependency_name):
+    try:
+        with Path.open("pyproject.toml") as file:
+            pyproject_data = toml.load(file)
+
+        python_version = pyproject_data.get("project").get("requires-python")
+        return python_version.replace(">=", "").strip()
+    except FileNotFoundError:
+        return "Error: pyproject.toml file not found."
+    except Exception as e:
+        return f"Error: An error occurred: {e}"
+
+
 if __name__ == "__main__":
     if len(sys.argv) != 2:  # noqa: PLR2004
         print("Usage: python parse_pyproject_toml.py <dependency_name>")
     else:
         dependency_name = sys.argv[1]
-        version = get_dependency_version(dependency_name)
+        if dependency_name.lower() == "python":
+            version = get_min_python_version(dependency_name)
+        else:
+            version = get_dependency_version(dependency_name)
         print(version, end="")

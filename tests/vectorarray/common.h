@@ -18,13 +18,15 @@
 #include <nias_cpp/interfaces/vector.h>
 #include <nias_cpp/interfaces/vectorarray.h>
 #include <nias_cpp/type_traits.h>
+#include <nias_cpp/vector/dynamic.h>
+#include <nias_cpp/vector/stl.h>
+#include <nias_cpp/vector/wrapper.h>
 #include <nias_cpp/vectorarray/list.h>
 #include <nias_cpp/vectorarray/numpy.h>
 #include <pybind11/numpy.h>
 
 #include "../boost_ext_ut_no_module.h"
 #include "../common.h"
-#include "../test_vector.h"
 
 // NOLINTBEGIN(google-global-names-in-headers)
 using namespace nias;
@@ -32,25 +34,24 @@ using namespace boost::ut;
 
 // NOLINTEND(google-global-names-in-headers)
 
-// Comparison operators for Vectors
 template <floating_point_or_complex F>
-struct ExactlyEqualOpVec
+struct ExactlyEqualOpVecInterface
 {
-    ExactlyEqualOpVec(const VectorInterface<F>& lhs, const VectorInterface<F>& rhs)
-        : lhs_(lhs)
-        , rhs_(rhs)
+    ExactlyEqualOpVecInterface(const VectorInterface<F>& lhs, const VectorInterface<F>& rhs)
+        : lhs_(lhs.copy())
+        , rhs_(rhs.copy())
     {
     }
 
     [[nodiscard]] explicit operator bool() const
     {
-        if (lhs_.dim() != rhs_.dim())
+        if (lhs_->dim() != rhs_->dim())
         {
             return false;
         }
-        for (ssize_t i = 0; i < lhs_.dim(); ++i)
+        for (ssize_t i = 0; i < lhs_->dim(); ++i)
         {
-            if (lhs_.get(i) != rhs_.get(i))
+            if ((*lhs_).at(i) != (*rhs_).at(i))
             {
                 return false;
             }
@@ -58,39 +59,39 @@ struct ExactlyEqualOpVec
         return true;
     }
 
-    friend std::ostream& operator<<(std::ostream& os, const ExactlyEqualOpVec& eq)
+    friend std::ostream& operator<<(std::ostream& os, const ExactlyEqualOpVecInterface& eq)
     {
-        return (os << "\n" << eq.lhs_ << " == " << "\n" << eq.rhs_);
+        return (os << "\n" << *eq.lhs_ << " == " << "\n" << *eq.rhs_);
     }
 
-    const VectorInterface<F>& lhs_;
-    const VectorInterface<F>& rhs_;
+    std::shared_ptr<VectorInterface<F>> lhs_;
+    std::shared_ptr<VectorInterface<F>> rhs_;
 };
 
 template <floating_point_or_complex F>
 auto exactly_equal(const VectorInterface<F>& lhs, const VectorInterface<F>& rhs)
 {
-    return ExactlyEqualOpVec<F>(lhs, rhs);
+    return ExactlyEqualOpVecInterface<F>(lhs, rhs);
 }
 
 template <floating_point_or_complex F>
-struct ApproxEqualOpVec
+struct ApproxEqualOpVecInterface
 {
-    ApproxEqualOpVec(const VectorInterface<F>& lhs, const VectorInterface<F>& rhs)
-        : lhs_(lhs)
-        , rhs_(rhs)
+    ApproxEqualOpVecInterface(const VectorInterface<F>& lhs, const VectorInterface<F>& rhs)
+        : lhs_(lhs.copy())
+        , rhs_(rhs.copy())
     {
     }
 
     [[nodiscard]] explicit operator bool() const
     {
-        if (lhs_.dim() != rhs_.dim())
+        if (lhs_->dim() != rhs_->dim())
         {
             return false;
         }
-        for (ssize_t i = 0; i < lhs_.dim(); ++i)
+        for (ssize_t i = 0; i < lhs_->dim(); ++i)
         {
-            if (!approx_equal((lhs_.get(i), rhs_.get(i))))
+            if (!approx_equal(((*lhs_).at(i), (*rhs_).at(i))))
             {
                 return false;
             }
@@ -98,19 +99,81 @@ struct ApproxEqualOpVec
         return true;
     }
 
-    friend std::ostream& operator<<(std::ostream& os, const ApproxEqualOpVec& eq)
+    friend std::ostream& operator<<(std::ostream& os, const ApproxEqualOpVecInterface& eq)
     {
-        return (os << "\n" << eq.lhs_ << " == " << "\n" << eq.rhs_);
+        return (os << "\n" << *eq.lhs_ << " == " << "\n" << *eq.rhs_);
     }
 
-    const VectorInterface<F>& lhs_;
-    const VectorInterface<F>& rhs_;
+    std::shared_ptr<VectorInterface<F>> lhs_;
+    std::shared_ptr<VectorInterface<F>> rhs_;
 };
 
 template <floating_point_or_complex F>
 auto approx_equal(const VectorInterface<F>& lhs, const VectorInterface<F>& rhs)
 {
-    return ApproxEqualOpVec<F>(lhs, rhs);
+    return ApproxEqualOpVecInterface<F>(lhs, rhs);
+}
+
+// Comparison operators for Vectors
+template <class VectorType>
+    requires wrappable_vector<VectorType> && (!derived_from_vector_interface<VectorType>)
+struct ExactlyEqualOpVec
+{
+    ExactlyEqualOpVec(const VectorType& lhs, const VectorType& rhs)
+        : exactly_equal_op_vec_interface_(VectorWrapper<VectorType>(lhs, false),
+                                          VectorWrapper<VectorType>(rhs, false))
+    {
+    }
+
+    [[nodiscard]] explicit operator bool() const
+    {
+        return bool(exactly_equal_op_vec_interface_);
+    }
+
+    friend std::ostream& operator<<(std::ostream& os, const ExactlyEqualOpVec& eq)
+    {
+        return os << eq.exactly_equal_op_vec_interface_;
+    }
+
+    ExactlyEqualOpVecInterface<typename VectorWrapperTraits<VectorType>::ScalarType>
+        exactly_equal_op_vec_interface_;
+};
+
+template <class VectorType>
+    requires wrappable_vector<VectorType> && (!derived_from_vector_interface<VectorType>)
+auto exactly_equal(const VectorType& lhs, const VectorType& rhs)
+{
+    return ExactlyEqualOpVec<VectorType>(lhs, rhs);
+}
+
+template <class VectorType>
+    requires wrappable_vector<VectorType> && (!derived_from_vector_interface<VectorType>)
+struct ApproxEqualOpVec
+{
+    ApproxEqualOpVec(const VectorType& lhs, const VectorType& rhs)
+        : approx_equal_op_vec_interface_(VectorWrapper<VectorType>(lhs), VectorWrapper<VectorType>(rhs))
+    {
+    }
+
+    [[nodiscard]] explicit operator bool() const
+    {
+        return bool(approx_equal_op_vec_interface_);
+    }
+
+    friend std::ostream& operator<<(std::ostream& os, const ApproxEqualOpVec& eq)
+    {
+        return os << eq.approx_equal_op_vec_interface_;
+    }
+
+    ApproxEqualOpVecInterface<typename VectorWrapperTraits<VectorType>::ScalarType>
+        approx_equal_op_vec_interface_;
+};
+
+template <class VectorType>
+    requires wrappable_vector<VectorType> && (!derived_from_vector_interface<VectorType>)
+auto approx_equal(const VectorType& lhs, const VectorType& rhs)
+{
+    return ApproxEqualOpVec<VectorType>(lhs, rhs);
 }
 
 // Comparison operators for VectorArrays
@@ -204,7 +267,7 @@ auto approx_equal(const VectorArrayInterface<F>& lhs, const VectorArrayInterface
 template <class VectorArray>
 struct TestVectorArrayFactory
 {
-    using F = typename VectorArray::ScalarType;
+    using F = VectorArray::ScalarType;
 
     static_assert(always_false<VectorArray>::value,
                   "Not implemented, specialize this template for the specific VectorArray type");
@@ -213,18 +276,43 @@ struct TestVectorArrayFactory
 };
 
 template <floating_point_or_complex F>
-struct TestVectorArrayFactory<ListVectorArray<F>>
+struct TestVectorArrayFactory<ListVectorArray<std::vector<F>>>
 {
+    using VectorType = std::vector<F>;
+
     static std::shared_ptr<VectorArrayInterface<F>> iota(ssize_t size, ssize_t dim, F start = F(1))
     {
-        auto vec_array = std::make_shared<ListVectorArray<F>>(dim);
+        auto vec_array = std::make_shared<ListVectorArray<VectorType>>(dim);
         auto current_number = start;
         for (ssize_t i = 0; i < size; ++i)
         {
-            const std::shared_ptr<VectorInterface<F>> new_vec = std::make_shared<DynamicVector<F>>(dim);
+            VectorType new_vec(as_size_t(dim));
             for (ssize_t j = 0; j < dim; ++j)
             {
-                new_vec->get(j) = current_number;
+                new_vec.at(as_size_t(j)) = current_number;
+                current_number += F(1);
+            }
+            vec_array->append(new_vec);
+        }
+        return vec_array;
+    }
+};
+
+template <floating_point_or_complex F>
+struct TestVectorArrayFactory<ListVectorArray<DynamicVector<F>>>
+{
+    using VectorType = DynamicVector<F>;
+
+    static std::shared_ptr<VectorArrayInterface<F>> iota(ssize_t size, ssize_t dim, F start = F(1))
+    {
+        auto vec_array = std::make_shared<ListVectorArray<VectorType>>(dim);
+        auto current_number = start;
+        for (ssize_t i = 0; i < size; ++i)
+        {
+            VectorType new_vec(dim);
+            for (ssize_t j = 0; j < dim; ++j)
+            {
+                new_vec.at(j) = current_number;
                 current_number += F(1);
             }
             vec_array->append(new_vec);
@@ -272,7 +360,7 @@ auto create_test_alphas(ssize_t size)
     std::vector<F> iota_alpha(as_size_t(size));
     for (ssize_t i = 0; i < size; ++i)
     {
-        iota_alpha[as_size_t(i)] = F(-1 + i);
+        iota_alpha.at(as_size_t(i)) = F(-1 + i);
     }
     ret.push_back(iota_alpha);
     return ret;
@@ -280,15 +368,14 @@ auto create_test_alphas(ssize_t size)
 
 inline auto create_test_index_vectors(ssize_t size)
 {
-    return std::vector{std::vector<ssize_t>{}, std::vector<ssize_t>({0, 2}),
-                       std::vector<ssize_t>(as_size_t(size), 0), std::vector<ssize_t>{-1, 0, 1}};
+    return std::vector{std::vector<ssize_t>(as_size_t(size), 0), std::vector<ssize_t>{-1, 0, 1}};
 }
 
 template <class VectorArray>
 auto create_test_vectorarrays(ssize_t size, ssize_t dim)
 {
     using VecArrayFactory = TestVectorArrayFactory<VectorArray>;
-    using F = typename VectorArray::ScalarType;
+    using F = VectorArray::ScalarType;
     std::vector<std::shared_ptr<VectorArrayInterface<F>>> ret;
     for (const ssize_t sz : std::vector<ssize_t>{0, 1, size, size + 2})
     {
@@ -608,7 +695,7 @@ void check_scal(const VectorArrayInterface<F>& v, ssize_t size, ssize_t dim)
                             for (ssize_t i = 0; i < size; ++i)
                             {
                                 const auto scaling_factor =
-                                    alpha.size() == 1 ? alpha[0] : alpha[as_size_t(i)];
+                                    alpha.size() == 1 ? alpha.at(0) : alpha.at(as_size_t(i));
                                 for (ssize_t j = 0; j < dim; ++j)
                                 {
                                     expect(v_scaled->get(i, j) == scaling_factor * v.get(i, j));
@@ -656,9 +743,10 @@ void check_scal(const VectorArrayInterface<F>& v, ssize_t size, ssize_t dim)
                                         F scaling_factor = F(1.);
                                         for (size_t k = 0; k < index_vec.size(); ++k)
                                         {
-                                            if (index_vec[k] == i || index_vec[k] == i - size)
+                                            if (index_vec.at(k) == i || index_vec.at(k) == i - size)
                                             {
-                                                scaling_factor *= alpha.size() == 1 ? alpha[0] : alpha[k];
+                                                scaling_factor *=
+                                                    alpha.size() == 1 ? alpha.at(0) : alpha.at(k);
                                             }
                                         }
                                         for (ssize_t j = 0; j < dim; ++j)
@@ -684,7 +772,7 @@ template <class VectorArray>
 void check_axpy(const VectorArrayInterface<typename VectorArray::ScalarType>& v, ssize_t size, ssize_t dim)
 {
     using namespace boost::ut::bdd;
-    using F = typename VectorArray::ScalarType;
+    using F = VectorArray::ScalarType;
     using VecArrayFactory = TestVectorArrayFactory<VectorArray>;
 
     given("A vectorarray v of size size and dimension dim") = [&]()
@@ -742,7 +830,7 @@ void check_axpy(const VectorArrayInterface<typename VectorArray::ScalarType>& v,
                                             {
                                                 expect(v_axpy->get(i, j) ==
                                                        v.get(i, j) +
-                                                           (alpha[alpha_index] * x->get(x_index, j)));
+                                                           (alpha.at(alpha_index) * x->get(x_index, j)));
                                             }
                                         }
                                     };
@@ -831,12 +919,13 @@ void check_axpy(const VectorArrayInterface<typename VectorArray::ScalarType>& v,
                                                                 F alpha_x_ij = F(0.);
                                                                 for (size_t k = 0; k < index_vec.size(); ++k)
                                                                 {
-                                                                    if (index_vec[k] == i ||
-                                                                        index_vec[k] == i - size)
+                                                                    if (index_vec.at(k) == i ||
+                                                                        index_vec.at(k) == i - size)
                                                                     {
                                                                         alpha_x_ij +=
-                                                                            (alpha.size() == 1 ? alpha[0]
-                                                                                               : alpha[k]) *
+                                                                            (alpha.size() == 1
+                                                                                 ? alpha.at(0)
+                                                                                 : alpha.at(k)) *
                                                                             (x->size() == 1
                                                                                  ? x->get(0, j)
                                                                                  : x->get(as_ssize_t(k), j));

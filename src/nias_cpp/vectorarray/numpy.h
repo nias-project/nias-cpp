@@ -22,7 +22,7 @@ namespace nias
 
 
 template <std::floating_point F>
-class NumpyVectorArray : public VectorArrayInterface<F>
+class NIAS_CPP_DLL_LOCAL NumpyVectorArray : public VectorArrayInterface<F>
 {
     using ThisType = NumpyVectorArray;
     using VectorInterfaceType = VectorInterface<F>;
@@ -222,12 +222,13 @@ class NumpyVectorArray : public VectorArrayInterface<F>
                 throw InvalidStateError("indices_to_keep has wrong size");
             }
         }
+        // numpy arrays have a fixed size so we cannot modify the array in place
         auto new_array = pybind11::array_t<F>({new_size, dim()});
         for (ssize_t i = 0; i < std::ssize(indices_to_keep); ++i)
         {
             for (ssize_t j = 0; j < dim(); ++j)
             {
-                new_array.mutable_at(i, j) = array_.at(indices_to_keep[as_size_t(i)], j);
+                new_array.mutable_at(i, j) = array_.at(indices_to_keep.at(as_size_t(i)), j);
             }
         }
         array_ = new_array;

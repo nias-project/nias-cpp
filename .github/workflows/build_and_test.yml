@@ -62,36 +62,36 @@ jobs:
     steps:
 
     - name: Setup Python
-      uses: actions/setup-python@v5
+      uses: actions/setup-python@v6
       with:
-        python-version: '3.12'
+        python-version: '3.13'
 
     - name: Setup uv
-      uses: yezz123/setup-uv@v4
+      uses: astral-sh/setup-uv@v7
 
     - name: Checkout
-      uses: actions/checkout@v4
+      uses: actions/checkout@v5
 
     - name: Configure with cmake
       run: |
-        cmake -B build -DPython_EXECUTABLE="$(which python3.12)" -DCMAKE_BUILD_TYPE=${{ matrix.type }}
+        cmake -B build -DCMAKE_BUILD_TYPE=${{ matrix.type }}
 
     - name: Build with cmake
       run: |
-        cmake --build build
+        cmake --build build --parallel
 
     - name: Build headerchecks with cmake
       run: |
-        cmake --build build --target headercheck
+        cmake --build build --parallel --target headercheck
 
     - name: Build C++ tests with cmake
       run: |
-        cmake --build build --target all_test_binaries
+        cmake --build build --parallel --target all_test_binaries
 
     - name: Run C++ tests with ctest
       id: run_tests
       run: |
-        ctest --test-dir build
+        ctest --parallel --test-dir build
 
     - name: Re-run failed tests for more information
       if: always() && steps.run_tests.conclusion == 'failure'
@@ -113,36 +113,36 @@ jobs:
     steps:
 
     - name: Setup Python
-      uses: actions/setup-python@v5
+      uses: actions/setup-python@v6
       with:
-        python-version: '3.12'
+        python-version: '3.13'
 
     - name: Setup uv
-      uses: yezz123/setup-uv@v4
+      uses: astral-sh/setup-uv@v7
 
     - name: Checkout
-      uses: actions/checkout@v4
+      uses: actions/checkout@v5
 
     - name: Configure with cmake
       run: |
-        cmake -B build -DPython_EXECUTABLE="$(which python3.12)" -DCMAKE_BUILD_TYPE=${{ matrix.type }}
+        cmake -B build -DCMAKE_BUILD_TYPE=${{ matrix.type }}
 
     - name: Build with cmake
       run: |
-        cmake --build build --config ${{ matrix.type }}
+        cmake --build build --parallel --config ${{ matrix.type }}
 
     - name: Build headerchecks with cmake
       run: |
-        cmake --build build --config ${{ matrix.type }} --target headercheck
+        cmake --build build --parallel --config ${{ matrix.type }} --target headercheck
 
     - name: Build C++ tests with cmake
       run: |
-        cmake --build build --config ${{ matrix.type }} --target all_test_binaries
+        cmake --build build --parallel --config ${{ matrix.type }} --target all_test_binaries
 
     - name: Run C++ tests with ctest
       id: run_tests
       run: |
-        ctest --test-dir build -C ${{ matrix.type }}
+        ctest --parallel --test-dir build -C ${{ matrix.type }}
 
     - name: Re-run failed tests for more information
       if: always() && steps.run_tests.conclusion == 'failure'
